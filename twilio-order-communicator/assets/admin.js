@@ -392,5 +392,107 @@ $(function(){
 		$.post(tocData.ajax_url, {action:'toc_onboarding_dismiss', nonce:tocData.nonce})
 		.done(function(){ $notice.fadeOut(); });
 	});
+
+	/* ---------- License tab ---------- */
+	function applyLicenseState(d){
+		if(!d) return;
+		$('#toc-license-status-label').text(d.status_label || d.status || '')
+			.attr('class', 'toc-license-status toc-license-status--'+(d.status||'inactive'));
+		$('#toc-license-updates-note').text(' — ' + (d.allows_updates ? i18n('updatesOn', 'premium updates enabled') : i18n('updatesOff', 'premium updates paused')));
+		$('#toc-lic-site').text(d.site_url || '—');
+		if(d.activations != null && d.max_sites != null){
+			$('#toc-lic-acts').text(d.activations + ' / ' + d.max_sites);
+		} else {
+			$('#toc-lic-acts').text('—');
+		}
+		$('#toc-lic-exp').text(d.expires_at ? d.expires_at : i18n('lifetime', 'Lifetime / none set'));
+		$('#toc-lic-email').text(d.customer_email || '—');
+		$('#toc-lic-check').text(d.last_check || '—');
+		if(d.instance_id) $('#toc-lic-instance').text(d.instance_id);
+		if(d.masked_key){
+			$('#toc-license-key').attr('placeholder', d.masked_key).val('');
+		}
+		if(d.message){
+			$('#toc-license-msg').html('<span style="color:green">'+d.message+'</span>');
+		}
+	}
+
+	function licenseError(r){
+		var msg = (r && r.data && (r.data.message || r.data.error)) ? (r.data.message || r.data.error) : errText(r && r.data);
+		if(r && r.data && r.data.status_label){
+			applyLicenseState(r.data);
+		}
+		$('#toc-license-msg').html('<span style="color:#b32d2e">'+msg+'</span>');
+	}
+
+	$('#toc-license-activate').on('click', function(){
+		var $btn = $(this).prop('disabled', true).text(i18n('activating', 'Activating…'));
+		$('#toc-license-msg').text('');
+		$.post(tocData.ajax_url, {
+			action: 'toc_license_activate',
+			nonce: tocData.nonce,
+			license_key: $('#toc-license-key').val() || ''
+		}).done(function(r){
+			$btn.prop('disabled', false).text(i18n('activate', 'Activate'));
+			if(r && r.success) applyLicenseState(r.data);
+			else licenseError(r);
+		}).fail(function(){
+			$btn.prop('disabled', false).text(i18n('activate', 'Activate'));
+			$('#toc-license-msg').text(i18n('requestFailed', 'Request failed'));
+		});
+	});
+
+	$('#toc-license-deactivate').on('click', function(){
+		var $btn = $(this).prop('disabled', true).text(i18n('deactivating', 'Deactivating…'));
+		$('#toc-license-msg').text('');
+		$.post(tocData.ajax_url, {
+			action: 'toc_license_deactivate',
+			nonce: tocData.nonce,
+			clear_key: $('#toc-license-clear-key').is(':checked') ? 1 : 0
+		}).done(function(r){
+			$btn.prop('disabled', false).text(i18n('deactivate', 'Deactivate'));
+			if(r && r.success) applyLicenseState(r.data);
+			else licenseError(r);
+		}).fail(function(){
+			$btn.prop('disabled', false).text(i18n('deactivate', 'Deactivate'));
+			$('#toc-license-msg').text(i18n('requestFailed', 'Request failed'));
+		});
+	});
+
+	$('#toc-license-refresh').on('click', function(){
+		var $btn = $(this).prop('disabled', true).text(i18n('checking', 'Checking…'));
+		$('#toc-license-msg').text('');
+		$.post(tocData.ajax_url, {
+			action: 'toc_license_refresh',
+			nonce: tocData.nonce
+		}).done(function(r){
+			$btn.prop('disabled', false).text(i18n('recheck', 'Re-check'));
+			if(r && r.success) applyLicenseState(r.data);
+			else licenseError(r);
+		}).fail(function(){
+			$btn.prop('disabled', false).text(i18n('recheck', 'Re-check'));
+			$('#toc-license-msg').text(i18n('requestFailed', 'Request failed'));
+		});
+	});
+
+	$('#toc-license-save-server').on('click', function(){
+		var $btn = $(this).prop('disabled', true).text(i18n('saving', 'Saving…'));
+		$('#toc-license-msg').text('');
+		$.post(tocData.ajax_url, {
+			action: 'toc_license_save_server',
+			nonce: tocData.nonce,
+			server_url: $('#toc-license-server').val() || ''
+		}).done(function(r){
+			$btn.prop('disabled', false).text(i18n('saveServer', 'Save server URL'));
+			if(r && r.success){
+				$('#toc-license-msg').html('<span style="color:green">'+(r.data.message||'')+'</span>');
+			} else {
+				licenseError(r);
+			}
+		}).fail(function(){
+			$btn.prop('disabled', false).text(i18n('saveServer', 'Save server URL'));
+			$('#toc-license-msg').text(i18n('requestFailed', 'Request failed'));
+		});
+	});
 });
 })(jQuery);

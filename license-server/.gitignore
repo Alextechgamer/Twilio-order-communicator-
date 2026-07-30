@@ -1,0 +1,5 @@
+config.php
+data/*.sqlite
+data/*.sqlite-*
+storage/releases/*.zip
+config.php

@@ -66,3 +66,12 @@
 .toc-badge-ok{background:#d1e7dd;color:#0f5132}
 .toc-badge-no{background:#f8d7da;color:#842029}
 .tablenav.bottom{margin-top:12px}
+
+.toc-license-status{display:inline-block;font-weight:600;padding:2px 10px;border-radius:10px;background:#f0f0f1}
+.toc-license-status--active{background:#d1e7dd;color:#0f5132}
+.toc-license-status--inactive{background:#f0f0f1;color:#50575e}
+.toc-license-status--expired,.toc-license-status--invalid{background:#f8d7da;color:#842029}
+.toc-license-status--error{background:#fff3cd;color:#664d03}
+.toc-license-meta{margin:0;padding-left:18px}
+.toc-license-meta li{margin:4px 0}
+.toc-license-actions{margin-top:8px}

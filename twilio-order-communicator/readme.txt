@@ -4,7 +4,7 @@ Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
 WC requires at least: 7.0
-Stable tag: 1.7.0
+Stable tag: 1.8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -27,6 +27,7 @@ Twilio Order Communicator turns every WooCommerce order into a communication hub
 * Bulk reminder tool for orders still in Ready for Pickup
 * Optional SMS compliance footer + Privacy Policy helper text
 * Filterable capabilities and optional wp-config credential constants
+* Optional first-party license key for premium updates (messaging works without a license)
 * SMS delivery status callbacks
 * Mark messages or whole conversations as resolved
 * Dashboard with filters, pagination, and live stats
@@ -42,14 +43,18 @@ Twilio Order Communicator turns every WooCommerce order into a communication hub
 4. Map Ready for Pickup / Shipped statuses (defaults are registered by the plugin)
 5. Enable voice and/or SMS per status as needed (SMS defaults off)
 6. Configure the Incoming SMS webhook (preferred REST URL on the Tools & Docs tab)
+7. (Optional) Set `TOC_LICENSE_SERVER_URL` and activate a license under the License tab for premium updates
 
 == Frequently Asked Questions ==
 
 = Do I need a Twilio account? =
 Yes. This plugin connects to **your** Twilio account. You provide Account SID, Auth Token, and From Number. Message and call costs are billed by Twilio.
 
+= Do I need a license key to send SMS? =
+No. A license only unlocks premium plugin updates from the seller’s update server. Core SMS, voice, chat, and auto-notify keep working without a license.
+
 = Can I set credentials in wp-config.php? =
-Yes. Define `TOC_ACCOUNT_SID`, `TOC_AUTH_TOKEN`, and/or `TOC_FROM_NUMBER`. Constants override Settings fields.
+Yes. Define `TOC_ACCOUNT_SID`, `TOC_AUTH_TOKEN`, and/or `TOC_FROM_NUMBER`. Constants override Settings fields. For licensing, define `TOC_LICENSE_SERVER_URL`.
 
 = Do voice calls require SMS consent? =
 No. Only SMS respects the consent setting. Voice calls can always be placed.
@@ -73,6 +78,14 @@ No. The plugin includes its own tokenized TwiML endpoint.
 They text START or UNSTOP. Plain "YES" is intentionally not treated as re-subscribe.
 
 == Changelog ==
+
+= 1.8.0 =
+* Custom first-party licensing client (activate / deactivate / validate) — does not lock SMS/voice
+* License tab under Order Communicator; masked keys; dismissible notice when expired/invalid
+* Premium update checks via `pre_set_site_transient_update_plugins` + `plugins_api` (fail closed without license)
+* Grace period for license server network errors; Action Scheduler / WP-Cron re-validation
+* Companion `license-server/` PHP API (SQLite) with key creation and release registration CLIs
+* Constants: `TOC_LICENSE_SERVER_URL`, optional `TOC_LICENSE_ITEM_SLUG`
 
 = 1.7.0 =
 * Shared Twilio HTTP `request()` helper for SMS, calls, and credential tests

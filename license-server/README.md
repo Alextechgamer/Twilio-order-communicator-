@@ -1,0 +1,86 @@
+# TOC License Server
+
+Minimal PHP license + update API for **Twilio Order Communicator**.  
+Host this on your own domain (e.g. `https://licenses.example.com`). Payments stay on your marketing site — this only activates keys and serves licensed zip updates.
+
+## Requirements
+
+- PHP 7.4+ with PDO SQLite
+- HTTPS in production
+- Writable `data/` and `storage/releases/`
+
+## Quick setup
+
+```bash
+cd license-server
+cp config.example.php config.php
+# Edit config.php: admin_token, public_base_url
+
+# Create a license key (1 site, lifetime)
+php bin/create-key.php --email=customer@example.com --sites=1 --expires=lifetime
+
+# Register a release package
+php bin/add-release.php --version=1.8.0 --file=/path/to/twilio-order-communicator-1.8.0.zip --changelog="Custom licensing"
+```
+
+Point your vhost **document root** at `license-server/public/` (Apache `.htaccess` included).
+
+Local smoke test:
+
+```bash
+cd license-server/public
+php -S 127.0.0.1:8080
+curl http://127.0.0.1:8080/v1/health
+```
+
+Set `public_base_url` in `config.php` to the public URL (no trailing slash), e.g. `http://127.0.0.1:8080` for local tests.
+
+## API
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/v1/health` | Liveness |
+| POST | `/v1/activate` | Activate key for site + instance |
+| POST | `/v1/deactivate` | Remove activation |
+| POST | `/v1/validate` | Periodic re-check |
+| GET | `/v1/update-check` | Latest release if license allows (`X-TOC-License` header) |
+| GET | `/v1/download` | Signed zip download |
+
+### Activate body (JSON)
+
+```json
+{
+  "license_key": "TOC-....",
+  "site_url": "https://store.example",
+  "instance_id": "random-install-id",
+  "plugin_version": "1.8.0"
+}
+```
+
+## Plugin configuration
+
+In the WordPress site’s `wp-config.php`:
+
+```php
+define( 'TOC_LICENSE_SERVER_URL', 'https://licenses.example.com' );
+// optional:
+define( 'TOC_LICENSE_ITEM_SLUG', 'twilio-order-communicator' );
+```
+
+Then: **WooCommerce → Order Communicator → License** → paste key → Activate.
+
+Invalid/expired licenses **do not** disable SMS/voice — they only pause premium updates.
+
+## Security notes
+
+- Keep `config.php` and `data/licenses.sqlite` outside public git / backups of customer keys carefully
+- Use a long random `admin_token` / `download_secret`
+- Prefer HTTPS; the plugin verifies SSL when calling the server
+- Download URLs are HMAC-signed and time-limited
+
+## Create keys options
+
+```bash
+php bin/create-key.php --email=a@b.c --sites=3 --expires=2027-12-31 --notes="Agency multi-site"
+php bin/create-key.php --expires=lifetime
+```

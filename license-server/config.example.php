@@ -1,0 +1,30 @@
+<?php
+/**
+ * TOC License Server — copy to config.php and edit.
+ */
+return array(
+	// Shared secret for admin CLI / optional HMAC (keep private).
+	'admin_token'     => 'change-me-to-a-long-random-string',
+
+	// SQLite path (writable). Relative paths are from license-server/.
+	'db_path'         => __DIR__ . '/data/licenses.sqlite',
+
+	// Product slug this server licenses.
+	'item_slug'       => 'twilio-order-communicator',
+
+	// Directory for zip packages referenced by releases.package_path (relative filenames).
+	'releases_dir'    => __DIR__ . '/storage/releases',
+
+	// Public base URL of this license server (no trailing slash), used to build download URLs.
+	// Example: https://licenses.example.com
+	'public_base_url' => '',
+
+	// Signed download URL TTL in seconds.
+	'download_ttl'    => 3600,
+
+	// HMAC secret for signed download tokens (defaults to admin_token if empty).
+	'download_secret' => '',
+
+	// CORS (usually leave empty; plugins call server-to-server).
+	'allowed_origins' => array(),
+);

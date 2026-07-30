@@ -215,7 +215,8 @@ Optional auto-footer on outbound SMS (“Reply STOP to opt out…”) + copy-pas
 # P1 — High-Value Product Features
 
 ### 14. License key + auto-updates
-Integrate Freemius, EDD Software Licensing, or Lemon Squeezy. Required to sell and push updates.
+**Status: Done (v1.8.0)** — custom first-party license server + plugin client (not Freemius/EDD/Lemon Squeezy).  
+See `license-server/README.md`. Invalid/expired license does **not** disable SMS/voice; it only gates premium updates.
 
 ### 15. Scheduled reminders (Ready for Pickup)
 Auto-remind after X hours/days while order is still in Ready for Pickup. Respect quiet hours, consent, and `_toc_last_reminder_at`.
@@ -267,7 +268,7 @@ Expose the capability filters in Settings.
 
 1. **P0 Core Product Expansion (tasks 1–6)** — statuses, per-status toggles & messages, auto + bulk logic, copy updates  
 2. **P0 Hardening (tasks 7–13)** — HTTP client, admin split, webhooks, logging, footer  
-3. **License system (P1 #14)**  
+3. **Custom license system (P1 #14)** — first-party license server + plugin client (done in v1.8.0)  
 4. Scheduled reminders + CSV + Mark as collected  
 5. Remaining P1 / P2 after first sales feedback
 

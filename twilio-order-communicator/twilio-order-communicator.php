@@ -3,7 +3,7 @@
  * Plugin Name:       Twilio Order Communicator
  * Plugin URI:        https://github.com/Alextechgamer/Twilio-order-communicator-
  * Description:       Send SMS and place voice calls from WooCommerce orders using your own Twilio account. Status-based Ready for Pickup and Shipped notifications, chat history, bulk reminders, and consent-aware messaging.
- * Version:           1.7.0
+ * Version:           1.8.0
  * Author:            Alextechgamer
  * Author URI:        https://github.com/Alextechgamer
  * Requires at least: 6.0
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'TOC_VERSION', '1.7.0' );
+define( 'TOC_VERSION', '1.8.0' );
 define( 'TOC_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TOC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'TOC_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
@@ -29,6 +29,8 @@ require_once TOC_PLUGIN_DIR . 'includes/class-toc-caps.php';
 require_once TOC_PLUGIN_DIR . 'includes/class-toc-logger.php';
 require_once TOC_PLUGIN_DIR . 'includes/class-toc-twilio.php';
 require_once TOC_PLUGIN_DIR . 'includes/class-toc-webhooks.php';
+require_once TOC_PLUGIN_DIR . 'includes/class-toc-license.php';
+require_once TOC_PLUGIN_DIR . 'includes/class-toc-updater.php';
 require_once TOC_PLUGIN_DIR . 'includes/class-toc-admin.php';
 require_once TOC_PLUGIN_DIR . 'includes/class-toc-order-meta.php';
 require_once TOC_PLUGIN_DIR . 'includes/class-toc-statuses.php';
@@ -100,6 +102,8 @@ final class Twilio_Order_Communicator {
 			'toc_bulk_delay_seconds'         => 8,
 			'toc_sms_footer_enabled'         => 0,
 			'toc_sms_footer_text'            => 'Reply STOP to opt out. Msg & data rates may apply.',
+			'toc_license_status'             => 'inactive',
+			'toc_license_server_url'         => '',
 			'toc_message_ready_for_pickup'   => 'Hello {customer_first_name}. Your order #{order_number} is ready for pickup. Please come to the store when convenient. Thank you.',
 			'toc_message_shipped'            => 'Hello {customer_first_name}. Your order #{order_number} has shipped. Thank you for your order.',
 			'toc_message_reminder'           => 'Hello {customer_first_name}. This is a reminder that your order #{order_number} is still waiting for pickup. Please stop by at your earliest convenience. Thank you.',
@@ -180,6 +184,8 @@ final class Twilio_Order_Communicator {
 		TOC_Logger::instance();
 		TOC_Twilio::instance();
 		TOC_Webhooks::instance();
+		TOC_License::instance();
+		TOC_Updater::instance();
 		TOC_Admin::instance();
 		TOC_Order_Meta::instance();
 		TOC_Statuses::instance();
