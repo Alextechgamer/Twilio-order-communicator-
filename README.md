@@ -2,19 +2,25 @@
 
 WordPress / WooCommerce plugin for SMS and voice calls via **your own Twilio account**. Order communication is driven by custom statuses (**Ready for Pickup** and **Shipped**), with consent-aware SMS, quiet hours, bulk reminders, and order chat history.
 
-**Current version: 1.6.0**
+**Current version: 1.7.0**
 
 ## Install
 
 Upload `twilio-order-communicator/` (or a release zip) to `/wp-content/plugins/`, activate, then open **WooCommerce → Order Communicator → Setup**.
 
-Enter your Twilio Account SID, Auth Token, and From Number. This plugin does not provide messaging services — Twilio bills you directly.
+Enter your Twilio Account SID, Auth Token, and From Number (or define `TOC_ACCOUNT_SID` / `TOC_AUTH_TOKEN` / `TOC_FROM_NUMBER` in `wp-config.php`). This plugin does not provide messaging services — Twilio bills you directly.
 
-Release zips:
+## What's in 1.7.0
 
-- [`twilio-order-communicator-1.5.0.zip`](./twilio-order-communicator-1.5.0.zip)
-- [`twilio-order-communicator-1.4.0.zip`](./twilio-order-communicator-1.4.0.zip)
-- [`twilio-order-communicator-1.3.0.zip`](./twilio-order-communicator-1.3.0.zip)
+| Feature | Notes |
+|---------|--------|
+| Shared Twilio HTTP client | `request()` used by SMS, calls, credential test |
+| Admin split | Settings / Dashboard / Bulk / Tools / Ajax traits |
+| Phone → order matching | Log + HPOS/CPT billing phone + broader status scan |
+| REST webhooks | `toc/v1/sms`, `voice-status`, `message-status` (+ query aliases) |
+| Keyword auto-reply logging | STOP / HELP / START appear in order chat |
+| Capabilities | Filters `toc_manage_settings`, `toc_send_sms` |
+| SMS footer + privacy helper | Optional outbound footer; copy-paste policy text |
 
 ## What's in 1.6.0
 
@@ -27,42 +33,24 @@ Release zips:
 | Bulk reminders | Orders currently in Ready for Pickup |
 | Local Pickup filter | Optional secondary check for Ready for Pickup (default off on new installs) |
 
-## What's in 1.5.0
-
-| Feature | Notes |
-|---------|--------|
-| Checkout SMS consent | Built-in checkbox for classic + block checkout; stores `_toc_sms_consent` + timestamp/IP |
-| Quiet hours | Defers auto voice/SMS until the window ends (store timezone) |
-| Setup wizard | Credentials → connection test → webhook → consent → auto notify |
-
-## Auto SMS troubleshooting
-
-Per-status **SMS** toggles default to **off**. Enable them under Settings, confirm consent, clear `_toc_notified_ready_for_pickup_at` or `_toc_notified_shipped_at` to re-test. Quiet hours may defer sends — check order notes.
-
 ## Plugin layout
 
 ```
 twilio-order-communicator/
   twilio-order-communicator.php
   includes/
-    class-toc-checkout.php      checkout consent
-    class-toc-onboarding.php    setup wizard
-    class-toc-statuses.php      custom WC statuses + mapping
-    class-toc-auto.php          status triggers + quiet hours
+    class-toc-caps.php
+    class-toc-statuses.php
+    class-toc-auto.php
     class-toc-twilio.php
     class-toc-webhooks.php
     class-toc-logger.php
+    class-toc-admin.php          thin orchestrator
+    trait-toc-admin-*.php        settings, dashboard, bulk, tools, ajax
     class-toc-order-meta.php
-    class-toc-admin.php
+    class-toc-checkout.php
+    class-toc-onboarding.php
   assets/admin.{js,css}
 ```
 
-## Product analysis (sell / website)
-
-See [`docs/PRODUCT-ANALYSIS.md`](./docs/PRODUCT-ANALYSIS.md) for cleanup priorities, commercial feature roadmap, and website/licensing notes.
-
 See [`tasks.md`](./tasks.md) for the implementation roadmap (P0–P2).
-
-## Next
-
-P0 hardening (HTTP client, admin split, webhooks REST) · license keys · scheduled reminders · CSV/analytics

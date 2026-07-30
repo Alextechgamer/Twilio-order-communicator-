@@ -3,7 +3,7 @@
  * Plugin Name:       Twilio Order Communicator
  * Plugin URI:        https://github.com/Alextechgamer/Twilio-order-communicator-
  * Description:       Send SMS and place voice calls from WooCommerce orders using your own Twilio account. Status-based Ready for Pickup and Shipped notifications, chat history, bulk reminders, and consent-aware messaging.
- * Version:           1.6.0
+ * Version:           1.7.0
  * Author:            Alextechgamer
  * Author URI:        https://github.com/Alextechgamer
  * Requires at least: 6.0
@@ -19,12 +19,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'TOC_VERSION', '1.6.0' );
+define( 'TOC_VERSION', '1.7.0' );
 define( 'TOC_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TOC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'TOC_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 define( 'TOC_PLUGIN_FILE', __FILE__ );
 
+require_once TOC_PLUGIN_DIR . 'includes/class-toc-caps.php';
 require_once TOC_PLUGIN_DIR . 'includes/class-toc-logger.php';
 require_once TOC_PLUGIN_DIR . 'includes/class-toc-twilio.php';
 require_once TOC_PLUGIN_DIR . 'includes/class-toc-webhooks.php';
@@ -97,6 +98,8 @@ final class Twilio_Order_Communicator {
 			'toc_onboarding_step'            => 1,
 			'toc_voice'                      => 'alice',
 			'toc_bulk_delay_seconds'         => 8,
+			'toc_sms_footer_enabled'         => 0,
+			'toc_sms_footer_text'            => 'Reply STOP to opt out. Msg & data rates may apply.',
 			'toc_message_ready_for_pickup'   => 'Hello {customer_first_name}. Your order #{order_number} is ready for pickup. Please come to the store when convenient. Thank you.',
 			'toc_message_shipped'            => 'Hello {customer_first_name}. Your order #{order_number} has shipped. Thank you for your order.',
 			'toc_message_reminder'           => 'Hello {customer_first_name}. This is a reminder that your order #{order_number} is still waiting for pickup. Please stop by at your earliest convenience. Thank you.',

@@ -33,7 +33,7 @@ class TOC_Onboarding {
 		if ( empty( $_GET['toc_dismiss_setup'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			return;
 		}
-		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+		if ( ! current_user_can( TOC_Caps::manage() ) ) {
 			return;
 		}
 		check_admin_referer( 'toc_dismiss_setup' );
@@ -46,7 +46,7 @@ class TOC_Onboarding {
 		if ( self::is_done() ) {
 			return;
 		}
-		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+		if ( ! current_user_can( TOC_Caps::manage() ) ) {
 			return;
 		}
 		if ( isset( $_GET['page'] ) && sanitize_key( wp_unslash( $_GET['page'] ) ) === 'toc-communicator' ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -74,7 +74,7 @@ class TOC_Onboarding {
 
 	public function ajax_dismiss() {
 		check_ajax_referer( 'toc_nonce', 'nonce' );
-		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+		if ( ! current_user_can( TOC_Caps::manage() ) ) {
 			wp_send_json_error( __( 'Permission denied', 'twilio-order-communicator' ) );
 		}
 		update_option( 'toc_onboarding_done', 1, false );
@@ -83,7 +83,7 @@ class TOC_Onboarding {
 
 	public function ajax_complete() {
 		check_ajax_referer( 'toc_nonce', 'nonce' );
-		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+		if ( ! current_user_can( TOC_Caps::manage() ) ) {
 			wp_send_json_error( __( 'Permission denied', 'twilio-order-communicator' ) );
 		}
 		update_option( 'toc_onboarding_done', 1, false );
@@ -97,7 +97,7 @@ class TOC_Onboarding {
 
 	public function ajax_save() {
 		check_ajax_referer( 'toc_nonce', 'nonce' );
-		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+		if ( ! current_user_can( TOC_Caps::manage() ) ) {
 			wp_send_json_error( __( 'Permission denied', 'twilio-order-communicator' ) );
 		}
 

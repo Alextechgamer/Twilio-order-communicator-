@@ -62,6 +62,8 @@ $options = array(
 	'toc_onboarding_done',
 	'toc_onboarding_step',
 	'toc_migrated_auto_v160',
+	'toc_sms_footer_enabled',
+	'toc_sms_footer_text',
 );
 
 foreach ( $options as $option ) {

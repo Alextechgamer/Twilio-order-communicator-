@@ -5,6 +5,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class TOC_Webhooks {
 
+	const REST_NAMESPACE = 'toc/v1';
+
 	private static $instance = null;
 
 	public static function instance() {
@@ -15,21 +17,128 @@ class TOC_Webhooks {
 	}
 
 	private function __construct() {
-		add_action( 'init', array( $this, 'handle' ) );
+		add_action( 'init', array( $this, 'handle_query_aliases' ) );
+		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
 	}
 
-	public function handle() {
-		if ( isset( $_GET['toc_status'] ) && (string) $_GET['toc_status'] === '1' ) {
+	/**
+	 * Preferred REST webhook URL for a channel.
+	 *
+	 * @param string $route sms|voice-status|message-status
+	 * @return string
+	 */
+	public static function rest_url( $route ) {
+		$base = TOC_Twilio::instance()->public_base_url();
+		$path = 'wp-json/' . self::REST_NAMESPACE . '/' . ltrim( $route, '/' );
+		return trailingslashit( $base ) . $path;
+	}
+
+	/**
+	 * Permanent query-string aliases (?toc_sms=1 etc.) so existing Twilio configs keep working.
+	 */
+	public function handle_query_aliases() {
+		if ( isset( $_GET['toc_status'] ) && (string) $_GET['toc_status'] === '1' ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$this->voice_status();
 			exit;
 		}
-		if ( isset( $_GET['toc_msg_status'] ) && (string) $_GET['toc_msg_status'] === '1' ) {
+		if ( isset( $_GET['toc_msg_status'] ) && (string) $_GET['toc_msg_status'] === '1' ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$this->message_status();
 			exit;
 		}
-		if ( isset( $_GET['toc_sms'] ) && (string) $_GET['toc_sms'] === '1' ) {
+		if ( isset( $_GET['toc_sms'] ) && (string) $_GET['toc_sms'] === '1' ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$this->incoming_sms();
 			exit;
+		}
+	}
+
+	public function register_rest_routes() {
+		$routes = array(
+			'/sms'            => 'rest_incoming_sms',
+			'/voice-status'   => 'rest_voice_status',
+			'/message-status' => 'rest_message_status',
+		);
+
+		foreach ( $routes as $route => $callback ) {
+			register_rest_route(
+				self::REST_NAMESPACE,
+				$route,
+				array(
+					'methods'             => 'POST',
+					'callback'            => array( $this, $callback ),
+					'permission_callback' => '__return_true', // Authenticated via Twilio signature.
+				)
+			);
+		}
+	}
+
+	/**
+	 * @param WP_REST_Request $request Request.
+	 * @return void Serves raw response for Twilio (not JSON).
+	 */
+	public function rest_incoming_sms( $request ) {
+		$this->hydrate_post_from_rest( $request );
+		ob_start();
+		$this->incoming_sms();
+		$this->serve_raw_and_exit( (string) ob_get_clean(), 'text/xml; charset=utf-8' );
+	}
+
+	/**
+	 * @param WP_REST_Request $request Request.
+	 * @return void
+	 */
+	public function rest_voice_status( $request ) {
+		$this->hydrate_post_from_rest( $request );
+		ob_start();
+		$this->voice_status();
+		$this->serve_raw_and_exit( (string) ob_get_clean(), 'text/plain; charset=utf-8' );
+	}
+
+	/**
+	 * @param WP_REST_Request $request Request.
+	 * @return void
+	 */
+	public function rest_message_status( $request ) {
+		$this->hydrate_post_from_rest( $request );
+		ob_start();
+		$this->message_status();
+		$this->serve_raw_and_exit( (string) ob_get_clean(), 'text/plain; charset=utf-8' );
+	}
+
+	/**
+	 * Bypass WP REST JSON encoding — Twilio expects raw XML/text bodies.
+	 *
+	 * @param string $body         Response body.
+	 * @param string $content_type Content-Type header.
+	 */
+	private function serve_raw_and_exit( $body, $content_type ) {
+		$code = http_response_code();
+		if ( ! $code || $code < 100 ) {
+			$code = 200;
+		}
+		status_header( $code );
+		header( 'Content-Type: ' . $content_type );
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Twilio TwiML / plain OK body.
+		echo $body !== '' ? $body : ( strpos( $content_type, 'xml' ) !== false ? '' : 'OK' );
+		exit;
+	}
+
+	/**
+	 * Copy REST params into $_POST so existing handlers / signature validation work.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 */
+	private function hydrate_post_from_rest( $request ) {
+		$params = $request->get_body_params();
+		if ( empty( $params ) ) {
+			$params = $request->get_params();
+		}
+		if ( ! is_array( $params ) ) {
+			return;
+		}
+		foreach ( $params as $key => $value ) {
+			if ( is_scalar( $value ) ) {
+				$_POST[ $key ] = $value; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			}
 		}
 	}
 
@@ -165,8 +274,8 @@ class TOC_Webhooks {
 			)
 		);
 
-		$reply = '';
-		$norm  = preg_replace( '/\s+/', ' ', strtoupper( trim( $body ) ) );
+		$reply   = '';
+		$norm    = preg_replace( '/\s+/', ' ', strtoupper( trim( $body ) ) );
 		$keyword = preg_replace( '/[^A-Z]/', '', $norm );
 
 		$stop_words  = array( 'STOP', 'STOPALL', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT' );
@@ -226,7 +335,7 @@ class TOC_Webhooks {
 			}
 		}
 
-		// Log auto keyword reply so staff see it in order chat.
+		// Log auto keyword reply so staff see it in order chat (task 11).
 		if ( $reply !== '' ) {
 			$logger->log(
 				array(

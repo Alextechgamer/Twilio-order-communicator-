@@ -395,8 +395,12 @@ class TOC_Logger {
 	}
 
 	/**
-	 * Find the most relevant recent order for an inbound phone number.
-	 * Matches on last 10 digits so formatting differences don't break linking.
+	 * Find the most relevant order for an inbound phone number.
+	 * Prefers communications-log matches, then billing-phone SQL (HPOS + CPT),
+	 * then a broader recent-orders scan. Matches on last-10 digits.
+	 *
+	 * @param string $phone Incoming phone.
+	 * @return int Order ID or 0.
 	 */
 	public function find_order_by_phone( $phone ) {
 		$digits = $this->digits_only( $phone );
@@ -406,12 +410,33 @@ class TOC_Logger {
 
 		$tail = substr( $digits, -10 );
 
+		// 1) Prior communications with this phone (covers older orders reliably).
+		$from_log = $this->find_order_id_from_communications( $tail );
+		if ( $from_log ) {
+			return $from_log;
+		}
+
+		// 2) Direct billing-phone lookup (HPOS addresses table or postmeta).
+		$from_billing = $this->find_order_id_from_billing_phone( $tail );
+		if ( $from_billing ) {
+			return $from_billing;
+		}
+
+		// 3) Broader recent-order scan including custom TOC statuses.
+		$statuses = array( 'processing', 'completed', 'on-hold', 'pending', 'ready-for-pickup', 'shipped' );
+		if ( class_exists( 'TOC_Statuses' ) ) {
+			$statuses[] = TOC_Statuses::bare_status( TOC_Statuses::mapped_ready_status() );
+			$statuses[] = TOC_Statuses::bare_status( TOC_Statuses::mapped_shipped_status() );
+		}
+		$statuses = array_values( array_unique( $statuses ) );
+
 		$orders = wc_get_orders(
 			array(
-				'limit'   => 40,
+				'limit'   => 150,
 				'orderby' => 'date',
 				'order'   => 'DESC',
-				'status'  => array( 'processing', 'completed', 'on-hold', 'pending' ),
+				'status'  => $statuses,
+				'return'  => 'objects',
 			)
 		);
 
@@ -422,21 +447,99 @@ class TOC_Logger {
 			}
 		}
 
+		return 0;
+	}
+
+	/**
+	 * @param string $tail Last 10 digits.
+	 * @return int
+	 */
+	private function find_order_id_from_communications( $tail ) {
 		global $wpdb;
+
+		$like4 = '%' . $wpdb->esc_like( substr( $tail, -4 ) );
+
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is internal.
 		$rows = $wpdb->get_results(
-			"SELECT order_id, phone FROM {$this->table}
-			 WHERE order_id > 0
-			 ORDER BY created_at DESC
-			 LIMIT 50"
+			$wpdb->prepare(
+				"SELECT order_id, phone FROM {$this->table}
+				 WHERE order_id > 0 AND phone LIKE %s
+				 ORDER BY created_at DESC
+				 LIMIT 200",
+				$like4
+			)
 		);
 
-		if ( $rows ) {
-			foreach ( $rows as $row ) {
-				$row_digits = $this->digits_only( $row->phone );
-				if ( $row_digits !== '' && substr( $row_digits, -10 ) === $tail ) {
-					return (int) $row->order_id;
-				}
+		if ( ! $rows ) {
+			return 0;
+		}
+
+		foreach ( $rows as $row ) {
+			$row_digits = $this->digits_only( $row->phone );
+			if ( $row_digits !== '' && substr( $row_digits, -10 ) === $tail ) {
+				return (int) $row->order_id;
+			}
+		}
+
+		return 0;
+	}
+
+	/**
+	 * Query WooCommerce billing phones (HPOS or legacy CPT meta).
+	 *
+	 * @param string $tail Last 10 digits.
+	 * @return int
+	 */
+	private function find_order_id_from_billing_phone( $tail ) {
+		global $wpdb;
+
+		$like4 = '%' . $wpdb->esc_like( substr( $tail, -4 ) );
+		$ids   = array();
+
+		$hpos = false;
+		if ( class_exists( '\Automattic\WooCommerce\Utilities\OrderUtil' )
+			&& method_exists( '\Automattic\WooCommerce\Utilities\OrderUtil', 'custom_orders_table_usage_is_enabled' )
+		) {
+			$hpos = \Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled();
+		}
+
+		if ( $hpos ) {
+			$addresses = $wpdb->prefix . 'wc_order_addresses';
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$ids = $wpdb->get_col(
+				$wpdb->prepare(
+					"SELECT order_id FROM {$addresses}
+					 WHERE address_type = 'billing' AND phone LIKE %s
+					 ORDER BY order_id DESC
+					 LIMIT 100",
+					$like4
+				)
+			);
+		} else {
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$ids = $wpdb->get_col(
+				$wpdb->prepare(
+					"SELECT post_id FROM {$wpdb->postmeta}
+					 WHERE meta_key = '_billing_phone' AND meta_value LIKE %s
+					 ORDER BY post_id DESC
+					 LIMIT 100",
+					$like4
+				)
+			);
+		}
+
+		if ( empty( $ids ) ) {
+			return 0;
+		}
+
+		foreach ( $ids as $order_id ) {
+			$order = wc_get_order( (int) $order_id );
+			if ( ! $order ) {
+				continue;
+			}
+			$billing = $this->digits_only( $order->get_billing_phone() );
+			if ( $billing !== '' && substr( $billing, -10 ) === $tail ) {
+				return (int) $order_id;
 			}
 		}
 

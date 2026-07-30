@@ -38,7 +38,7 @@ class TOC_Twilio {
 			}
 		}
 
-		if ( $message === '' && isset( $_GET['message'] ) && current_user_can( 'manage_woocommerce' ) ) {
+		if ( $message === '' && isset( $_GET['message'] ) && current_user_can( TOC_Caps::manage() ) ) {
 			$message = sanitize_text_field( wp_unslash( $_GET['message'] ) );
 		}
 
@@ -91,14 +91,128 @@ class TOC_Twilio {
 	}
 
 	public function webhook_url( $query_key ) {
+		$map = array(
+			'toc_sms'        => 'sms',
+			'toc_status'     => 'voice-status',
+			'toc_msg_status' => 'message-status',
+		);
+
+		// Prefer REST routes; query-string aliases remain supported forever.
+		if ( isset( $map[ $query_key ] ) ) {
+			return TOC_Webhooks::rest_url( $map[ $query_key ] );
+		}
+
 		return add_query_arg( $query_key, '1', $this->public_base_url() );
 	}
 
 	private function get_credentials() {
+		$sid = defined( 'TOC_ACCOUNT_SID' ) && TOC_ACCOUNT_SID
+			? (string) TOC_ACCOUNT_SID
+			: (string) get_option( 'toc_account_sid', '' );
+		$token = defined( 'TOC_AUTH_TOKEN' ) && TOC_AUTH_TOKEN
+			? (string) TOC_AUTH_TOKEN
+			: (string) get_option( 'toc_auth_token', '' );
+		$from = defined( 'TOC_FROM_NUMBER' ) && TOC_FROM_NUMBER
+			? (string) TOC_FROM_NUMBER
+			: (string) get_option( 'toc_from_number', '' );
+
 		return array(
-			'sid'   => (string) get_option( 'toc_account_sid', '' ),
-			'token' => (string) get_option( 'toc_auth_token', '' ),
-			'from'  => (string) get_option( 'toc_from_number', '' ),
+			'sid'   => $sid,
+			'token' => $token,
+			'from'  => $from,
+		);
+	}
+
+	/**
+	 * Whether a credential is locked via wp-config constant.
+	 *
+	 * @param string $which sid|token|from
+	 * @return bool
+	 */
+	public function credential_is_constant( $which ) {
+		if ( $which === 'sid' ) {
+			return defined( 'TOC_ACCOUNT_SID' ) && TOC_ACCOUNT_SID;
+		}
+		if ( $which === 'token' ) {
+			return defined( 'TOC_AUTH_TOKEN' ) && TOC_AUTH_TOKEN;
+		}
+		if ( $which === 'from' ) {
+			return defined( 'TOC_FROM_NUMBER' ) && TOC_FROM_NUMBER;
+		}
+		return false;
+	}
+
+	/**
+	 * Shared Twilio REST request helper.
+	 *
+	 * @param string $method GET|POST.
+	 * @param string $path   Path under /2010-04-01/Accounts/{SID}/ (or absolute path starting with /Accounts/…).
+	 * @param array  $body   Request body for POST.
+	 * @return array{success:bool,code:int,data:array,error?:string}
+	 */
+	private function request( $method, $path, $body = array() ) {
+		$creds = $this->get_credentials();
+		if ( $creds['sid'] === '' || $creds['token'] === '' ) {
+			return array(
+				'success' => false,
+				'code'    => 0,
+				'data'    => array(),
+				'error'   => 'Twilio credentials not configured.',
+			);
+		}
+
+		$method = strtoupper( (string) $method );
+		$path   = ltrim( (string) $path, '/' );
+
+		if ( strpos( $path, 'Accounts/' ) === 0 ) {
+			$url = 'https://api.twilio.com/2010-04-01/' . $path;
+		} else {
+			$url = 'https://api.twilio.com/2010-04-01/Accounts/' . rawurlencode( $creds['sid'] ) . '/' . $path;
+		}
+
+		$args = array(
+			'method'  => $method,
+			'headers' => array(
+				'Authorization' => 'Basic ' . base64_encode( $creds['sid'] . ':' . $creds['token'] ),
+			),
+			'timeout' => 20,
+		);
+
+		if ( $method === 'POST' ) {
+			$args['body'] = $body;
+		}
+
+		$response = wp_remote_request( $url, $args );
+
+		if ( is_wp_error( $response ) ) {
+			return array(
+				'success' => false,
+				'code'    => 0,
+				'data'    => array(),
+				'error'   => $response->get_error_message(),
+			);
+		}
+
+		$code = (int) wp_remote_retrieve_response_code( $response );
+		$data = json_decode( wp_remote_retrieve_body( $response ), true );
+		if ( ! is_array( $data ) ) {
+			$data = array();
+		}
+
+		if ( $code >= 200 && $code < 300 ) {
+			return array(
+				'success' => true,
+				'code'    => $code,
+				'data'    => $data,
+			);
+		}
+
+		$msg = ! empty( $data['message'] ) ? (string) $data['message'] : 'HTTP ' . $code;
+		return array(
+			'success' => false,
+			'code'    => $code,
+			'data'    => $data,
+			'error'   => $msg,
 		);
 	}
 
@@ -257,38 +371,51 @@ class TOC_Twilio {
 	}
 
 	public function test_credentials() {
-		$creds = $this->get_credentials();
 		if ( ! $this->is_configured() ) {
 			return array( 'success' => false, 'error' => 'Credentials missing. Save Account SID, Auth Token and From Number first.' );
 		}
 
-		$response = wp_remote_get(
-			'https://api.twilio.com/2010-04-01/Accounts/' . rawurlencode( $creds['sid'] ) . '.json',
-			array(
-				'headers' => array(
-					'Authorization' => 'Basic ' . base64_encode( $creds['sid'] . ':' . $creds['token'] ),
-				),
-				'timeout' => 15,
-			)
-		);
+		$creds = $this->get_credentials();
+		$result = $this->request( 'GET', 'Accounts/' . rawurlencode( $creds['sid'] ) . '.json' );
 
-		if ( is_wp_error( $response ) ) {
-			return array( 'success' => false, 'error' => $response->get_error_message() );
-		}
-
-		$code = wp_remote_retrieve_response_code( $response );
-		$data = json_decode( wp_remote_retrieve_body( $response ), true );
-
-		if ( $code >= 200 && $code < 300 && ! empty( $data['sid'] ) ) {
+		if ( empty( $result['success'] ) ) {
 			return array(
-				'success'       => true,
-				'friendly_name' => isset( $data['friendly_name'] ) ? (string) $data['friendly_name'] : '',
-				'status'        => isset( $data['status'] ) ? (string) $data['status'] : '',
+				'success' => false,
+				'error'   => 'Twilio rejected credentials: ' . ( $result['error'] ?? 'unknown' ),
 			);
 		}
 
-		$msg = is_array( $data ) && ! empty( $data['message'] ) ? $data['message'] : 'HTTP ' . $code;
-		return array( 'success' => false, 'error' => 'Twilio rejected credentials: ' . $msg );
+		$data = $result['data'];
+		if ( empty( $data['sid'] ) ) {
+			return array( 'success' => false, 'error' => 'Twilio rejected credentials: unexpected response.' );
+		}
+
+		return array(
+			'success'       => true,
+			'friendly_name' => isset( $data['friendly_name'] ) ? (string) $data['friendly_name'] : '',
+			'status'        => isset( $data['status'] ) ? (string) $data['status'] : '',
+		);
+	}
+
+	/**
+	 * Optional SMS compliance footer appended to outbound bodies.
+	 *
+	 * @param string $body Message body.
+	 * @return string
+	 */
+	public function append_sms_footer( $body ) {
+		if ( ! (int) get_option( 'toc_sms_footer_enabled', 0 ) ) {
+			return $body;
+		}
+		$footer = trim( (string) get_option( 'toc_sms_footer_text', 'Reply STOP to opt out. Msg & data rates may apply.' ) );
+		if ( $footer === '' ) {
+			return $body;
+		}
+		$body = rtrim( (string) $body );
+		if ( stripos( $body, 'STOP' ) !== false && stripos( $body, 'opt out' ) !== false ) {
+			return $body;
+		}
+		return $body . "\n\n" . $footer;
 	}
 
 	public function send_sms( $to, $body, $order_id = 0, $force = false ) {
@@ -317,52 +444,47 @@ class TOC_Twilio {
 			$body = $this->merge_tags( $body, $order );
 		}
 
+		$body = $this->append_sms_footer( $body );
+
 		$status_cb = $this->webhook_url( 'toc_msg_status' );
 
-		$response = wp_remote_post(
-			'https://api.twilio.com/2010-04-01/Accounts/' . rawurlencode( $creds['sid'] ) . '/Messages.json',
+		$result = $this->request(
+			'POST',
+			'Messages.json',
 			array(
-				'headers' => array(
-					'Authorization' => 'Basic ' . base64_encode( $creds['sid'] . ':' . $creds['token'] ),
-				),
-				'body'    => array(
-					'To'                   => $to,
-					'From'                 => $creds['from'],
-					'Body'                 => $body,
-					'StatusCallback'       => $status_cb,
-					'StatusCallbackMethod' => 'POST',
-				),
-				'timeout' => 20,
+				'To'                   => $to,
+				'From'                 => $creds['from'],
+				'Body'                 => $body,
+				'StatusCallback'       => $status_cb,
+				'StatusCallbackMethod' => 'POST',
 			)
 		);
 
-		if ( is_wp_error( $response ) ) {
-			return array( 'success' => false, 'error' => $response->get_error_message() );
+		if ( empty( $result['success'] ) ) {
+			return array( 'success' => false, 'error' => $result['error'] ?? 'Unknown Twilio error' );
 		}
 
-		$code = wp_remote_retrieve_response_code( $response );
-		$data = json_decode( wp_remote_retrieve_body( $response ), true );
-
-		if ( $code >= 200 && $code < 300 && ! empty( $data['sid'] ) ) {
-			TOC_Logger::instance()->log(
-				array(
-					'order_id'   => $order_id,
-					'phone'      => $to,
-					'direction'  => 'outbound',
-					'type'       => 'sms',
-					'body'       => $body,
-					'twilio_sid' => $data['sid'],
-					'status'     => isset( $data['status'] ) ? $data['status'] : 'queued',
-				)
-			);
-			return array(
-				'success' => true,
-				'sid'     => $data['sid'],
-				'status'  => $data['status'] ?? 'queued',
-			);
+		$data = $result['data'];
+		if ( empty( $data['sid'] ) ) {
+			return array( 'success' => false, 'error' => 'Unknown Twilio error' );
 		}
 
-		return array( 'success' => false, 'error' => $data['message'] ?? 'Unknown Twilio error' );
+		TOC_Logger::instance()->log(
+			array(
+				'order_id'   => $order_id,
+				'phone'      => $to,
+				'direction'  => 'outbound',
+				'type'       => 'sms',
+				'body'       => $body,
+				'twilio_sid' => $data['sid'],
+				'status'     => isset( $data['status'] ) ? $data['status'] : 'queued',
+			)
+		);
+		return array(
+			'success' => true,
+			'sid'     => $data['sid'],
+			'status'  => $data['status'] ?? 'queued',
+		);
 	}
 
 	public function make_call( $to, $message, $order_id = 0 ) {
@@ -384,60 +506,53 @@ class TOC_Twilio {
 		$twiml_url    = $this->build_twiml_url( $message );
 		$callback_url = $this->webhook_url( 'toc_status' );
 
-		$response = wp_remote_post(
-			'https://api.twilio.com/2010-04-01/Accounts/' . rawurlencode( $creds['sid'] ) . '/Calls.json',
+		$result = $this->request(
+			'POST',
+			'Calls.json',
 			array(
-				'headers' => array(
-					'Authorization' => 'Basic ' . base64_encode( $creds['sid'] . ':' . $creds['token'] ),
-				),
-				'body'    => array(
-					'To'                   => $to,
-					'From'                 => $creds['from'],
-					'Url'                  => $twiml_url,
-					'StatusCallback'       => $callback_url,
-					'StatusCallbackEvent'  => array( 'completed' ),
-					'StatusCallbackMethod' => 'POST',
-				),
-				'timeout' => 20,
+				'To'                   => $to,
+				'From'                 => $creds['from'],
+				'Url'                  => $twiml_url,
+				'StatusCallback'       => $callback_url,
+				'StatusCallbackEvent'  => array( 'completed' ),
+				'StatusCallbackMethod' => 'POST',
 			)
 		);
 
-		if ( is_wp_error( $response ) ) {
-			return array( 'success' => false, 'error' => $response->get_error_message() );
+		if ( empty( $result['success'] ) ) {
+			return array( 'success' => false, 'error' => $result['error'] ?? 'Unknown Twilio error' );
 		}
 
-		$code = wp_remote_retrieve_response_code( $response );
-		$data = json_decode( wp_remote_retrieve_body( $response ), true );
+		$data = $result['data'];
+		if ( empty( $data['sid'] ) ) {
+			return array( 'success' => false, 'error' => 'Unknown Twilio error' );
+		}
 
-		if ( $code >= 200 && $code < 300 && ! empty( $data['sid'] ) ) {
-			TOC_Logger::instance()->log(
-				array(
-					'order_id'   => $order_id,
-					'phone'      => $to,
-					'direction'  => 'outbound',
-					'type'       => 'voice',
-					'body'       => $message,
-					'twilio_sid' => $data['sid'],
-					'status'     => $data['status'] ?? 'queued',
-				)
-			);
+		TOC_Logger::instance()->log(
+			array(
+				'order_id'   => $order_id,
+				'phone'      => $to,
+				'direction'  => 'outbound',
+				'type'       => 'voice',
+				'body'       => $message,
+				'twilio_sid' => $data['sid'],
+				'status'     => $data['status'] ?? 'queued',
+			)
+		);
 
-			if ( $order_id ) {
-				$order_obj = wc_get_order( $order_id );
-				if ( $order_obj ) {
-					$order_obj->update_meta_data( '_toc_last_call_sid', $data['sid'] );
-					$order_obj->save();
-				}
+		if ( $order_id ) {
+			$order_obj = wc_get_order( $order_id );
+			if ( $order_obj ) {
+				$order_obj->update_meta_data( '_toc_last_call_sid', $data['sid'] );
+				$order_obj->save();
 			}
-
-			return array(
-				'success' => true,
-				'sid'     => $data['sid'],
-				'status'  => $data['status'] ?? 'queued',
-			);
 		}
 
-		return array( 'success' => false, 'error' => $data['message'] ?? 'Unknown Twilio error' );
+		return array(
+			'success' => true,
+			'sid'     => $data['sid'],
+			'status'  => $data['status'] ?? 'queued',
+		);
 	}
 
 	public function customer_consented_sms( $order_id ) {
