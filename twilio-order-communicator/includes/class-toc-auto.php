@@ -81,7 +81,7 @@ class TOC_Auto {
 
 		$phone = $order->get_billing_phone();
 		if ( empty( $phone ) ) {
-			$order->add_order_note( 'Auto notification skipped: no phone number.' );
+			$order->add_order_note( __( 'Auto notification skipped: no phone number.', 'twilio-order-communicator' ) );
 			return;
 		}
 
@@ -95,22 +95,41 @@ class TOC_Auto {
 		if ( get_option( 'toc_auto_voice', 1 ) ) {
 			$result = $twilio->make_call( $phone, $message, $order_id );
 			if ( ! empty( $result['success'] ) ) {
-				$order->add_order_note( 'Auto voice call placed (Ready for Pickup). SID: ' . $result['sid'] );
+				$order->add_order_note(
+					sprintf(
+						/* translators: %s: Twilio call SID */
+						__( 'Auto voice call placed (Ready for Pickup). SID: %s', 'twilio-order-communicator' ),
+						$result['sid']
+					)
+				);
 			} else {
-				$order->add_order_note( 'Auto voice call failed: ' . ( $result['error'] ?? 'unknown' ) );
+				$order->add_order_note(
+					sprintf(
+						/* translators: %s: error message */
+						__( 'Auto voice call failed: %s', 'twilio-order-communicator' ),
+						$result['error'] ?? 'unknown'
+					)
+				);
 			}
 		}
 
 		if ( get_option( 'toc_auto_sms', 0 ) ) {
 			$result = $twilio->send_sms( $phone, $message, $order_id, false );
 			if ( ! empty( $result['success'] ) ) {
-				$order->add_order_note( 'Auto SMS sent (Ready for Pickup).' );
+				$order->add_order_note( __( 'Auto SMS sent (Ready for Pickup).', 'twilio-order-communicator' ) );
 			} else {
-				// Always explain why (was silent on consent before — hard to debug).
-				$order->add_order_note( 'Auto SMS not sent: ' . ( $result['error'] ?? 'unknown' ) );
+				$order->add_order_note(
+					sprintf(
+						/* translators: %s: error / skip reason */
+						__( 'Auto SMS not sent: %s', 'twilio-order-communicator' ),
+						$result['error'] ?? 'unknown'
+					)
+				);
 			}
 		} else {
-			$order->add_order_note( 'Auto SMS skipped: "Also send an SMS" is disabled in Order Communicator → Settings.' );
+			$order->add_order_note(
+				__( 'Auto SMS skipped: "Also send an SMS" is disabled in Order Communicator → Settings.', 'twilio-order-communicator' )
+			);
 		}
 
 		// Stamp once in-scope so re-completing does not spam. Clear meta to force re-send.

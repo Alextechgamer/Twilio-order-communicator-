@@ -1,10 +1,10 @@
 === Twilio Order Communicator ===
-Contributors: twilioordercommunicator
+Contributors: alextechgamer
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
 WC requires at least: 7.0
-Stable tag: 1.3.0
+Stable tag: 1.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -24,9 +24,10 @@ Twilio Order Communicator turns every WooCommerce order into a communication hub
 * Bulk reminder tool for outstanding Local Pickup orders
 * SMS delivery status callbacks
 * Mark messages or whole conversations as resolved
-* Dashboard with filters and live stats
+* Dashboard with filters, pagination, and live stats
 * Incoming customer replies are logged and attached to the matching order
 * Twilio request signature validation on inbound webhooks
+* Declared compatible with WooCommerce HPOS (custom order tables)
 
 == Installation ==
 
@@ -46,12 +47,27 @@ No. Only SMS respects the consent setting. Voice calls can always be placed for 
 No. Automatic calls and SMS only run for Local Pickup orders.
 
 = Why did I only get a call and not an SMS? =
-Auto SMS is a separate setting and defaults to off. Enable “Also send an SMS” under Settings. Also confirm the order has SMS consent and that Require consent is configured for your meta key. Order notes now explain skips.
+Auto SMS is a separate setting and defaults to off. Enable "Also send an SMS" under Settings. Also confirm the order has SMS consent and that Require consent is configured for your meta key. Order notes now explain skips.
 
 = Do I need a separate TwiML page? =
 No. The plugin includes its own tokenized TwiML endpoint.
 
+= How do customers re-subscribe after STOP? =
+They text START or UNSTOP. Plain "YES" is intentionally not treated as re-subscribe.
+
 == Changelog ==
+
+= 1.4.0 =
+* Declare WooCommerce HPOS (custom order tables) compatibility
+* Brand headers: Plugin URI / Author / Domain Path (GitHub)
+* i18n: load text domain; wrap admin, order UI, notes, and JS strings
+* Dashboard pagination (40 per page) with Previous / Next
+* START keywords narrowed to START / UNSTOP (removed YES)
+* SMS opt-outs moved to dedicated DB table (migrates legacy option)
+* Seed default settings on activation / upgrade when missing
+* Log STOP/HELP/START auto-replies in communications history
+* DRY webhook SID to order note lookup
+* .editorconfig + phpcs.xml.dist; normalize LF line endings
 
 = 1.3.0 =
 * Merge tags in templates and bulk: {order_number}, {customer_first_name}, {store_name}, etc.
@@ -78,7 +94,7 @@ No. The plugin includes its own tokenized TwiML endpoint.
 * Security: Voice TwiML uses short-lived tokens instead of putting the full message in the URL
 * Connection test now verifies credentials against the Twilio Account API
 * HPOS-safe order edit links on the dashboard
-* Better inbound phone → order matching (last-10-digit compare)
+* Better inbound phone to order matching (last-10-digit compare)
 * Bulk reminders stamp `_toc_last_reminder_at` meta
 * Call status notes only on terminal statuses (less order-note spam)
 * uninstall.php removes table + options

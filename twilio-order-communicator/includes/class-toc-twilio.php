@@ -522,60 +522,15 @@ class TOC_Twilio {
 	}
 
 	public function phone_is_opted_out( $phone ) {
-		$norm = TOC_Logger::instance()->normalize_phone( $phone );
-		if ( ! $norm ) {
-			return false;
-		}
-		$list = get_option( 'toc_sms_opt_outs', array() );
-		if ( ! is_array( $list ) ) {
-			return false;
-		}
-		$digits = preg_replace( '/\D+/', '', $norm );
-		$last10 = strlen( $digits ) >= 10 ? substr( $digits, -10 ) : $digits;
-		foreach ( $list as $entry ) {
-			$ed = preg_replace( '/\D+/', '', (string) $entry );
-			if ( $ed === $digits || ( strlen( $ed ) >= 10 && substr( $ed, -10 ) === $last10 ) ) {
-				return true;
-			}
-		}
-		return false;
+		return TOC_Logger::instance()->phone_is_opted_out( $phone );
 	}
 
 	public function add_opt_out( $phone ) {
-		$norm = TOC_Logger::instance()->normalize_phone( $phone );
-		if ( ! $norm ) {
-			return;
-		}
-		$list = get_option( 'toc_sms_opt_outs', array() );
-		if ( ! is_array( $list ) ) {
-			$list = array();
-		}
-		if ( ! in_array( $norm, $list, true ) ) {
-			$list[] = $norm;
-			update_option( 'toc_sms_opt_outs', $list, false );
-		}
+		TOC_Logger::instance()->add_opt_out_phone( $phone );
 	}
 
 	public function remove_opt_out( $phone ) {
-		$norm = TOC_Logger::instance()->normalize_phone( $phone );
-		if ( ! $norm ) {
-			return;
-		}
-		$list = get_option( 'toc_sms_opt_outs', array() );
-		if ( ! is_array( $list ) ) {
-			return;
-		}
-		$digits = preg_replace( '/\D+/', '', $norm );
-		$last10 = strlen( $digits ) >= 10 ? substr( $digits, -10 ) : $digits;
-		$new    = array();
-		foreach ( $list as $entry ) {
-			$ed = preg_replace( '/\D+/', '', (string) $entry );
-			if ( $ed === $digits || ( strlen( $ed ) >= 10 && substr( $ed, -10 ) === $last10 ) ) {
-				continue;
-			}
-			$new[] = $entry;
-		}
-		update_option( 'toc_sms_opt_outs', $new, false );
+		TOC_Logger::instance()->remove_opt_out_phone( $phone );
 	}
 
 	public function is_truthy_consent( $value ) {

@@ -44,6 +44,23 @@ class TOC_Webhooks {
 		return false;
 	}
 
+	/**
+	 * Add an order note for a communication SID when an order is linked.
+	 *
+	 * @param string $sid  Twilio SID.
+	 * @param string $note Note text.
+	 */
+	private function note_order_for_sid( $sid, $note ) {
+		$order_id = TOC_Logger::instance()->get_order_id_by_sid( $sid );
+		if ( ! $order_id ) {
+			return;
+		}
+		$order = wc_get_order( $order_id );
+		if ( $order ) {
+			$order->add_order_note( $note );
+		}
+	}
+
 	private function voice_status() {
 		if ( ! $this->require_valid_twilio() ) {
 			return;
@@ -58,22 +75,15 @@ class TOC_Webhooks {
 
 			$note_statuses = array( 'completed', 'busy', 'failed', 'no-answer', 'canceled' );
 			if ( in_array( $status, $note_statuses, true ) ) {
-				global $wpdb;
-				$table = $wpdb->prefix . 'toc_communications';
-				$row   = $wpdb->get_row(
-					$wpdb->prepare(
-						"SELECT order_id FROM {$table} WHERE twilio_sid = %s LIMIT 1",
+				$this->note_order_for_sid(
+					$sid,
+					sprintf(
+						/* translators: 1: call status, 2: Twilio SID */
+						__( 'Voice call status: %1$s (SID: %2$s)', 'twilio-order-communicator' ),
+						ucfirst( $status ),
 						$sid
 					)
 				);
-				if ( $row && $row->order_id ) {
-					$order = wc_get_order( $row->order_id );
-					if ( $order ) {
-						$order->add_order_note(
-							sprintf( 'Voice call status: %s (SID: %s)', ucfirst( $status ), $sid )
-						);
-					}
-				}
 			}
 		}
 
@@ -96,30 +106,23 @@ class TOC_Webhooks {
 		if ( $sid && $status ) {
 			TOC_Logger::instance()->update_status_by_sid( $sid, $status );
 
-			// Note only failures / undelivered to avoid noise.
 			if ( in_array( $status, array( 'failed', 'undelivered' ), true ) ) {
-				global $wpdb;
-				$table = $wpdb->prefix . 'toc_communications';
-				$row   = $wpdb->get_row(
-					$wpdb->prepare(
-						"SELECT order_id FROM {$table} WHERE twilio_sid = %s LIMIT 1",
-						$sid
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing
+				$err = isset( $_POST['ErrorCode'] ) ? sanitize_text_field( wp_unslash( $_POST['ErrorCode'] ) ) : '';
+				$this->note_order_for_sid(
+					$sid,
+					sprintf(
+						/* translators: 1: message status, 2: Twilio SID, 3: optional error suffix */
+						__( 'SMS %1$s (SID: %2$s)%3$s', 'twilio-order-communicator' ),
+						$status,
+						$sid,
+						$err ? ' ' . sprintf(
+							/* translators: %s: Twilio error code */
+							__( 'Error: %s', 'twilio-order-communicator' ),
+							$err
+						) : ''
 					)
 				);
-				if ( $row && $row->order_id ) {
-					$order = wc_get_order( $row->order_id );
-					if ( $order ) {
-						$err = isset( $_POST['ErrorCode'] ) ? sanitize_text_field( wp_unslash( $_POST['ErrorCode'] ) ) : '';
-						$order->add_order_note(
-							sprintf(
-								'SMS %s (SID: %s)%s',
-								$status,
-								$sid,
-								$err ? ' Error: ' . $err : ''
-							)
-						);
-					}
-				}
 			}
 		}
 
@@ -134,7 +137,9 @@ class TOC_Webhooks {
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$from = isset( $_POST['From'] ) ? sanitize_text_field( wp_unslash( $_POST['From'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$body = isset( $_POST['Body'] ) ? sanitize_textarea_field( wp_unslash( $_POST['Body'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$sid  = isset( $_POST['MessageSid'] ) ? sanitize_text_field( wp_unslash( $_POST['MessageSid'] ) ) : '';
 
 		if ( empty( $from ) || $body === '' ) {
@@ -162,48 +167,48 @@ class TOC_Webhooks {
 
 		$reply = '';
 		$norm  = preg_replace( '/\s+/', ' ', strtoupper( trim( $body ) ) );
-		// Strip common punctuation for keyword match.
 		$keyword = preg_replace( '/[^A-Z]/', '', $norm );
 
-		$stop_words = array( 'STOP', 'STOPALL', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT' );
-		$help_words = array( 'HELP', 'INFO' );
-		$start_words = array( 'START', 'YES', 'UNSTOP' );
+		$stop_words  = array( 'STOP', 'STOPALL', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT' );
+		$help_words  = array( 'HELP', 'INFO' );
+		// START / UNSTOP only — do not treat bare YES as re-subscribe (too easy to match casual replies).
+		$start_words = array( 'START', 'UNSTOP' );
 
 		if ( in_array( $keyword, $stop_words, true ) ) {
 			$twilio->set_sms_consent( $order_id, false, $from );
 			$reply = get_option(
 				'toc_stop_reply',
-				'You have been unsubscribed from SMS messages. Reply START to re-subscribe. Msg&data rates may apply.'
+				__( 'You have been unsubscribed from SMS messages. Reply START to re-subscribe. Msg&data rates may apply.', 'twilio-order-communicator' )
 			);
 			if ( $order_id ) {
 				$order = wc_get_order( $order_id );
 				if ( $order ) {
-					$order->add_order_note( 'Customer opted out of SMS (STOP).' );
+					$order->add_order_note( __( 'Customer opted out of SMS (STOP).', 'twilio-order-communicator' ) );
 				}
 			}
 		} elseif ( in_array( $keyword, $help_words, true ) ) {
 			$store = wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
-			$reply = get_option(
-				'toc_help_reply',
-				sprintf(
-					'%s: For help, reply to this number or contact the store. Reply STOP to opt out of SMS.',
+			$saved = get_option( 'toc_help_reply', '' );
+			$reply = ( is_string( $saved ) && $saved !== '' )
+				? $saved
+				: sprintf(
+					/* translators: %s: store name */
+					__( '%s: For help, reply to this number or contact the store. Reply STOP to opt out of SMS.', 'twilio-order-communicator' ),
 					$store
-				)
-			);
+				);
 		} elseif ( in_array( $keyword, $start_words, true ) ) {
-			// Re-subscribe at phone level; order consent left for checkout/staff.
 			$twilio->remove_opt_out( $from );
 			if ( $order_id ) {
 				$twilio->set_sms_consent( $order_id, true, $from );
 			}
 			$reply = get_option(
 				'toc_start_reply',
-				'You have been re-subscribed to SMS messages. Reply STOP to opt out.'
+				__( 'You have been re-subscribed to SMS messages. Reply STOP to opt out.', 'twilio-order-communicator' )
 			);
 			if ( $order_id ) {
 				$order = wc_get_order( $order_id );
 				if ( $order ) {
-					$order->add_order_note( 'Customer re-subscribed to SMS (START).' );
+					$order->add_order_note( __( 'Customer re-subscribed to SMS (START).', 'twilio-order-communicator' ) );
 				}
 			}
 		} else {
@@ -211,10 +216,30 @@ class TOC_Webhooks {
 				$order = wc_get_order( $order_id );
 				if ( $order ) {
 					$order->add_order_note(
-						sprintf( 'Incoming SMS: "%s"', wp_trim_words( $body, 20 ) )
+						sprintf(
+							/* translators: %s: trimmed inbound SMS body */
+							__( 'Incoming SMS: "%s"', 'twilio-order-communicator' ),
+							wp_trim_words( $body, 20 )
+						)
 					);
 				}
 			}
+		}
+
+		// Log auto keyword reply so staff see it in order chat.
+		if ( $reply !== '' ) {
+			$logger->log(
+				array(
+					'order_id'      => $order_id,
+					'phone'         => $from,
+					'direction'     => 'outbound',
+					'type'          => 'sms',
+					'body'          => $reply,
+					'twilio_sid'    => '',
+					'status'        => 'auto-reply',
+					'admin_user_id' => 0,
+				)
+			);
 		}
 
 		header( 'Content-Type: text/xml; charset=utf-8' );

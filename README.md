@@ -2,15 +2,31 @@
 
 WordPress / WooCommerce plugin for SMS and voice calls on Local Pickup orders via Twilio.
 
-**Current version: 1.3.0**
+**Current version: 1.4.0**
 
 ## Install
 
-Upload `twilio-order-communicator/` (or the release zip) to `/wp-content/plugins/`, activate, then configure under **WooCommerce → Order Communicator → Settings**.
+Upload `twilio-order-communicator/` (or a release zip) to `/wp-content/plugins/`, activate, then configure under **WooCommerce → Order Communicator → Settings**.
 
-Release zip: [`twilio-order-communicator-1.3.0.zip`](./twilio-order-communicator-1.3.0.zip)
+Release zips:
 
-## What’s in 1.3.0
+- [`twilio-order-communicator-1.4.0.zip`](./twilio-order-communicator-1.4.0.zip)
+- [`twilio-order-communicator-1.3.0.zip`](./twilio-order-communicator-1.3.0.zip) (previous)
+
+## What's in 1.4.0 (P0 cleanup)
+
+| Item | Notes |
+|------|--------|
+| HPOS declare | Compatible with WooCommerce custom order tables |
+| Brand headers | GitHub Plugin URI / Author / Domain Path |
+| i18n | Text domain loaded; admin, order UI, notes, JS strings wrapped |
+| Dashboard pagination | 40 per page |
+| START keywords | `START` / `UNSTOP` only (not `YES`) |
+| Opt-out table | `wp_toc_sms_opt_outs` (migrates legacy option) |
+| Activation defaults | Templates and toggles seeded when missing |
+| Tooling | `.editorconfig`, `phpcs.xml.dist`, LF line endings |
+
+## What's in 1.3.0
 
 | Feature | Notes |
 |---------|--------|
@@ -40,22 +56,21 @@ twilio-order-communicator/
   twilio-order-communicator.php   bootstrap
   uninstall.php
   readme.txt
+  languages/
   assets/admin.{js,css}
   includes/
     class-toc-twilio.php          REST SMS/calls + TwiML + merge tags
     class-toc-webhooks.php        inbound SMS + status callbacks
-    class-toc-logger.php          communications table
+    class-toc-logger.php          communications + opt-outs tables
     class-toc-order-meta.php      order chat UI
     class-toc-admin.php           settings, bulk, tools
     class-toc-auto.php            completed → auto notify
 ```
 
-## Version history (short)
+## Product analysis (sell / website)
 
-- **1.3.0** — merge tags, auto-once, STOP/HELP/START, consent force warn, pickup match, SMS status callbacks  
-- **1.2.2** — Bulk Pickup Reminders overhaul  
-- **1.2.1** — checkbox save, Twilio signature validation, tokenized TwiML, connection test, HPOS links, uninstall  
+See [`docs/PRODUCT-ANALYSIS.md`](./docs/PRODUCT-ANALYSIS.md) for cleanup priorities, commercial feature roadmap, and website/licensing notes.
 
-## Possible next work
+## Possible next work (1.5+)
 
-Quiet hours for auto voice · dashboard pagination · packaging/release automation
+Built-in checkout SMS opt-in · quiet hours · onboarding wizard · licensing / auto-updates · marketing site

@@ -9,9 +9,15 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 
 global $wpdb;
 
-$table = $wpdb->prefix . 'toc_communications';
-// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from prefix.
-$wpdb->query( "DROP TABLE IF EXISTS {$table}" );
+$tables = array(
+	$wpdb->prefix . 'toc_communications',
+	$wpdb->prefix . 'toc_sms_opt_outs',
+);
+
+foreach ( $tables as $table ) {
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from prefix.
+	$wpdb->query( "DROP TABLE IF EXISTS {$table}" );
+}
 
 $options = array(
 	'toc_account_sid',
@@ -33,7 +39,7 @@ $options = array(
 	'toc_stop_reply',
 	'toc_help_reply',
 	'toc_start_reply',
-	'toc_sms_opt_outs',
+	'toc_sms_opt_outs', // legacy option (pre-1.4.0)
 );
 
 foreach ( $options as $option ) {
