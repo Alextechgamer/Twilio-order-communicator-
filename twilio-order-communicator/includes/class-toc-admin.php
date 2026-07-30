@@ -27,8 +27,8 @@ class TOC_Admin {
 	public function menu() {
 		add_submenu_page(
 			'woocommerce',
-			'Order Communicator',
-			'Order Communicator',
+			__( 'Order Communicator', 'twilio-order-communicator' ),
+			__( 'Order Communicator', 'twilio-order-communicator' ),
 			'manage_woocommerce',
 			'toc-communicator',
 			array( $this, 'page' )
@@ -49,6 +49,9 @@ class TOC_Admin {
 			'toc_stop_reply'               => 'sanitize_textarea_field',
 			'toc_help_reply'               => 'sanitize_textarea_field',
 			'toc_start_reply'              => 'sanitize_textarea_field',
+			'toc_checkout_consent_label'   => 'sanitize_textarea_field',
+			'toc_quiet_hours_start'        => array( $this, 'sanitize_time' ),
+			'toc_quiet_hours_end'          => array( $this, 'sanitize_time' ),
 		);
 
 		foreach ( $text_fields as $option => $cb ) {
@@ -75,10 +78,13 @@ class TOC_Admin {
 		);
 
 		$checkboxes = array(
-			'toc_auto_on_completed'    => 1,
-			'toc_auto_voice'           => 1,
-			'toc_auto_sms'             => 0,
-			'toc_require_sms_consent'  => 1,
+			'toc_auto_on_completed'         => 1,
+			'toc_auto_voice'                => 1,
+			'toc_auto_sms'                  => 0,
+			'toc_require_sms_consent'       => 1,
+			'toc_checkout_consent_enabled'  => 1,
+			'toc_checkout_consent_required' => 0,
+			'toc_quiet_hours_enabled'       => 0,
 		);
 
 		foreach ( $checkboxes as $option => $default ) {
@@ -127,6 +133,10 @@ class TOC_Admin {
 		return $value ? untrailingslashit( $value ) : '';
 	}
 
+	public function sanitize_time( $value ) {
+		return TOC_Auto::normalize_time_option( is_string( $value ) ? $value : '', '00:00' );
+	}
+
 	public function assets( $hook ) {
 		$screen = get_current_screen();
 		if ( ! $screen ) {
@@ -147,6 +157,29 @@ class TOC_Admin {
 			array(
 				'ajax_url' => admin_url( 'admin-ajax.php' ),
 				'nonce'    => wp_create_nonce( 'toc_nonce' ),
+				'i18n'     => array(
+					'enterMessage'       => __( 'Enter a message', 'twilio-order-communicator' ),
+					'noPhone'            => __( 'No phone number on this order', 'twilio-order-communicator' ),
+					'optOutConfirm'      => __( 'This phone has opted out (STOP). Send SMS anyway?', 'twilio-order-communicator' ),
+					'noConsentConfirm'   => __( 'Customer has not opted in to SMS. Send anyway?', 'twilio-order-communicator' ),
+					'placeCallConfirm'   => __( 'Place a voice call with the current message?', 'twilio-order-communicator' ),
+					'errorPrefix'        => __( 'Error:', 'twilio-order-communicator' ),
+					'requestFailed'      => __( 'Request failed', 'twilio-order-communicator' ),
+					'couldNotResolve'    => __( 'Could not mark resolved', 'twilio-order-communicator' ),
+					'markResolved'       => __( 'Mark Resolved', 'twilio-order-communicator' ),
+					'conversationDone'   => __( 'Conversation resolved', 'twilio-order-communicator' ),
+					'resolved'           => __( 'Resolved', 'twilio-order-communicator' ),
+					'selectOrders'       => __( 'Select at least one order', 'twilio-order-communicator' ),
+					'sending'            => __( 'Sending…', 'twilio-order-communicator' ),
+					'sendSelected'       => __( 'Send to Selected', 'twilio-order-communicator' ),
+					'stop'               => __( 'Stop', 'twilio-order-communicator' ),
+					'stopping'           => __( 'Stopping…', 'twilio-order-communicator' ),
+					'testing'            => __( 'Testing…', 'twilio-order-communicator' ),
+					'testBtn'            => __( 'Run Connection Test', 'twilio-order-communicator' ),
+					'unknown'            => __( 'Unknown', 'twilio-order-communicator' ),
+					'needsForce'         => __( 'SMS blocked by consent', 'twilio-order-communicator' ),
+					'sendAnyway'         => __( 'Send anyway?', 'twilio-order-communicator' ),
+				),
 			)
 		);
 	}
@@ -159,12 +192,13 @@ class TOC_Admin {
 		$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'dashboard';
 		?>
 		<div class="wrap toc-wrap">
-			<h1>Twilio Order Communicator</h1>
+			<h1><?php echo esc_html__( 'Twilio Order Communicator', 'twilio-order-communicator' ); ?></h1>
 			<nav class="nav-tab-wrapper">
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator&tab=dashboard' ) ); ?>" class="nav-tab <?php echo $tab === 'dashboard' ? 'nav-tab-active' : ''; ?>">Dashboard</a>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator&tab=bulk' ) ); ?>" class="nav-tab <?php echo $tab === 'bulk' ? 'nav-tab-active' : ''; ?>">Bulk Reminders</a>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator&tab=settings' ) ); ?>" class="nav-tab <?php echo $tab === 'settings' ? 'nav-tab-active' : ''; ?>">Settings</a>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator&tab=tools' ) ); ?>" class="nav-tab <?php echo $tab === 'tools' ? 'nav-tab-active' : ''; ?>">Tools &amp; Docs</a>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator&tab=dashboard' ) ); ?>" class="nav-tab <?php echo $tab === 'dashboard' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__( 'Dashboard', 'twilio-order-communicator' ); ?></a>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator&tab=bulk' ) ); ?>" class="nav-tab <?php echo $tab === 'bulk' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__( 'Bulk Reminders', 'twilio-order-communicator' ); ?></a>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator&tab=settings' ) ); ?>" class="nav-tab <?php echo $tab === 'settings' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__( 'Settings', 'twilio-order-communicator' ); ?></a>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator&tab=setup' ) ); ?>" class="nav-tab <?php echo $tab === 'setup' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__( 'Setup', 'twilio-order-communicator' ); ?></a>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator&tab=tools' ) ); ?>" class="nav-tab <?php echo $tab === 'tools' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__( 'Tools & Docs', 'twilio-order-communicator' ); ?></a>
 			</nav>
 			<div class="toc-content">
 				<?php
@@ -172,6 +206,8 @@ class TOC_Admin {
 					$this->render_settings();
 				} elseif ( $tab === 'bulk' ) {
 					$this->render_bulk();
+				} elseif ( $tab === 'setup' ) {
+					TOC_Onboarding::instance()->render();
 				} elseif ( $tab === 'tools' ) {
 					$this->render_tools();
 				} else {
@@ -185,8 +221,10 @@ class TOC_Admin {
 
 	/* ---------- DASHBOARD ---------- */
 	private function render_dashboard() {
-		$logger = TOC_Logger::instance();
-		$stats  = $logger->get_stats();
+		$logger   = TOC_Logger::instance();
+		$stats    = $logger->get_stats();
+		$per_page = 40;
+		$page_num = isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1;
 
 		$filters = array(
 			'type'      => isset( $_GET['type'] ) ? sanitize_key( wp_unslash( $_GET['type'] ) ) : '',
@@ -195,49 +233,80 @@ class TOC_Admin {
 			'search'    => isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '',
 			'date_from' => isset( $_GET['date_from'] ) ? sanitize_text_field( wp_unslash( $_GET['date_from'] ) ) : '',
 			'date_to'   => isset( $_GET['date_to'] ) ? sanitize_text_field( wp_unslash( $_GET['date_to'] ) ) : '',
-			'limit'     => 40,
+			'limit'     => $per_page,
+			'offset'    => ( $page_num - 1 ) * $per_page,
 		);
-		$results = $logger->get_filtered( $filters );
-		$total   = $logger->count_filtered( $filters );
+		$results     = $logger->get_filtered( $filters );
+		$total       = $logger->count_filtered( $filters );
+		$total_pages = max( 1, (int) ceil( $total / $per_page ) );
 		?>
 		<div class="toc-stats">
-			<div class="toc-stat"><span class="num"><?php echo (int) $stats['today_sms']; ?></span><span class="lbl">SMS today</span></div>
-			<div class="toc-stat"><span class="num"><?php echo (int) $stats['today_calls']; ?></span><span class="lbl">Calls today</span></div>
-			<div class="toc-stat alert"><span class="num"><?php echo (int) $stats['unresolved']; ?></span><span class="lbl">Unresolved</span></div>
-			<div class="toc-stat"><span class="num"><?php echo (int) $stats['total']; ?></span><span class="lbl">Total</span></div>
+			<div class="toc-stat"><span class="num"><?php echo (int) $stats['today_sms']; ?></span><span class="lbl"><?php echo esc_html__( 'SMS today', 'twilio-order-communicator' ); ?></span></div>
+			<div class="toc-stat"><span class="num"><?php echo (int) $stats['today_calls']; ?></span><span class="lbl"><?php echo esc_html__( 'Calls today', 'twilio-order-communicator' ); ?></span></div>
+			<div class="toc-stat alert"><span class="num"><?php echo (int) $stats['unresolved']; ?></span><span class="lbl"><?php echo esc_html__( 'Unresolved', 'twilio-order-communicator' ); ?></span></div>
+			<div class="toc-stat"><span class="num"><?php echo (int) $stats['total']; ?></span><span class="lbl"><?php echo esc_html__( 'Total', 'twilio-order-communicator' ); ?></span></div>
 		</div>
 
 		<form method="get" class="toc-filters">
 			<input type="hidden" name="page" value="toc-communicator" />
 			<select name="type">
-				<option value="">All types</option>
-				<option value="sms" <?php selected( $filters['type'], 'sms' ); ?>>SMS</option>
-				<option value="voice" <?php selected( $filters['type'], 'voice' ); ?>>Voice</option>
+				<option value=""><?php echo esc_html__( 'All types', 'twilio-order-communicator' ); ?></option>
+				<option value="sms" <?php selected( $filters['type'], 'sms' ); ?>><?php echo esc_html__( 'SMS', 'twilio-order-communicator' ); ?></option>
+				<option value="voice" <?php selected( $filters['type'], 'voice' ); ?>><?php echo esc_html__( 'Voice', 'twilio-order-communicator' ); ?></option>
 			</select>
 			<select name="direction">
-				<option value="">All</option>
-				<option value="outbound" <?php selected( $filters['direction'], 'outbound' ); ?>>Outbound</option>
-				<option value="inbound" <?php selected( $filters['direction'], 'inbound' ); ?>>Inbound</option>
+				<option value=""><?php echo esc_html__( 'All', 'twilio-order-communicator' ); ?></option>
+				<option value="outbound" <?php selected( $filters['direction'], 'outbound' ); ?>><?php echo esc_html__( 'Outbound', 'twilio-order-communicator' ); ?></option>
+				<option value="inbound" <?php selected( $filters['direction'], 'inbound' ); ?>><?php echo esc_html__( 'Inbound', 'twilio-order-communicator' ); ?></option>
 			</select>
 			<select name="resolved">
-				<option value="">All statuses</option>
-				<option value="0" <?php selected( $filters['resolved'], '0' ); ?>>Unresolved</option>
-				<option value="1" <?php selected( $filters['resolved'], '1' ); ?>>Resolved</option>
+				<option value=""><?php echo esc_html__( 'All statuses', 'twilio-order-communicator' ); ?></option>
+				<option value="0" <?php selected( $filters['resolved'], '0' ); ?>><?php echo esc_html__( 'Unresolved', 'twilio-order-communicator' ); ?></option>
+				<option value="1" <?php selected( $filters['resolved'], '1' ); ?>><?php echo esc_html__( 'Resolved', 'twilio-order-communicator' ); ?></option>
 			</select>
 			<input type="date" name="date_from" value="<?php echo esc_attr( $filters['date_from'] ); ?>" />
 			<input type="date" name="date_to" value="<?php echo esc_attr( $filters['date_to'] ); ?>" />
-			<input type="search" name="s" value="<?php echo esc_attr( $filters['search'] ); ?>" placeholder="Search…" />
-			<button class="button">Filter</button>
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator' ) ); ?>" class="button">Reset</a>
+			<input type="search" name="s" value="<?php echo esc_attr( $filters['search'] ); ?>" placeholder="<?php echo esc_attr__( 'Search…', 'twilio-order-communicator' ); ?>" />
+			<button class="button"><?php echo esc_html__( 'Filter', 'twilio-order-communicator' ); ?></button>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator' ) ); ?>" class="button"><?php echo esc_html__( 'Reset', 'twilio-order-communicator' ); ?></a>
 		</form>
 
-		<p class="toc-count"><?php echo (int) $total; ?> result(s)</p>
+		<p class="toc-count">
+			<?php
+			echo esc_html(
+				sprintf(
+					/* translators: %d: number of matching communications */
+					_n( '%d result', '%d results', $total, 'twilio-order-communicator' ),
+					$total
+				)
+			);
+			if ( $total_pages > 1 ) {
+				echo ' · ' . esc_html(
+					sprintf(
+						/* translators: 1: current page, 2: total pages */
+						__( 'Page %1$d of %2$d', 'twilio-order-communicator' ),
+						$page_num,
+						$total_pages
+					)
+				);
+			}
+			?>
+		</p>
 
 		<?php if ( empty( $results ) ) : ?>
-			<p>No communications found.</p>
+			<p><?php echo esc_html__( 'No communications found.', 'twilio-order-communicator' ); ?></p>
 		<?php else : ?>
 			<table class="wp-list-table widefat fixed striped">
-				<thead><tr><th>Date</th><th>Order</th><th>Phone</th><th>Type</th><th>Dir</th><th>Message</th><th>Status</th><th>Resolved</th></tr></thead>
+				<thead><tr>
+					<th><?php echo esc_html__( 'Date', 'twilio-order-communicator' ); ?></th>
+					<th><?php echo esc_html__( 'Order', 'twilio-order-communicator' ); ?></th>
+					<th><?php echo esc_html__( 'Phone', 'twilio-order-communicator' ); ?></th>
+					<th><?php echo esc_html__( 'Type', 'twilio-order-communicator' ); ?></th>
+					<th><?php echo esc_html__( 'Dir', 'twilio-order-communicator' ); ?></th>
+					<th><?php echo esc_html__( 'Message', 'twilio-order-communicator' ); ?></th>
+					<th><?php echo esc_html__( 'Status', 'twilio-order-communicator' ); ?></th>
+					<th><?php echo esc_html__( 'Resolved', 'twilio-order-communicator' ); ?></th>
+				</tr></thead>
 				<tbody>
 				<?php foreach ( $results as $row ) :
 					$link = '—';
@@ -249,28 +318,62 @@ class TOC_Admin {
 							$link = '#' . (int) $row->order_id;
 						}
 					}
-					$icon = $row->type === 'voice' ? '📞' : '💬';
-					$dir  = $row->direction === 'inbound' ? '⬅️ In' : '➡️ Out';
+					$type_label = $row->type === 'voice'
+						? __( 'Voice', 'twilio-order-communicator' )
+						: __( 'SMS', 'twilio-order-communicator' );
+					$dir_label = $row->direction === 'inbound'
+						? __( 'In', 'twilio-order-communicator' )
+						: __( 'Out', 'twilio-order-communicator' );
 					?>
 					<tr class="<?php echo $row->resolved ? 'toc-resolved' : ''; ?>">
 						<td><?php echo esc_html( date_i18n( 'M j, g:i a', strtotime( $row->created_at ) ) ); ?></td>
 						<td><?php echo $link; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built with esc_url above ?></td>
 						<td><?php echo esc_html( $row->phone ); ?></td>
-						<td><?php echo esc_html( $icon . ' ' . ucfirst( $row->type ) ); ?></td>
-						<td><?php echo esc_html( $dir ); ?></td>
+						<td><?php echo esc_html( $type_label ); ?></td>
+						<td><?php echo esc_html( $dir_label ); ?></td>
 						<td><?php echo esc_html( wp_trim_words( $row->body, 14 ) ); ?></td>
 						<td><?php echo esc_html( $row->status ); ?></td>
 						<td>
 							<?php if ( $row->resolved ) : ?>
-								<span class="toc-badge">✓ Resolved</span>
+								<span class="toc-badge"><?php echo esc_html__( 'Resolved', 'twilio-order-communicator' ); ?></span>
 							<?php else : ?>
-								<button type="button" class="button button-small toc-resolve" data-id="<?php echo (int) $row->id; ?>">Mark Resolved</button>
+								<button type="button" class="button button-small toc-resolve" data-id="<?php echo (int) $row->id; ?>"><?php echo esc_html__( 'Mark Resolved', 'twilio-order-communicator' ); ?></button>
 							<?php endif; ?>
 						</td>
 					</tr>
 				<?php endforeach; ?>
 				</tbody>
 			</table>
+
+			<?php if ( $total_pages > 1 ) : ?>
+				<?php
+				$base_args = array(
+					'page'      => 'toc-communicator',
+					'type'      => $filters['type'],
+					'direction' => $filters['direction'],
+					'resolved'  => $filters['resolved'],
+					's'         => $filters['search'],
+					'date_from' => $filters['date_from'],
+					'date_to'   => $filters['date_to'],
+				);
+				$base_args = array_filter(
+					$base_args,
+					static function ( $v ) {
+						return $v !== '' && $v !== null;
+					}
+				);
+				?>
+				<div class="tablenav bottom">
+					<div class="tablenav-pages">
+						<?php if ( $page_num > 1 ) : ?>
+							<a class="button" href="<?php echo esc_url( add_query_arg( array_merge( $base_args, array( 'paged' => $page_num - 1 ) ), admin_url( 'admin.php' ) ) ); ?>">&lsaquo; <?php echo esc_html__( 'Previous', 'twilio-order-communicator' ); ?></a>
+						<?php endif; ?>
+						<?php if ( $page_num < $total_pages ) : ?>
+							<a class="button" href="<?php echo esc_url( add_query_arg( array_merge( $base_args, array( 'paged' => $page_num + 1 ) ), admin_url( 'admin.php' ) ) ); ?>"><?php echo esc_html__( 'Next', 'twilio-order-communicator' ); ?> &rsaquo;</a>
+						<?php endif; ?>
+					</div>
+				</div>
+			<?php endif; ?>
 		<?php endif;
 	}
 
@@ -511,10 +614,47 @@ class TOC_Admin {
 						<p class="description">Controls which orders get automatic calls/SMS and appear in Bulk Reminders.</p>
 					</td>
 				</tr>
+				<tr>
+					<th><?php echo esc_html__( 'Quiet hours', 'twilio-order-communicator' ); ?></th>
+					<td>
+						<?php $this->checkbox( 'toc_quiet_hours_enabled', 0 ); ?>
+						<label for="toc_quiet_hours_enabled"><?php echo esc_html__( 'Defer auto notifications during quiet hours', 'twilio-order-communicator' ); ?></label>
+						<p>
+							<label><?php echo esc_html__( 'From', 'twilio-order-communicator' ); ?>
+								<input type="time" name="toc_quiet_hours_start" value="<?php echo esc_attr( TOC_Auto::normalize_time_option( get_option( 'toc_quiet_hours_start', '21:00' ), '21:00' ) ); ?>" />
+							</label>
+							<label><?php echo esc_html__( 'Until', 'twilio-order-communicator' ); ?>
+								<input type="time" name="toc_quiet_hours_end" value="<?php echo esc_attr( TOC_Auto::normalize_time_option( get_option( 'toc_quiet_hours_end', '08:00' ), '08:00' ) ); ?>" />
+							</label>
+						</p>
+						<p class="description"><?php echo esc_html( sprintf( __( 'Uses the WordPress timezone (%s). Overnight windows like 21:00–08:00 are supported. Deferred with Action Scheduler when available.', 'twilio-order-communicator' ), wp_timezone_string() ) ); ?></p>
+					</td>
+				</tr>
 			</table>
 
 			<h2>SMS Consent</h2>
 			<table class="form-table">
+				<tr>
+					<th><?php echo esc_html__( 'Checkout checkbox', 'twilio-order-communicator' ); ?></th>
+					<td>
+						<?php $this->checkbox( 'toc_checkout_consent_enabled', 1 ); ?>
+						<label for="toc_checkout_consent_enabled"><?php echo esc_html__( 'Show built-in SMS consent checkbox on checkout', 'twilio-order-communicator' ); ?></label>
+						<p class="description"><?php echo esc_html__( 'Works with classic checkout and WooCommerce block checkout (8.9+). Stores consent, timestamp, and IP on the order.', 'twilio-order-communicator' ); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th><?php echo esc_html__( 'Require at checkout', 'twilio-order-communicator' ); ?></th>
+					<td>
+						<?php $this->checkbox( 'toc_checkout_consent_required', 0 ); ?>
+						<label for="toc_checkout_consent_required"><?php echo esc_html__( 'Customer must check the box to place the order', 'twilio-order-communicator' ); ?></label>
+					</td>
+				</tr>
+				<tr>
+					<th><?php echo esc_html__( 'Checkbox label', 'twilio-order-communicator' ); ?></th>
+					<td>
+						<textarea name="toc_checkout_consent_label" rows="2" class="large-text"><?php echo esc_textarea( get_option( 'toc_checkout_consent_label', 'I agree to receive SMS updates about my order (msg & data rates may apply). Reply STOP to opt out.' ) ); ?></textarea>
+					</td>
+				</tr>
 				<tr>
 					<th>Require consent for SMS</th>
 					<td>
@@ -527,7 +667,7 @@ class TOC_Admin {
 					<th>Consent meta key</th>
 					<td>
 						<input type="text" name="toc_sms_consent_meta" value="<?php echo esc_attr( get_option( 'toc_sms_consent_meta', '_toc_sms_consent' ) ); ?>" class="regular-text" />
-						<p class="description">Order meta key from your checkout checkbox snippet (values like yes / 1 / on / true). Default: <code>_toc_sms_consent</code>. Also checks common fallback keys.</p>
+						<p class="description">Order meta key used by the built-in checkbox and any custom snippet (values like yes / 1 / on / true). Default: <code>_toc_sms_consent</code>.</p>
 					</td>
 				</tr>
 			</table>
@@ -549,19 +689,20 @@ class TOC_Admin {
 				</tr>
 			</table>
 
-			<h2>Inbound SMS keywords (STOP / HELP)</h2>
+			<h2><?php echo esc_html__( 'Inbound SMS keywords (STOP / HELP / START)', 'twilio-order-communicator' ); ?></h2>
+			<p class="description"><?php echo esc_html__( 'Re-subscribe keywords are START and UNSTOP only (not YES), so casual customer replies do not re-opt-in by accident.', 'twilio-order-communicator' ); ?></p>
 			<table class="form-table">
 				<tr>
-					<th>STOP reply</th>
+					<th><?php echo esc_html__( 'STOP reply', 'twilio-order-communicator' ); ?></th>
 					<td><textarea name="toc_stop_reply" rows="2" class="large-text"><?php echo esc_textarea( get_option( 'toc_stop_reply', 'You have been unsubscribed from SMS messages. Reply START to re-subscribe. Msg&data rates may apply.' ) ); ?></textarea></td>
 				</tr>
 				<tr>
-					<th>HELP reply</th>
+					<th><?php echo esc_html__( 'HELP reply', 'twilio-order-communicator' ); ?></th>
 					<td><textarea name="toc_help_reply" rows="2" class="large-text"><?php echo esc_textarea( get_option( 'toc_help_reply', '' ) ); ?></textarea>
-					<p class="description">Leave blank to use a default with your store name.</p></td>
+					<p class="description"><?php echo esc_html__( 'Leave blank to use a default with your store name.', 'twilio-order-communicator' ); ?></p></td>
 				</tr>
 				<tr>
-					<th>START reply</th>
+					<th><?php echo esc_html__( 'START reply', 'twilio-order-communicator' ); ?></th>
 					<td><textarea name="toc_start_reply" rows="2" class="large-text"><?php echo esc_textarea( get_option( 'toc_start_reply', 'You have been re-subscribed to SMS messages. Reply STOP to opt out.' ) ); ?></textarea></td>
 				</tr>
 			</table>

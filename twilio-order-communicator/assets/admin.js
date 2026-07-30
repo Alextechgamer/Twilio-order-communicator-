@@ -1,6 +1,10 @@
 (function($){
 'use strict';
 
+function i18n(key, fallback){
+	return (tocData.i18n && tocData.i18n[key]) ? tocData.i18n[key] : (fallback || key);
+}
+
 function $chat(){ return $('.toc-chat').first(); }
 
 function refresh($w){
@@ -10,7 +14,7 @@ function refresh($w){
 function scroll($w){ var $h=$w.find('.toc-history'); if($h[0]) $h.scrollTop($h[0].scrollHeight); }
 
 function errText(data){
-	if(data == null) return 'Unknown';
+	if(data == null) return i18n('unknown', 'Unknown');
 	if(typeof data === 'string') return data;
 	if(typeof data === 'object'){
 		if(data.message) return data.message;
@@ -21,18 +25,17 @@ function errText(data){
 
 function send(type, force){
 	var $w=$chat(), msg=$('#toc-message').val().trim(), phone=$w.data('phone');
-	if(!msg){ alert('Enter a message'); return; }
-	if(!phone){ alert('No phone number on this order'); return; }
+	if(!msg){ alert(i18n('enterMessage', 'Enter a message')); return; }
+	if(!phone){ alert(i18n('noPhone', 'No phone number on this order')); return; }
 
-	// Consent / STOP warning before force SMS
 	if(type === 'sms' && !force){
 		var consented = String($w.data('consent')) === '1';
 		var optedOut = String($w.data('opted-out')) === '1';
 		if(optedOut){
-			if(!confirm('This phone has opted out (STOP). Send SMS anyway?')) return;
+			if(!confirm(i18n('optOutConfirm', 'This phone has opted out (STOP). Send SMS anyway?'))) return;
 			force = true;
 		} else if(!consented){
-			if(!confirm('Customer has not opted in to SMS. Send anyway?')) return;
+			if(!confirm(i18n('noConsentConfirm', 'Customer has not opted in to SMS. Send anyway?'))) return;
 			force = true;
 		}
 	}
@@ -48,14 +51,14 @@ function send(type, force){
 		else {
 			var d = r.data;
 			if(type==='sms' && d && typeof d === 'object' && d.code === 'needs_force'){
-				if(confirm((d.message || 'SMS blocked by consent') + '\n\nSend anyway?')){
+				if(confirm((d.message || i18n('needsForce', 'SMS blocked by consent')) + '\n\n' + i18n('sendAnyway', 'Send anyway?'))){
 					send('sms', true);
 				}
 				return;
 			}
-			alert('Error: '+errText(d));
+			alert(i18n('errorPrefix', 'Error:') + ' ' + errText(d));
 		}
-	}).fail(function(){ $w.removeClass('loading'); alert('Request failed'); });
+	}).fail(function(){ $w.removeClass('loading'); alert(i18n('requestFailed', 'Request failed')); });
 }
 
 function resolve(id, orderId, $btn){
@@ -66,14 +69,17 @@ function resolve(id, orderId, $btn){
 		if(r.success){
 			if(orderId){
 				$('.toc-history .toc-bubble').addClass('resolved');
-				$('.toc-resolve-order').replaceWith('<span class="toc-badge">Conversation resolved</span>');
+				$('.toc-resolve-order').replaceWith('<span class="toc-badge">'+i18n('conversationDone', 'Conversation resolved')+'</span>');
 			} else {
 				$btn.closest('tr').addClass('toc-resolved');
-				$btn.replaceWith('<span class="toc-badge">Resolved</span>');
+				$btn.replaceWith('<span class="toc-badge">'+i18n('resolved', 'Resolved')+'</span>');
 				$('.toc-resolve-one[data-id="'+id+'"]').closest('.toc-bubble').addClass('resolved')
-					.find('.toc-resolve-one').replaceWith('<span class="tag">resolved</span>');
+					.find('.toc-resolve-one').replaceWith('<span class="tag">'+i18n('resolved', 'Resolved').toLowerCase()+'</span>');
 			}
-		} else { alert('Could not mark resolved'); $btn.prop('disabled',false).text('Mark Resolved'); }
+		} else {
+			alert(i18n('couldNotResolve', 'Could not mark resolved'));
+			$btn.prop('disabled',false).text(i18n('markResolved', 'Mark Resolved'));
+		}
 	});
 }
 
@@ -102,7 +108,7 @@ function bulkLog(html, cls){
 
 function setBulkUi(running){
 	bulkState.running = running;
-	$('#toc-run-bulk').prop('disabled', running).text(running ? 'Sending…' : 'Send to Selected');
+	$('#toc-run-bulk').prop('disabled', running).text(running ? i18n('sending', 'Sending…') : i18n('sendSelected', 'Send to Selected'));
 	$('#toc-stop-bulk').toggle(running);
 	$('#toc-bulk-form').toggleClass('toc-bulk-running', running);
 	$('input[name="order_ids[]"], #toc-check-all, #toc-bulk-message, input[name="mode"], #toc-bulk-delay')
@@ -202,7 +208,7 @@ $(function(){
 		scroll($w);
 		$('.toc-tpl').on('click',function(){ $('#toc-message').val($('#toc-tpl-'+$(this).data('tpl')).text()).focus(); });
 		$('#toc-sms').on('click',function(){ send('sms', false); });
-		$('#toc-call').on('click',function(){ if(confirm('Place a voice call with the current message?')) send('call', false); });
+		$('#toc-call').on('click',function(){ if(confirm(i18n('placeCallConfirm', 'Place a voice call with the current message?'))) send('call', false); });
 		$('#toc-message').on('keydown',function(e){ if(e.ctrlKey&&e.key==='Enter') send('sms', false); });
 		$(document).on('click','.toc-resolve-order',function(){ resolve(null,$w.data('order-id'),$(this)); });
 		$(document).on('click','.toc-resolve-one',function(){ resolve($(this).data('id'),null,$(this)); });
@@ -219,7 +225,7 @@ $(function(){
 
 	$('#toc-stop-bulk').on('click', function(){
 		bulkState.stop = true;
-		$(this).prop('disabled', true).text('Stopping…');
+		$(this).prop('disabled', true).text(i18n('stopping', 'Stopping…'));
 		if(window._tocBulkTimer){
 			clearTimeout(window._tocBulkTimer);
 			window._tocBulkTimer = null;
@@ -233,10 +239,10 @@ $(function(){
 
 		var ids = [];
 		$('input[name="order_ids[]"]:checked').each(function(){ ids.push($(this).val()); });
-		if(!ids.length){ alert('Select at least one order'); return; }
+		if(!ids.length){ alert(i18n('selectOrders', 'Select at least one order')); return; }
 
 		var msg = $('#toc-bulk-message').val().trim();
-		if(!msg){ alert('Enter a message'); return; }
+		if(!msg){ alert(i18n('enterMessage', 'Enter a message')); return; }
 
 		var mode = $('input[name="mode"]:checked').val() || 'call';
 		var delaySec = parseInt($('#toc-bulk-delay').val(), 10);
@@ -264,7 +270,7 @@ $(function(){
 
 		bulkState = { running:true, stop:false, ids:ids, index:0, ok:0, fail:0, skip:0 };
 		$('#toc-bulk-log').empty().show();
-		$('#toc-stop-bulk').prop('disabled', false).text('Stop');
+		$('#toc-stop-bulk').prop('disabled', false).text(i18n('stop', 'Stop'));
 		$('.toc-bulk-table tr').removeClass('toc-bulk-ok toc-bulk-fail toc-bulk-skip toc-bulk-active');
 		setBulkUi(true);
 		bulkLog('Starting bulk send: '+ids.length+' order(s), mode='+mode+', delay='+delaySec+'s');
@@ -272,14 +278,116 @@ $(function(){
 	});
 
 	$('#toc-test-btn').on('click',function(){
-		var $btn=$(this).prop('disabled',true).text('Testing…');
+		var $btn=$(this).prop('disabled',true).text(i18n('testing', 'Testing…'));
 		var $r=$('#toc-test-result').text('');
 		$.post(tocData.ajax_url,{action:'toc_test_connection',nonce:tocData.nonce})
 		.done(function(res){
-			$btn.prop('disabled',false).text('Run Connection Test');
+			$btn.prop('disabled',false).text(i18n('testBtn', 'Run Connection Test'));
 			if(res.success) $r.html('<span style="color:green">✓ '+res.data+'</span>');
 			else $r.html('<span style="color:#b32d2e">✗ '+(res.data||'Failed')+'</span>');
-		}).fail(function(){ $btn.prop('disabled',false).text('Run Connection Test'); $r.text('Request failed'); });
+		}).fail(function(){ $btn.prop('disabled',false).text(i18n('testBtn', 'Run Connection Test')); $r.text(i18n('requestFailed', 'Request failed')); });
+	});
+
+	/* ---------- Onboarding wizard ---------- */
+	function showWizardStep(step){
+		var $wiz = $('.toc-wizard');
+		if(!$wiz.length) return;
+		$wiz.attr('data-step', step);
+		$wiz.find('.toc-wizard-panel').attr('hidden', true);
+		$wiz.find('.toc-wizard-panel[data-panel="'+step+'"]').removeAttr('hidden');
+		$wiz.find('.toc-wizard-steps li').removeClass('is-active is-done').each(function(){
+			var s = parseInt($(this).data('step'), 10);
+			if(s === step) $(this).addClass('is-active');
+			else if(s < step) $(this).addClass('is-done');
+		});
+	}
+
+	function wizardPayload(step){
+		return {
+			action: 'toc_onboarding_save',
+			nonce: tocData.nonce,
+			step: step,
+			toc_account_sid: $('#toc-wiz-sid').val() || '',
+			toc_auth_token: $('#toc-wiz-token').val() || '',
+			toc_from_number: $('#toc-wiz-from').val() || '',
+			toc_checkout_consent_enabled: $('#toc-wiz-checkout-consent').is(':checked') ? 1 : 0,
+			toc_require_sms_consent: $('#toc-wiz-require-consent').is(':checked') ? 1 : 0,
+			toc_auto_on_completed: $('#toc-wiz-auto').is(':checked') ? 1 : 0,
+			toc_auto_voice: $('#toc-wiz-auto-voice').is(':checked') ? 1 : 0,
+			toc_auto_sms: $('#toc-wiz-auto-sms').is(':checked') ? 1 : 0,
+			toc_quiet_hours_enabled: $('#toc-wiz-quiet').is(':checked') ? 1 : 0,
+			toc_quiet_hours_start: $('#toc-wiz-quiet-start').val() || '21:00',
+			toc_quiet_hours_end: $('#toc-wiz-quiet-end').val() || '08:00'
+		};
+	}
+
+	$(document).on('click', '.toc-wiz-next', function(){
+		var next = parseInt($(this).data('next'), 10);
+		var $btn = $(this).prop('disabled', true);
+		$.post(tocData.ajax_url, wizardPayload(next))
+		.done(function(r){
+			$btn.prop('disabled', false);
+			if(r && r.success){
+				$('#toc-wiz-token').val('');
+				showWizardStep(next);
+			} else {
+				alert(i18n('errorPrefix', 'Error:') + ' ' + errText(r && r.data));
+			}
+		}).fail(function(){ $btn.prop('disabled', false); alert(i18n('requestFailed', 'Request failed')); });
+	});
+
+	$(document).on('click', '.toc-wiz-back', function(){
+		showWizardStep(parseInt($(this).data('back'), 10));
+	});
+
+	$('#toc-wiz-test').on('click', function(){
+		var $btn = $(this).prop('disabled', true).text(i18n('testing', 'Testing…'));
+		var $r = $('#toc-wiz-test-result').text('');
+		// Save credentials first, then test.
+		$.post(tocData.ajax_url, wizardPayload(2)).always(function(){
+			$.post(tocData.ajax_url, {action:'toc_test_connection', nonce:tocData.nonce})
+			.done(function(res){
+				$btn.prop('disabled', false).text(i18n('testBtn', 'Run Connection Test'));
+				if(res.success) $r.html('<span style="color:green">✓ '+res.data+'</span>');
+				else $r.html('<span style="color:#b32d2e">✗ '+(res.data||'Failed')+'</span>');
+			}).fail(function(){
+				$btn.prop('disabled', false).text(i18n('testBtn', 'Run Connection Test'));
+				$r.text(i18n('requestFailed', 'Request failed'));
+			});
+		});
+	});
+
+	$('#toc-wiz-copy-webhook').on('click', function(){
+		var text = $('#toc-wiz-webhook').text();
+		if(navigator.clipboard && navigator.clipboard.writeText){
+			navigator.clipboard.writeText(text);
+		} else {
+			var $tmp = $('<textarea>').val(text).appendTo('body').select();
+			document.execCommand('copy');
+			$tmp.remove();
+		}
+		$(this).text('Copied');
+		var $b = $(this);
+		setTimeout(function(){ $b.text('Copy'); }, 1500);
+	});
+
+	$('#toc-wiz-finish').on('click', function(){
+		var $btn = $(this).prop('disabled', true);
+		$.post(tocData.ajax_url, {action:'toc_onboarding_complete', nonce:tocData.nonce})
+		.done(function(r){
+			if(r && r.success && r.data && r.data.redirect){
+				window.location.href = r.data.redirect;
+			} else {
+				$btn.prop('disabled', false);
+			}
+		}).fail(function(){ $btn.prop('disabled', false); alert(i18n('requestFailed', 'Request failed')); });
+	});
+
+	$(document).on('click', '.toc-dismiss-onboarding', function(e){
+		e.preventDefault();
+		var $notice = $(this).closest('.notice');
+		$.post(tocData.ajax_url, {action:'toc_onboarding_dismiss', nonce:tocData.nonce})
+		.done(function(){ $notice.fadeOut(); });
 	});
 });
 })(jQuery);

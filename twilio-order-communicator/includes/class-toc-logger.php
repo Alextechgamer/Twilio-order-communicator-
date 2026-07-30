@@ -7,6 +7,7 @@ class TOC_Logger {
 
 	private static $instance = null;
 	private $table;
+	private $opt_outs_table;
 
 	public static function instance() {
 		if ( is_null( self::$instance ) ) {
@@ -17,11 +18,16 @@ class TOC_Logger {
 
 	private function __construct() {
 		global $wpdb;
-		$this->table = $wpdb->prefix . 'toc_communications';
+		$this->table          = $wpdb->prefix . 'toc_communications';
+		$this->opt_outs_table = $wpdb->prefix . 'toc_sms_opt_outs';
 	}
 
 	public function get_table() {
 		return $this->table;
+	}
+
+	public function get_opt_outs_table() {
+		return $this->opt_outs_table;
 	}
 
 	public static function create_table() {
@@ -53,6 +59,47 @@ class TOC_Logger {
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( $sql );
+	}
+
+	/**
+	 * Scalable STOP / opt-out list (replaces serialized toc_sms_opt_outs option).
+	 */
+	public static function create_opt_outs_table() {
+		global $wpdb;
+		$table   = $wpdb->prefix . 'toc_sms_opt_outs';
+		$charset = $wpdb->get_charset_collate();
+
+		$sql = "CREATE TABLE {$table} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			phone varchar(30) NOT NULL DEFAULT '',
+			phone_digits varchar(20) NOT NULL DEFAULT '',
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			UNIQUE KEY phone_digits (phone_digits),
+			KEY phone (phone)
+		) {$charset};";
+
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		dbDelta( $sql );
+	}
+
+	/**
+	 * One-time migrate from legacy option array into the opt-outs table.
+	 */
+	public static function migrate_opt_outs_from_option() {
+		$list = get_option( 'toc_sms_opt_outs', null );
+		if ( null === $list ) {
+			return;
+		}
+
+		if ( is_array( $list ) ) {
+			$logger = self::instance();
+			foreach ( $list as $entry ) {
+				$logger->add_opt_out_phone( (string) $entry );
+			}
+		}
+
+		delete_option( 'toc_sms_opt_outs' );
 	}
 
 	public function log( $args ) {
@@ -126,9 +173,9 @@ class TOC_Logger {
 		$orderby = in_array( $args['orderby'], array( 'created_at', 'id', 'order_id' ), true ) ? $args['orderby'] : 'created_at';
 		$order   = strtoupper( $args['order'] ) === 'ASC' ? 'ASC' : 'DESC';
 
-		$sql      = "SELECT * FROM {$this->table} WHERE {$where_sql} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d";
-		$vals[]   = absint( $args['limit'] );
-		$vals[]   = absint( $args['offset'] );
+		$sql    = "SELECT * FROM {$this->table} WHERE {$where_sql} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d";
+		$vals[] = absint( $args['limit'] );
+		$vals[] = absint( $args['offset'] );
 
 		return $wpdb->get_results( $wpdb->prepare( $sql, $vals ) );
 	}
@@ -241,6 +288,113 @@ class TOC_Logger {
 	}
 
 	/**
+	 * Resolve order_id for a Twilio SID (call or message).
+	 *
+	 * @param string $sid Twilio SID.
+	 * @return int
+	 */
+	public function get_order_id_by_sid( $sid ) {
+		global $wpdb;
+		$sid = sanitize_text_field( (string) $sid );
+		if ( $sid === '' ) {
+			return 0;
+		}
+
+		$order_id = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT order_id FROM {$this->table} WHERE twilio_sid = %s LIMIT 1",
+				$sid
+			)
+		);
+
+		return absint( $order_id );
+	}
+
+	public function phone_is_opted_out( $phone ) {
+		global $wpdb;
+		$digits = $this->digits_only( $phone );
+		if ( strlen( $digits ) < 7 ) {
+			return false;
+		}
+
+		$last10 = strlen( $digits ) >= 10 ? substr( $digits, -10 ) : $digits;
+
+		$found = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT id FROM {$this->opt_outs_table}
+				 WHERE phone_digits = %s
+				    OR phone_digits = %s
+				    OR RIGHT(phone_digits, 10) = %s
+				 LIMIT 1",
+				$digits,
+				$last10,
+				$last10
+			)
+		);
+
+		return ! empty( $found );
+	}
+
+	public function add_opt_out_phone( $phone ) {
+		global $wpdb;
+		$norm = $this->normalize_phone( $phone );
+		if ( $norm === '' ) {
+			return false;
+		}
+
+		$digits = $this->digits_only( $norm );
+		if ( $digits === '' ) {
+			return false;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- intentional upsert.
+		$existing = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT id FROM {$this->opt_outs_table} WHERE phone_digits = %s OR RIGHT(phone_digits, 10) = %s LIMIT 1",
+				$digits,
+				strlen( $digits ) >= 10 ? substr( $digits, -10 ) : $digits
+			)
+		);
+
+		if ( $existing ) {
+			return true;
+		}
+
+		return false !== $wpdb->insert(
+			$this->opt_outs_table,
+			array(
+				'phone'        => $norm,
+				'phone_digits' => $digits,
+				'created_at'   => current_time( 'mysql' ),
+			),
+			array( '%s', '%s', '%s' )
+		);
+	}
+
+	public function remove_opt_out_phone( $phone ) {
+		global $wpdb;
+		$digits = $this->digits_only( $phone );
+		if ( $digits === '' ) {
+			return;
+		}
+
+		$last10 = strlen( $digits ) >= 10 ? substr( $digits, -10 ) : $digits;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$this->opt_outs_table}
+				 WHERE phone_digits = %s
+				    OR phone_digits = %s
+				    OR RIGHT(phone_digits, 10) = %s",
+				$digits,
+				$last10,
+				$last10
+			)
+		);
+	}
+
+	/**
 	 * Find the most relevant recent order for an inbound phone number.
 	 * Matches on last 10 digits so formatting differences don't break linking.
 	 */
@@ -252,7 +406,6 @@ class TOC_Logger {
 
 		$tail = substr( $digits, -10 );
 
-		// 1) Recent orders — compare digit tails (handles formatting variance).
 		$orders = wc_get_orders(
 			array(
 				'limit'   => 40,
@@ -269,7 +422,6 @@ class TOC_Logger {
 			}
 		}
 
-		// 2) Prior communication log (exact E.164 or digit-tail via PHP).
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is internal.
 		$rows = $wpdb->get_results(
@@ -316,7 +468,6 @@ class TOC_Logger {
 		}
 
 		$digits = ltrim( $phone, '0' );
-		// If number already starts with country code and is long enough, just prefix +.
 		if ( strpos( $digits, $cc ) === 0 && strlen( $digits ) >= strlen( $cc ) + 7 ) {
 			return '+' . $digits;
 		}
@@ -381,7 +532,7 @@ class TOC_Logger {
 
 		$orders = wc_get_orders(
 			array(
-				'limit'        => $limit * 3, // over-fetch; Local Pickup filter is PHP-side
+				'limit'        => $limit * 3,
 				'status'       => 'completed',
 				'date_created' => '>=' . $date_limit,
 				'orderby'      => 'date',

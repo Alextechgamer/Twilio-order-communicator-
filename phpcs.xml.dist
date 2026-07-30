@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<ruleset name="Twilio Order Communicator">
+	<description>WordPress coding standards for Twilio Order Communicator.</description>
+
+	<file>twilio-order-communicator</file>
+
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+	<exclude-pattern>*/node_modules/*</exclude-pattern>
+	<exclude-pattern>*/languages/*</exclude-pattern>
+
+	<arg name="extensions" value="php"/>
+	<arg value="sp"/>
+	<arg name="parallel" value="4"/>
+
+	<rule ref="WordPress">
+		<!-- Allow short array syntax and modern PHP used throughout. -->
+		<exclude name="Universal.Arrays.DisallowShortArraySyntax"/>
+		<!-- Admin UI built with inline markup; split gradually. -->
+		<exclude name="WordPress.Files.FileName"/>
+	</rule>
+
+	<config name="minimum_supported_wp_version" value="6.0"/>
+	<rule ref="PHPCompatibility"/>
+	<config name="testVersion" value="7.4-"/>
+</ruleset>

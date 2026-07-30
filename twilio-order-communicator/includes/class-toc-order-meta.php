@@ -23,14 +23,21 @@ class TOC_Order_Meta {
 
 	public function meta_box() {
 		foreach ( array( 'shop_order', 'woocommerce_page_wc-orders' ) as $screen ) {
-			add_meta_box( 'toc_communications', 'Customer Communications', array( $this, 'render' ), $screen, 'normal', 'high' );
+			add_meta_box(
+				'toc_communications',
+				__( 'Customer Communications', 'twilio-order-communicator' ),
+				array( $this, 'render' ),
+				$screen,
+				'normal',
+				'high'
+			);
 		}
 	}
 
 	public function render( $post_or_order ) {
 		$order = $post_or_order instanceof WP_Post ? wc_get_order( $post_or_order->ID ) : $post_or_order;
 		if ( ! $order ) {
-			echo '<p>Unable to load order.</p>';
+			echo '<p>' . esc_html__( 'Unable to load order.', 'twilio-order-communicator' ) . '</p>';
 			return;
 		}
 
@@ -60,23 +67,23 @@ class TOC_Order_Meta {
 			data-consent="<?php echo $consented ? '1' : '0'; ?>"
 			data-opted-out="<?php echo $opted_out ? '1' : '0'; ?>">
 			<div class="toc-chat-header">
-				<strong>Phone:</strong> <?php echo esc_html( $phone ?: 'No phone on file' ); ?>
+				<strong><?php echo esc_html__( 'Phone:', 'twilio-order-communicator' ); ?></strong> <?php echo esc_html( $phone ?: __( 'No phone on file', 'twilio-order-communicator' ) ); ?>
 				<?php if ( $opted_out ) : ?>
-					<span class="toc-badge toc-badge-no">SMS STOP / opted out</span>
+					<span class="toc-badge toc-badge-no"><?php echo esc_html__( 'SMS STOP / opted out', 'twilio-order-communicator' ); ?></span>
 				<?php elseif ( $consented ) : ?>
-					<span class="toc-badge toc-badge-ok">SMS consent: Yes</span>
+					<span class="toc-badge toc-badge-ok"><?php echo esc_html__( 'SMS consent: Yes', 'twilio-order-communicator' ); ?></span>
 				<?php else : ?>
-					<span class="toc-badge toc-badge-no">SMS consent: No</span>
+					<span class="toc-badge toc-badge-no"><?php echo esc_html__( 'SMS consent: No', 'twilio-order-communicator' ); ?></span>
 				<?php endif; ?>
 				<?php if ( ! $twilio->is_configured() ) : ?>
-					<span class="toc-warn">Twilio not configured</span>
+					<span class="toc-warn"><?php echo esc_html__( 'Twilio not configured', 'twilio-order-communicator' ); ?></span>
 				<?php endif; ?>
-				<button type="button" class="button button-small toc-resolve-order" style="margin-left:auto">Mark conversation resolved</button>
+				<button type="button" class="button button-small toc-resolve-order" style="margin-left:auto"><?php echo esc_html__( 'Mark conversation resolved', 'twilio-order-communicator' ); ?></button>
 			</div>
 
 			<div class="toc-history">
 				<?php if ( empty( $history ) ) : ?>
-					<div class="toc-empty">No messages or calls yet.</div>
+					<div class="toc-empty"><?php echo esc_html__( 'No messages or calls yet.', 'twilio-order-communicator' ); ?></div>
 				<?php else : ?>
 					<?php foreach ( $history as $row ) { $this->bubble( $row ); } ?>
 				<?php endif; ?>
@@ -84,14 +91,14 @@ class TOC_Order_Meta {
 
 			<div class="toc-actions">
 				<div class="toc-quick">
-					<button type="button" class="button toc-tpl" data-tpl="pickup">Ready for Pickup</button>
-					<button type="button" class="button toc-tpl" data-tpl="reminder">Pickup Reminder</button>
-					<button type="button" class="button toc-tpl" data-tpl="issue">Issue / Contact</button>
+					<button type="button" class="button toc-tpl" data-tpl="pickup"><?php echo esc_html__( 'Ready for Pickup', 'twilio-order-communicator' ); ?></button>
+					<button type="button" class="button toc-tpl" data-tpl="reminder"><?php echo esc_html__( 'Pickup Reminder', 'twilio-order-communicator' ); ?></button>
+					<button type="button" class="button toc-tpl" data-tpl="issue"><?php echo esc_html__( 'Issue / Contact', 'twilio-order-communicator' ); ?></button>
 				</div>
-				<textarea id="toc-message" rows="2" placeholder="Type a custom message…"></textarea>
+				<textarea id="toc-message" rows="2" placeholder="<?php echo esc_attr__( 'Type a custom message…', 'twilio-order-communicator' ); ?>"></textarea>
 				<div class="toc-btns">
-					<button type="button" class="button button-primary" id="toc-sms">Send SMS</button>
-					<button type="button" class="button" id="toc-call">Place Call</button>
+					<button type="button" class="button button-primary" id="toc-sms"><?php echo esc_html__( 'Send SMS', 'twilio-order-communicator' ); ?></button>
+					<button type="button" class="button" id="toc-call"><?php echo esc_html__( 'Place Call', 'twilio-order-communicator' ); ?></button>
 				</div>
 			</div>
 
@@ -107,18 +114,18 @@ class TOC_Order_Meta {
 		$voice    = $row->type === 'voice';
 		$resolved = ! empty( $row->resolved );
 		$class    = 'toc-bubble ' . ( $out ? 'out' : 'in' ) . ( $voice ? ' voice' : '' ) . ( $resolved ? ' resolved' : '' );
-		$icon     = $voice ? 'Call' : 'SMS';
+		$icon     = $voice ? __( 'Call', 'twilio-order-communicator' ) : __( 'SMS', 'twilio-order-communicator' );
 		$time     = date_i18n( 'M j, g:i a', strtotime( $row->created_at ) );
 		$status   = $row->status ? ' · ' . esc_html( $row->status ) : '';
 		?>
 		<div class="<?php echo esc_attr( $class ); ?>" data-id="<?php echo (int) $row->id; ?>">
 			<div class="meta">
-				<?php echo esc_html( $icon ); ?> <?php echo $out ? 'You' : 'Customer'; ?>
-				<span class="time"><?php echo esc_html( $time . $status ); ?></span>
+				<?php echo esc_html( $icon ); ?> <?php echo $out ? esc_html__( 'You', 'twilio-order-communicator' ) : esc_html__( 'Customer', 'twilio-order-communicator' ); ?>
+				<span class="time"><?php echo esc_html( $time ) . $status; ?></span>
 				<?php if ( $resolved ) : ?>
-					<span class="tag">resolved</span>
+					<span class="tag"><?php echo esc_html__( 'resolved', 'twilio-order-communicator' ); ?></span>
 				<?php elseif ( ! $out ) : ?>
-					<button type="button" class="toc-resolve-one" data-id="<?php echo (int) $row->id; ?>" title="Mark resolved">OK</button>
+					<button type="button" class="toc-resolve-one" data-id="<?php echo (int) $row->id; ?>" title="<?php echo esc_attr__( 'Mark resolved', 'twilio-order-communicator' ); ?>"><?php echo esc_html__( 'OK', 'twilio-order-communicator' ); ?></button>
 				<?php endif; ?>
 			</div>
 			<div class="body"><?php echo nl2br( esc_html( $row->body ) ); ?></div>
@@ -129,7 +136,7 @@ class TOC_Order_Meta {
 	public function ajax_sms() {
 		check_ajax_referer( 'toc_nonce', 'nonce' );
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
-			wp_send_json_error( 'Permission denied' );
+			wp_send_json_error( __( 'Permission denied', 'twilio-order-communicator' ) );
 		}
 
 		$order_id = absint( $_POST['order_id'] ?? 0 );
@@ -138,13 +145,11 @@ class TOC_Order_Meta {
 		$force    = ! empty( $_POST['force'] );
 
 		if ( empty( $message ) || empty( $phone ) ) {
-			wp_send_json_error( 'Message and phone required.' );
+			wp_send_json_error( __( 'Message and phone required.', 'twilio-order-communicator' ) );
 		}
 
-		// Manual send can force (bypass consent) after UI confirm.
 		$result = TOC_Twilio::instance()->send_sms( $phone, $message, $order_id, $force ? true : false );
 
-		// If blocked by consent and not forced, tell the client so it can confirm.
 		if ( empty( $result['success'] ) && ! $force ) {
 			$err = (string) ( $result['error'] ?? '' );
 			if ( stripos( $err, 'consented' ) !== false || stripos( $err, 'opted out' ) !== false ) {
@@ -160,17 +165,24 @@ class TOC_Order_Meta {
 		if ( ! empty( $result['success'] ) ) {
 			$order = wc_get_order( $order_id );
 			if ( $order ) {
-				$order->add_order_note( 'SMS sent: "' . wp_trim_words( $message, 15 ) . '"' . ( $force ? ' (forced)' : '' ) );
+				$order->add_order_note(
+					sprintf(
+						/* translators: 1: trimmed message, 2: optional forced suffix */
+						__( 'SMS sent: "%1$s"%2$s', 'twilio-order-communicator' ),
+						wp_trim_words( $message, 15 ),
+						$force ? ' ' . __( '(forced)', 'twilio-order-communicator' ) : ''
+					)
+				);
 			}
 			wp_send_json_success();
 		}
-		wp_send_json_error( is_array( $result['error'] ?? null ) ? $result['error'] : ( $result['error'] ?? 'Failed' ) );
+		wp_send_json_error( is_array( $result['error'] ?? null ) ? $result['error'] : ( $result['error'] ?? __( 'Failed', 'twilio-order-communicator' ) ) );
 	}
 
 	public function ajax_call() {
 		check_ajax_referer( 'toc_nonce', 'nonce' );
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
-			wp_send_json_error( 'Permission denied' );
+			wp_send_json_error( __( 'Permission denied', 'twilio-order-communicator' ) );
 		}
 
 		$order_id = absint( $_POST['order_id'] ?? 0 );
@@ -178,7 +190,7 @@ class TOC_Order_Meta {
 		$phone    = sanitize_text_field( wp_unslash( $_POST['phone'] ?? '' ) );
 
 		if ( empty( $message ) || empty( $phone ) ) {
-			wp_send_json_error( 'Message and phone required.' );
+			wp_send_json_error( __( 'Message and phone required.', 'twilio-order-communicator' ) );
 		}
 
 		$result = TOC_Twilio::instance()->make_call( $phone, $message, $order_id );
@@ -186,17 +198,23 @@ class TOC_Order_Meta {
 		if ( ! empty( $result['success'] ) ) {
 			$order = wc_get_order( $order_id );
 			if ( $order ) {
-				$order->add_order_note( 'Voice call placed (SID: ' . $result['sid'] . ')' );
+				$order->add_order_note(
+					sprintf(
+						/* translators: %s: Twilio call SID */
+						__( 'Voice call placed (SID: %s)', 'twilio-order-communicator' ),
+						$result['sid']
+					)
+				);
 			}
 			wp_send_json_success();
 		}
-		wp_send_json_error( $result['error'] ?? 'Failed' );
+		wp_send_json_error( $result['error'] ?? __( 'Failed', 'twilio-order-communicator' ) );
 	}
 
 	public function ajax_history() {
 		check_ajax_referer( 'toc_nonce', 'nonce' );
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
-			wp_send_json_error( 'Permission denied' );
+			wp_send_json_error( __( 'Permission denied', 'twilio-order-communicator' ) );
 		}
 
 		$order_id = absint( $_POST['order_id'] ?? 0 );
@@ -204,7 +222,7 @@ class TOC_Order_Meta {
 
 		ob_start();
 		if ( empty( $history ) ) {
-			echo '<div class="toc-empty">No messages or calls yet.</div>';
+			echo '<div class="toc-empty">' . esc_html__( 'No messages or calls yet.', 'twilio-order-communicator' ) . '</div>';
 		} else {
 			foreach ( $history as $row ) {
 				$this->bubble( $row );
