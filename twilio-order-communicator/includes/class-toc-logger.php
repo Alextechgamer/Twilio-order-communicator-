@@ -503,7 +503,7 @@ class TOC_Logger {
 	}
 
 	/**
-	 * Completed Local Pickup orders for bulk reminders.
+	 * Orders in the mapped Ready for Pickup status for bulk reminders.
 	 *
 	 * @param array $args {
 	 *     @type int  $days               Lookback window (default 30).
@@ -529,11 +529,12 @@ class TOC_Logger {
 		$skip  = max( 0, absint( $args['skip_recent_hours'] ) );
 
 		$date_limit = gmdate( 'Y-m-d H:i:s', time() - ( $days * DAY_IN_SECONDS ) );
+		$status     = TOC_Statuses::bare_status( TOC_Statuses::mapped_ready_status() );
 
 		$orders = wc_get_orders(
 			array(
 				'limit'        => $limit * 3,
-				'status'       => 'completed',
+				'status'       => $status,
 				'date_created' => '>=' . $date_limit,
 				'orderby'      => 'date',
 				'order'        => 'DESC',
@@ -544,7 +545,7 @@ class TOC_Logger {
 		$cutoff     = $skip > 0 ? ( time() - ( $skip * HOUR_IN_SECONDS ) ) : 0;
 
 		foreach ( $orders as $order ) {
-			if ( ! TOC_Auto::is_local_pickup( $order ) ) {
+			if ( (int) get_option( 'toc_ready_require_local_pickup', 0 ) === 1 && ! TOC_Auto::is_local_pickup( $order ) ) {
 				continue;
 			}
 			if ( ! empty( $args['require_phone'] ) && empty( $order->get_billing_phone() ) ) {

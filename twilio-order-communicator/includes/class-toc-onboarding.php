@@ -121,9 +121,12 @@ class TOC_Onboarding {
 		// Toggles (hidden 0 / checkbox 1 pattern from wizard).
 		$bools = array(
 			'toc_checkout_consent_enabled',
-			'toc_auto_on_completed',
-			'toc_auto_voice',
-			'toc_auto_sms',
+			'toc_auto_ready_enabled',
+			'toc_auto_ready_voice',
+			'toc_auto_ready_sms',
+			'toc_auto_shipped_enabled',
+			'toc_auto_shipped_voice',
+			'toc_auto_shipped_sms',
 			'toc_require_sms_consent',
 			'toc_quiet_hours_enabled',
 		);
@@ -159,7 +162,7 @@ class TOC_Onboarding {
 		?>
 		<div class="toc-wizard" data-step="<?php echo (int) $step; ?>">
 			<h2><?php echo esc_html__( 'Setup wizard', 'twilio-order-communicator' ); ?></h2>
-			<p class="description"><?php echo esc_html__( 'Connect Twilio, verify webhooks, and turn on Local Pickup notifications.', 'twilio-order-communicator' ); ?></p>
+			<p class="description"><?php echo esc_html__( 'Connect your own Twilio account, verify webhooks, and turn on Ready for Pickup / Shipped notifications.', 'twilio-order-communicator' ); ?></p>
 
 			<ol class="toc-wizard-steps">
 				<li data-step="1" class="<?php echo $step === 1 ? 'is-active' : ( $step > 1 ? 'is-done' : '' ); ?>"><?php echo esc_html__( 'Credentials', 'twilio-order-communicator' ); ?></li>
@@ -245,11 +248,19 @@ class TOC_Onboarding {
 			</div>
 
 			<div class="toc-wizard-panel" data-panel="5" <?php echo $step === 5 ? '' : 'hidden'; ?>>
-				<h3><?php echo esc_html__( '5. Automatic Local Pickup notifications', 'twilio-order-communicator' ); ?></h3>
+				<h3><?php echo esc_html__( '5. Automatic notifications', 'twilio-order-communicator' ); ?></h3>
+				<p class="description"><?php echo esc_html__( 'Triggered by order status (Ready for Pickup / Shipped), not shipping method. Uses your Twilio account.', 'twilio-order-communicator' ); ?></p>
+				<p><strong><?php echo esc_html__( 'Ready for Pickup', 'twilio-order-communicator' ); ?></strong></p>
 				<p>
-					<label><input type="checkbox" id="toc-wiz-auto" value="1" <?php checked( (int) get_option( 'toc_auto_on_completed', 1 ), 1 ); ?> /> <?php echo esc_html__( 'Enable auto notifications when order is Completed', 'twilio-order-communicator' ); ?></label><br>
-					<label><input type="checkbox" id="toc-wiz-auto-voice" value="1" <?php checked( (int) get_option( 'toc_auto_voice', 1 ), 1 ); ?> /> <?php echo esc_html__( 'Auto voice call', 'twilio-order-communicator' ); ?></label><br>
-					<label><input type="checkbox" id="toc-wiz-auto-sms" value="1" <?php checked( (int) get_option( 'toc_auto_sms', 0 ), 1 ); ?> /> <?php echo esc_html__( 'Also send SMS (requires consent)', 'twilio-order-communicator' ); ?></label>
+					<label><input type="checkbox" id="toc-wiz-auto-ready" value="1" <?php checked( (int) get_option( 'toc_auto_ready_enabled', 1 ), 1 ); ?> /> <?php echo esc_html__( 'Enable auto notifications', 'twilio-order-communicator' ); ?></label><br>
+					<label><input type="checkbox" id="toc-wiz-auto-ready-voice" value="1" <?php checked( (int) get_option( 'toc_auto_ready_voice', 1 ), 1 ); ?> /> <?php echo esc_html__( 'Voice call', 'twilio-order-communicator' ); ?></label><br>
+					<label><input type="checkbox" id="toc-wiz-auto-ready-sms" value="1" <?php checked( (int) get_option( 'toc_auto_ready_sms', 0 ), 1 ); ?> /> <?php echo esc_html__( 'Also send SMS (requires consent)', 'twilio-order-communicator' ); ?></label>
+				</p>
+				<p><strong><?php echo esc_html__( 'Shipped', 'twilio-order-communicator' ); ?></strong></p>
+				<p>
+					<label><input type="checkbox" id="toc-wiz-auto-shipped" value="1" <?php checked( (int) get_option( 'toc_auto_shipped_enabled', 0 ), 1 ); ?> /> <?php echo esc_html__( 'Enable auto notifications', 'twilio-order-communicator' ); ?></label><br>
+					<label><input type="checkbox" id="toc-wiz-auto-shipped-voice" value="1" <?php checked( (int) get_option( 'toc_auto_shipped_voice', 0 ), 1 ); ?> /> <?php echo esc_html__( 'Voice call', 'twilio-order-communicator' ); ?></label><br>
+					<label><input type="checkbox" id="toc-wiz-auto-shipped-sms" value="1" <?php checked( (int) get_option( 'toc_auto_shipped_sms', 0 ), 1 ); ?> /> <?php echo esc_html__( 'Also send SMS (requires consent)', 'twilio-order-communicator' ); ?></label>
 				</p>
 				<hr>
 				<p>
@@ -272,7 +283,7 @@ class TOC_Onboarding {
 
 			<div class="toc-wizard-panel" data-panel="6" <?php echo $step === 6 ? '' : 'hidden'; ?>>
 				<h3><?php echo esc_html__( 'You are ready', 'twilio-order-communicator' ); ?></h3>
-				<p><?php echo esc_html__( 'Mark a Local Pickup test order as Completed to verify auto notify. Check order notes if SMS is skipped.', 'twilio-order-communicator' ); ?></p>
+				<p><?php echo esc_html__( 'Mark a test order as Ready for Pickup (or Shipped) to verify auto notify. Check order notes if SMS is skipped.', 'twilio-order-communicator' ); ?></p>
 				<p>
 					<button type="button" class="button button-primary button-hero" id="toc-wiz-finish"><?php echo esc_html__( 'Finish setup', 'twilio-order-communicator' ); ?></button>
 					<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator&tab=settings' ) ); ?>"><?php echo esc_html__( 'Open Settings', 'twilio-order-communicator' ); ?></a>

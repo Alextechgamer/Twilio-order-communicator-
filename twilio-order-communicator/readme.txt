@@ -4,24 +4,26 @@ Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
 WC requires at least: 7.0
-Stable tag: 1.5.0
+Stable tag: 1.6.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Send SMS and place voice calls from WooCommerce orders. Full history, bulk reminders, consent-aware messaging, and automatic Local Pickup notifications.
+Send SMS and place voice calls from WooCommerce orders using your own Twilio account. Status-based Ready for Pickup and Shipped notifications, chat history, bulk reminders, and consent-aware messaging.
 
 == Description ==
 
-Twilio Order Communicator turns every WooCommerce order into a communication hub.
+Twilio Order Communicator turns every WooCommerce order into a communication hub. **You bring your own Twilio account** (Account SID, Auth Token, From Number). The plugin does not sell or provide messaging services — Twilio bills you directly.
 
 * Chat-style history of SMS and voice calls (sent + received)
 * Send custom SMS or place voice calls directly from the order screen
 * One-click templates with merge tags (order number, customer name, …)
-* Automatic voice/SMS for Local Pickup orders when marked Completed (once per order)
+* Custom order statuses: **Ready for Pickup** and **Shipped**
+* Independent auto-notify toggles (enable / voice / SMS) and message templates per status
+* Status mapping so you can point at existing WooCommerce statuses if needed
+* Optional Local Pickup shipping-method filter for Ready for Pickup (off by default)
 * SMS only sent when the customer has consented; STOP/HELP/START keyword handling
-* Shipped / flat-rate orders are never contacted automatically
 * Built-in tokenized TwiML endpoint – no extra pages or snippets needed
-* Bulk reminder tool for outstanding Local Pickup orders
+* Bulk reminder tool for orders still in Ready for Pickup
 * SMS delivery status callbacks
 * Mark messages or whole conversations as resolved
 * Dashboard with filters, pagination, and live stats
@@ -33,21 +35,30 @@ Twilio Order Communicator turns every WooCommerce order into a communication hub
 
 1. Upload the plugin folder to `/wp-content/plugins/`
 2. Activate through the Plugins menu
-3. Go to WooCommerce → Order Communicator → Settings and enter your Twilio credentials
-4. Enable **Also send an SMS** if you want automatic SMS on Completed (off by default)
-5. Set Consent meta key to match your checkout checkbox snippet
+3. Go to WooCommerce → Order Communicator → Setup (or Settings) and enter **your** Twilio credentials
+4. Map Ready for Pickup / Shipped statuses (defaults are registered by the plugin)
+5. Enable voice and/or SMS per status as needed (SMS defaults off)
 6. Configure the Incoming SMS webhook (instructions on the Tools & Docs tab)
 
 == Frequently Asked Questions ==
 
+= Do I need a Twilio account? =
+Yes. This plugin connects to **your** Twilio account. You provide Account SID, Auth Token, and From Number. Message and call costs are billed by Twilio.
+
 = Do voice calls require SMS consent? =
-No. Only SMS respects the consent setting. Voice calls can always be placed for Local Pickup orders.
+No. Only SMS respects the consent setting. Voice calls can always be placed.
 
 = Will shipped orders receive automatic notifications? =
-No. Automatic calls and SMS only run for Local Pickup orders.
+Only if you enable Shipped auto-notify in Settings. Ready for Pickup and Shipped are independent.
+
+= Is this Local Pickup only? =
+No. The primary trigger is order status. An optional Local Pickup shipping-method filter is available for Ready for Pickup auto-notify (off by default on new installs).
 
 = Why did I only get a call and not an SMS? =
-Auto SMS is a separate setting and defaults to off. Enable "Also send an SMS" under Settings. Also confirm the order has SMS consent and that Require consent is configured for your meta key. Order notes now explain skips.
+Auto SMS is a separate per-status setting and defaults to off. Enable SMS under Settings for that status. Also confirm consent and that Require consent is configured. Order notes explain skips.
+
+= How do I re-send an auto notification? =
+Clear `_toc_notified_ready_for_pickup_at` or `_toc_notified_shipped_at` on the order, then move the order into that status again (or clear meta and re-trigger).
 
 = Do I need a separate TwiML page? =
 No. The plugin includes its own tokenized TwiML endpoint.
@@ -56,6 +67,16 @@ No. The plugin includes its own tokenized TwiML endpoint.
 They text START or UNSTOP. Plain "YES" is intentionally not treated as re-subscribe.
 
 == Changelog ==
+
+= 1.6.0 =
+* Custom WooCommerce statuses: Ready for Pickup (`wc-ready-for-pickup`) and Shipped (`wc-shipped`)
+* Status mapping settings + per-status enable / voice / SMS toggles and message templates
+* Auto-notify on mapped status change (quiet hours, consent, and order notes preserved)
+* Tracking meta: `_toc_notified_ready_for_pickup_at`, `_toc_notified_shipped_at`
+* Bulk Reminders target orders in Ready for Pickup status
+* Local Pickup shipping-method check is now an optional secondary filter (default off for new installs)
+* Setup wizard, Tools & Docs, and copy updated for bring-your-own-Twilio + status model
+* Migrates 1.5.x Completed / Local Pickup auto settings to Ready for Pickup controls
 
 = 1.5.0 =
 * Built-in checkout SMS consent checkbox (classic + block checkout 8.9+)

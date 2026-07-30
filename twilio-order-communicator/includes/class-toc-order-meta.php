@@ -49,15 +49,19 @@ class TOC_Order_Meta {
 		$opted_out = $phone && $twilio->phone_is_opted_out( $phone );
 
 		$pickup   = $twilio->merge_tags(
-			get_option( 'toc_default_pickup_message', 'Hello {customer_first_name}. Your order #{order_number} is ready for pickup. Please come to the store when convenient. Thank you.' ),
+			TOC_Auto::get_message_template( TOC_Auto::KIND_READY ),
+			$order
+		);
+		$shipped  = $twilio->merge_tags(
+			TOC_Auto::get_message_template( TOC_Auto::KIND_SHIPPED ),
 			$order
 		);
 		$reminder = $twilio->merge_tags(
-			get_option( 'toc_default_reminder_message', 'Hello {customer_first_name}. This is a reminder that your order #{order_number} is still waiting for pickup. Please stop by at your earliest convenience. Thank you.' ),
+			TOC_Auto::get_message_template( 'reminder' ),
 			$order
 		);
 		$issue    = $twilio->merge_tags(
-			get_option( 'toc_default_issue_message', 'Hello {customer_first_name}. There is an issue with your recent order #{order_number} that requires your attention. Please contact us or reply to this message. Thank you.' ),
+			TOC_Auto::get_message_template( 'issue' ),
 			$order
 		);
 		?>
@@ -92,6 +96,7 @@ class TOC_Order_Meta {
 			<div class="toc-actions">
 				<div class="toc-quick">
 					<button type="button" class="button toc-tpl" data-tpl="pickup"><?php echo esc_html__( 'Ready for Pickup', 'twilio-order-communicator' ); ?></button>
+					<button type="button" class="button toc-tpl" data-tpl="shipped"><?php echo esc_html__( 'Shipped', 'twilio-order-communicator' ); ?></button>
 					<button type="button" class="button toc-tpl" data-tpl="reminder"><?php echo esc_html__( 'Pickup Reminder', 'twilio-order-communicator' ); ?></button>
 					<button type="button" class="button toc-tpl" data-tpl="issue"><?php echo esc_html__( 'Issue / Contact', 'twilio-order-communicator' ); ?></button>
 				</div>
@@ -103,6 +108,7 @@ class TOC_Order_Meta {
 			</div>
 
 			<script type="text/template" id="toc-tpl-pickup"><?php echo esc_html( $pickup ); ?></script>
+			<script type="text/template" id="toc-tpl-shipped"><?php echo esc_html( $shipped ); ?></script>
 			<script type="text/template" id="toc-tpl-reminder"><?php echo esc_html( $reminder ); ?></script>
 			<script type="text/template" id="toc-tpl-issue"><?php echo esc_html( $issue ); ?></script>
 		</div>

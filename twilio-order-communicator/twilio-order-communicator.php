@@ -2,8 +2,8 @@
 /**
  * Plugin Name:       Twilio Order Communicator
  * Plugin URI:        https://github.com/Alextechgamer/Twilio-order-communicator-
- * Description:       Send SMS and place voice calls from WooCommerce orders. Full chat history, bulk reminders, consent-aware messaging, and automatic Local Pickup notifications.
- * Version:           1.5.0
+ * Description:       Send SMS and place voice calls from WooCommerce orders using your own Twilio account. Status-based Ready for Pickup and Shipped notifications, chat history, bulk reminders, and consent-aware messaging.
+ * Version:           1.6.0
  * Author:            Alextechgamer
  * Author URI:        https://github.com/Alextechgamer
  * Requires at least: 6.0
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'TOC_VERSION', '1.5.0' );
+define( 'TOC_VERSION', '1.6.0' );
 define( 'TOC_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TOC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'TOC_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
@@ -30,6 +30,7 @@ require_once TOC_PLUGIN_DIR . 'includes/class-toc-twilio.php';
 require_once TOC_PLUGIN_DIR . 'includes/class-toc-webhooks.php';
 require_once TOC_PLUGIN_DIR . 'includes/class-toc-admin.php';
 require_once TOC_PLUGIN_DIR . 'includes/class-toc-order-meta.php';
+require_once TOC_PLUGIN_DIR . 'includes/class-toc-statuses.php';
 require_once TOC_PLUGIN_DIR . 'includes/class-toc-auto.php';
 require_once TOC_PLUGIN_DIR . 'includes/class-toc-checkout.php';
 require_once TOC_PLUGIN_DIR . 'includes/class-toc-onboarding.php';
@@ -65,6 +66,7 @@ final class Twilio_Order_Communicator {
 		TOC_Logger::create_opt_outs_table();
 		TOC_Logger::migrate_opt_outs_from_option();
 		$this->seed_defaults();
+		$this->migrate_from_legacy();
 		update_option( 'toc_db_version', TOC_VERSION );
 	}
 
@@ -75,9 +77,15 @@ final class Twilio_Order_Communicator {
 		$defaults = array(
 			'toc_sms_consent_meta'           => '_toc_sms_consent',
 			'toc_pickup_match'               => 'local_title',
-			'toc_auto_on_completed'          => 1,
-			'toc_auto_voice'                 => 1,
-			'toc_auto_sms'                   => 0,
+			'toc_ready_require_local_pickup' => 0,
+			'toc_status_ready_for_pickup'    => 'wc-ready-for-pickup',
+			'toc_status_shipped'             => 'wc-shipped',
+			'toc_auto_ready_enabled'         => 1,
+			'toc_auto_ready_voice'           => 1,
+			'toc_auto_ready_sms'             => 0,
+			'toc_auto_shipped_enabled'       => 0,
+			'toc_auto_shipped_voice'         => 0,
+			'toc_auto_shipped_sms'           => 0,
 			'toc_require_sms_consent'        => 1,
 			'toc_checkout_consent_enabled'   => 1,
 			'toc_checkout_consent_required'  => 0,
@@ -89,9 +97,10 @@ final class Twilio_Order_Communicator {
 			'toc_onboarding_step'            => 1,
 			'toc_voice'                      => 'alice',
 			'toc_bulk_delay_seconds'         => 8,
-			'toc_default_pickup_message'     => 'Hello {customer_first_name}. Your order #{order_number} is ready for pickup. Please come to the store when convenient. Thank you.',
-			'toc_default_reminder_message'   => 'Hello {customer_first_name}. This is a reminder that your order #{order_number} is still waiting for pickup. Please stop by at your earliest convenience. Thank you.',
-			'toc_default_issue_message'      => 'Hello {customer_first_name}. There is an issue with your recent order #{order_number} that requires your attention. Please contact us or reply to this message. Thank you.',
+			'toc_message_ready_for_pickup'   => 'Hello {customer_first_name}. Your order #{order_number} is ready for pickup. Please come to the store when convenient. Thank you.',
+			'toc_message_shipped'            => 'Hello {customer_first_name}. Your order #{order_number} has shipped. Thank you for your order.',
+			'toc_message_reminder'           => 'Hello {customer_first_name}. This is a reminder that your order #{order_number} is still waiting for pickup. Please stop by at your earliest convenience. Thank you.',
+			'toc_message_issue'              => 'Hello {customer_first_name}. There is an issue with your recent order #{order_number} that requires your attention. Please contact us or reply to this message. Thank you.',
 			'toc_stop_reply'                 => 'You have been unsubscribed from SMS messages. Reply START to re-subscribe. Msg&data rates may apply.',
 			'toc_start_reply'                => 'You have been re-subscribed to SMS messages. Reply STOP to opt out.',
 		);
@@ -100,6 +109,51 @@ final class Twilio_Order_Communicator {
 			if ( false === get_option( $key, false ) ) {
 				add_option( $key, $value );
 			}
+		}
+	}
+
+	/**
+	 * One-time migration from 1.5.x Local Pickup / Completed options.
+	 */
+	public function migrate_from_legacy() {
+		// Copy message templates from legacy keys when new keys were just seeded empty / default.
+		$msg_map = array(
+			'toc_default_pickup_message'   => 'toc_message_ready_for_pickup',
+			'toc_default_reminder_message' => 'toc_message_reminder',
+			'toc_default_issue_message'    => 'toc_message_issue',
+		);
+		foreach ( $msg_map as $old => $new ) {
+			$old_val = get_option( $old, false );
+			if ( false === $old_val || $old_val === '' ) {
+				continue;
+			}
+			// Only overwrite new key if it still matches the shipped default (never customized).
+			$new_val = get_option( $new, false );
+			$default = null;
+			if ( $new === 'toc_message_ready_for_pickup' ) {
+				$default = 'Hello {customer_first_name}. Your order #{order_number} is ready for pickup. Please come to the store when convenient. Thank you.';
+			} elseif ( $new === 'toc_message_reminder' ) {
+				$default = 'Hello {customer_first_name}. This is a reminder that your order #{order_number} is still waiting for pickup. Please stop by at your earliest convenience. Thank you.';
+			} elseif ( $new === 'toc_message_issue' ) {
+				$default = 'Hello {customer_first_name}. There is an issue with your recent order #{order_number} that requires your attention. Please contact us or reply to this message. Thank you.';
+			}
+			if ( false === $new_val || $new_val === $default ) {
+				update_option( $new, $old_val );
+			}
+		}
+
+		// Map old auto Completed toggles → Ready for Pickup (once).
+		if ( get_option( 'toc_migrated_auto_v160', false ) === false ) {
+			$had_legacy_auto = ( false !== get_option( 'toc_auto_on_completed', false ) );
+			if ( $had_legacy_auto ) {
+				update_option( 'toc_auto_ready_enabled', (int) get_option( 'toc_auto_on_completed', 1 ) ? 1 : 0 );
+				update_option( 'toc_auto_ready_voice', (int) get_option( 'toc_auto_voice', 1 ) ? 1 : 0 );
+				update_option( 'toc_auto_ready_sms', (int) get_option( 'toc_auto_sms', 0 ) ? 1 : 0 );
+				// Preserve prior Completed + Local Pickup behavior until the store remaps.
+				update_option( 'toc_status_ready_for_pickup', 'wc-completed' );
+				update_option( 'toc_ready_require_local_pickup', 1 );
+			}
+			update_option( 'toc_migrated_auto_v160', 1, false );
 		}
 	}
 
@@ -116,6 +170,7 @@ final class Twilio_Order_Communicator {
 			TOC_Logger::create_opt_outs_table();
 			TOC_Logger::migrate_opt_outs_from_option();
 			$this->seed_defaults();
+			$this->migrate_from_legacy();
 			update_option( 'toc_db_version', TOC_VERSION );
 		}
 
@@ -124,6 +179,7 @@ final class Twilio_Order_Communicator {
 		TOC_Webhooks::instance();
 		TOC_Admin::instance();
 		TOC_Order_Meta::instance();
+		TOC_Statuses::instance();
 		TOC_Auto::instance();
 		TOC_Checkout::instance();
 		TOC_Onboarding::instance();
