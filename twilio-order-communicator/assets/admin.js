@@ -287,5 +287,107 @@ $(function(){
 			else $r.html('<span style="color:#b32d2e">✗ '+(res.data||'Failed')+'</span>');
 		}).fail(function(){ $btn.prop('disabled',false).text(i18n('testBtn', 'Run Connection Test')); $r.text(i18n('requestFailed', 'Request failed')); });
 	});
+
+	/* ---------- Onboarding wizard ---------- */
+	function showWizardStep(step){
+		var $wiz = $('.toc-wizard');
+		if(!$wiz.length) return;
+		$wiz.attr('data-step', step);
+		$wiz.find('.toc-wizard-panel').attr('hidden', true);
+		$wiz.find('.toc-wizard-panel[data-panel="'+step+'"]').removeAttr('hidden');
+		$wiz.find('.toc-wizard-steps li').removeClass('is-active is-done').each(function(){
+			var s = parseInt($(this).data('step'), 10);
+			if(s === step) $(this).addClass('is-active');
+			else if(s < step) $(this).addClass('is-done');
+		});
+	}
+
+	function wizardPayload(step){
+		return {
+			action: 'toc_onboarding_save',
+			nonce: tocData.nonce,
+			step: step,
+			toc_account_sid: $('#toc-wiz-sid').val() || '',
+			toc_auth_token: $('#toc-wiz-token').val() || '',
+			toc_from_number: $('#toc-wiz-from').val() || '',
+			toc_checkout_consent_enabled: $('#toc-wiz-checkout-consent').is(':checked') ? 1 : 0,
+			toc_require_sms_consent: $('#toc-wiz-require-consent').is(':checked') ? 1 : 0,
+			toc_auto_on_completed: $('#toc-wiz-auto').is(':checked') ? 1 : 0,
+			toc_auto_voice: $('#toc-wiz-auto-voice').is(':checked') ? 1 : 0,
+			toc_auto_sms: $('#toc-wiz-auto-sms').is(':checked') ? 1 : 0,
+			toc_quiet_hours_enabled: $('#toc-wiz-quiet').is(':checked') ? 1 : 0,
+			toc_quiet_hours_start: $('#toc-wiz-quiet-start').val() || '21:00',
+			toc_quiet_hours_end: $('#toc-wiz-quiet-end').val() || '08:00'
+		};
+	}
+
+	$(document).on('click', '.toc-wiz-next', function(){
+		var next = parseInt($(this).data('next'), 10);
+		var $btn = $(this).prop('disabled', true);
+		$.post(tocData.ajax_url, wizardPayload(next))
+		.done(function(r){
+			$btn.prop('disabled', false);
+			if(r && r.success){
+				$('#toc-wiz-token').val('');
+				showWizardStep(next);
+			} else {
+				alert(i18n('errorPrefix', 'Error:') + ' ' + errText(r && r.data));
+			}
+		}).fail(function(){ $btn.prop('disabled', false); alert(i18n('requestFailed', 'Request failed')); });
+	});
+
+	$(document).on('click', '.toc-wiz-back', function(){
+		showWizardStep(parseInt($(this).data('back'), 10));
+	});
+
+	$('#toc-wiz-test').on('click', function(){
+		var $btn = $(this).prop('disabled', true).text(i18n('testing', 'Testing…'));
+		var $r = $('#toc-wiz-test-result').text('');
+		// Save credentials first, then test.
+		$.post(tocData.ajax_url, wizardPayload(2)).always(function(){
+			$.post(tocData.ajax_url, {action:'toc_test_connection', nonce:tocData.nonce})
+			.done(function(res){
+				$btn.prop('disabled', false).text(i18n('testBtn', 'Run Connection Test'));
+				if(res.success) $r.html('<span style="color:green">✓ '+res.data+'</span>');
+				else $r.html('<span style="color:#b32d2e">✗ '+(res.data||'Failed')+'</span>');
+			}).fail(function(){
+				$btn.prop('disabled', false).text(i18n('testBtn', 'Run Connection Test'));
+				$r.text(i18n('requestFailed', 'Request failed'));
+			});
+		});
+	});
+
+	$('#toc-wiz-copy-webhook').on('click', function(){
+		var text = $('#toc-wiz-webhook').text();
+		if(navigator.clipboard && navigator.clipboard.writeText){
+			navigator.clipboard.writeText(text);
+		} else {
+			var $tmp = $('<textarea>').val(text).appendTo('body').select();
+			document.execCommand('copy');
+			$tmp.remove();
+		}
+		$(this).text('Copied');
+		var $b = $(this);
+		setTimeout(function(){ $b.text('Copy'); }, 1500);
+	});
+
+	$('#toc-wiz-finish').on('click', function(){
+		var $btn = $(this).prop('disabled', true);
+		$.post(tocData.ajax_url, {action:'toc_onboarding_complete', nonce:tocData.nonce})
+		.done(function(r){
+			if(r && r.success && r.data && r.data.redirect){
+				window.location.href = r.data.redirect;
+			} else {
+				$btn.prop('disabled', false);
+			}
+		}).fail(function(){ $btn.prop('disabled', false); alert(i18n('requestFailed', 'Request failed')); });
+	});
+
+	$(document).on('click', '.toc-dismiss-onboarding', function(e){
+		e.preventDefault();
+		var $notice = $(this).closest('.notice');
+		$.post(tocData.ajax_url, {action:'toc_onboarding_dismiss', nonce:tocData.nonce})
+		.done(function(){ $notice.fadeOut(); });
+	});
 });
 })(jQuery);

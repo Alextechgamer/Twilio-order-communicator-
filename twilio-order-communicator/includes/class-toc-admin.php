@@ -49,6 +49,9 @@ class TOC_Admin {
 			'toc_stop_reply'               => 'sanitize_textarea_field',
 			'toc_help_reply'               => 'sanitize_textarea_field',
 			'toc_start_reply'              => 'sanitize_textarea_field',
+			'toc_checkout_consent_label'   => 'sanitize_textarea_field',
+			'toc_quiet_hours_start'        => array( $this, 'sanitize_time' ),
+			'toc_quiet_hours_end'          => array( $this, 'sanitize_time' ),
 		);
 
 		foreach ( $text_fields as $option => $cb ) {
@@ -75,10 +78,13 @@ class TOC_Admin {
 		);
 
 		$checkboxes = array(
-			'toc_auto_on_completed'    => 1,
-			'toc_auto_voice'           => 1,
-			'toc_auto_sms'             => 0,
-			'toc_require_sms_consent'  => 1,
+			'toc_auto_on_completed'         => 1,
+			'toc_auto_voice'                => 1,
+			'toc_auto_sms'                  => 0,
+			'toc_require_sms_consent'       => 1,
+			'toc_checkout_consent_enabled'  => 1,
+			'toc_checkout_consent_required' => 0,
+			'toc_quiet_hours_enabled'       => 0,
 		);
 
 		foreach ( $checkboxes as $option => $default ) {
@@ -125,6 +131,10 @@ class TOC_Admin {
 		}
 		$value = esc_url_raw( $value );
 		return $value ? untrailingslashit( $value ) : '';
+	}
+
+	public function sanitize_time( $value ) {
+		return TOC_Auto::normalize_time_option( is_string( $value ) ? $value : '', '00:00' );
 	}
 
 	public function assets( $hook ) {
@@ -187,6 +197,7 @@ class TOC_Admin {
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator&tab=dashboard' ) ); ?>" class="nav-tab <?php echo $tab === 'dashboard' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__( 'Dashboard', 'twilio-order-communicator' ); ?></a>
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator&tab=bulk' ) ); ?>" class="nav-tab <?php echo $tab === 'bulk' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__( 'Bulk Reminders', 'twilio-order-communicator' ); ?></a>
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator&tab=settings' ) ); ?>" class="nav-tab <?php echo $tab === 'settings' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__( 'Settings', 'twilio-order-communicator' ); ?></a>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator&tab=setup' ) ); ?>" class="nav-tab <?php echo $tab === 'setup' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__( 'Setup', 'twilio-order-communicator' ); ?></a>
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator&tab=tools' ) ); ?>" class="nav-tab <?php echo $tab === 'tools' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__( 'Tools & Docs', 'twilio-order-communicator' ); ?></a>
 			</nav>
 			<div class="toc-content">
@@ -195,6 +206,8 @@ class TOC_Admin {
 					$this->render_settings();
 				} elseif ( $tab === 'bulk' ) {
 					$this->render_bulk();
+				} elseif ( $tab === 'setup' ) {
+					TOC_Onboarding::instance()->render();
 				} elseif ( $tab === 'tools' ) {
 					$this->render_tools();
 				} else {
@@ -601,10 +614,47 @@ class TOC_Admin {
 						<p class="description">Controls which orders get automatic calls/SMS and appear in Bulk Reminders.</p>
 					</td>
 				</tr>
+				<tr>
+					<th><?php echo esc_html__( 'Quiet hours', 'twilio-order-communicator' ); ?></th>
+					<td>
+						<?php $this->checkbox( 'toc_quiet_hours_enabled', 0 ); ?>
+						<label for="toc_quiet_hours_enabled"><?php echo esc_html__( 'Defer auto notifications during quiet hours', 'twilio-order-communicator' ); ?></label>
+						<p>
+							<label><?php echo esc_html__( 'From', 'twilio-order-communicator' ); ?>
+								<input type="time" name="toc_quiet_hours_start" value="<?php echo esc_attr( TOC_Auto::normalize_time_option( get_option( 'toc_quiet_hours_start', '21:00' ), '21:00' ) ); ?>" />
+							</label>
+							<label><?php echo esc_html__( 'Until', 'twilio-order-communicator' ); ?>
+								<input type="time" name="toc_quiet_hours_end" value="<?php echo esc_attr( TOC_Auto::normalize_time_option( get_option( 'toc_quiet_hours_end', '08:00' ), '08:00' ) ); ?>" />
+							</label>
+						</p>
+						<p class="description"><?php echo esc_html( sprintf( __( 'Uses the WordPress timezone (%s). Overnight windows like 21:00–08:00 are supported. Deferred with Action Scheduler when available.', 'twilio-order-communicator' ), wp_timezone_string() ) ); ?></p>
+					</td>
+				</tr>
 			</table>
 
 			<h2>SMS Consent</h2>
 			<table class="form-table">
+				<tr>
+					<th><?php echo esc_html__( 'Checkout checkbox', 'twilio-order-communicator' ); ?></th>
+					<td>
+						<?php $this->checkbox( 'toc_checkout_consent_enabled', 1 ); ?>
+						<label for="toc_checkout_consent_enabled"><?php echo esc_html__( 'Show built-in SMS consent checkbox on checkout', 'twilio-order-communicator' ); ?></label>
+						<p class="description"><?php echo esc_html__( 'Works with classic checkout and WooCommerce block checkout (8.9+). Stores consent, timestamp, and IP on the order.', 'twilio-order-communicator' ); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th><?php echo esc_html__( 'Require at checkout', 'twilio-order-communicator' ); ?></th>
+					<td>
+						<?php $this->checkbox( 'toc_checkout_consent_required', 0 ); ?>
+						<label for="toc_checkout_consent_required"><?php echo esc_html__( 'Customer must check the box to place the order', 'twilio-order-communicator' ); ?></label>
+					</td>
+				</tr>
+				<tr>
+					<th><?php echo esc_html__( 'Checkbox label', 'twilio-order-communicator' ); ?></th>
+					<td>
+						<textarea name="toc_checkout_consent_label" rows="2" class="large-text"><?php echo esc_textarea( get_option( 'toc_checkout_consent_label', 'I agree to receive SMS updates about my order (msg & data rates may apply). Reply STOP to opt out.' ) ); ?></textarea>
+					</td>
+				</tr>
 				<tr>
 					<th>Require consent for SMS</th>
 					<td>
@@ -617,7 +667,7 @@ class TOC_Admin {
 					<th>Consent meta key</th>
 					<td>
 						<input type="text" name="toc_sms_consent_meta" value="<?php echo esc_attr( get_option( 'toc_sms_consent_meta', '_toc_sms_consent' ) ); ?>" class="regular-text" />
-						<p class="description">Order meta key from your checkout checkbox snippet (values like yes / 1 / on / true). Default: <code>_toc_sms_consent</code>. Also checks common fallback keys.</p>
+						<p class="description">Order meta key used by the built-in checkbox and any custom snippet (values like yes / 1 / on / true). Default: <code>_toc_sms_consent</code>.</p>
 					</td>
 				</tr>
 			</table>

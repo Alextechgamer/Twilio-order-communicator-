@@ -39,7 +39,15 @@ $options = array(
 	'toc_stop_reply',
 	'toc_help_reply',
 	'toc_start_reply',
-	'toc_sms_opt_outs', // legacy option (pre-1.4.0)
+	'toc_sms_opt_outs',
+	'toc_checkout_consent_enabled',
+	'toc_checkout_consent_required',
+	'toc_checkout_consent_label',
+	'toc_quiet_hours_enabled',
+	'toc_quiet_hours_start',
+	'toc_quiet_hours_end',
+	'toc_onboarding_done',
+	'toc_onboarding_step',
 );
 
 foreach ( $options as $option ) {

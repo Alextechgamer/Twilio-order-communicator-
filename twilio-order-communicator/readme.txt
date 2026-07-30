@@ -4,7 +4,7 @@ Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
 WC requires at least: 7.0
-Stable tag: 1.4.0
+Stable tag: 1.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -56,6 +56,13 @@ No. The plugin includes its own tokenized TwiML endpoint.
 They text START or UNSTOP. Plain "YES" is intentionally not treated as re-subscribe.
 
 == Changelog ==
+
+= 1.5.0 =
+* Built-in checkout SMS consent checkbox (classic + block checkout 8.9+)
+* Consent audit meta: timestamp, IP, and source on the order
+* Quiet hours: defer auto notify until window ends (Action Scheduler / WP-Cron)
+* Setup wizard: credentials → test → webhook → consent → auto notify
+* Admin Setup tab + first-run notice
 
 = 1.4.0 =
 * Declare WooCommerce HPOS (custom order tables) compatibility

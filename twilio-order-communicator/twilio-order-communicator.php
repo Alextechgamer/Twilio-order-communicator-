@@ -3,7 +3,7 @@
  * Plugin Name:       Twilio Order Communicator
  * Plugin URI:        https://github.com/Alextechgamer/Twilio-order-communicator-
  * Description:       Send SMS and place voice calls from WooCommerce orders. Full chat history, bulk reminders, consent-aware messaging, and automatic Local Pickup notifications.
- * Version:           1.4.0
+ * Version:           1.5.0
  * Author:            Alextechgamer
  * Author URI:        https://github.com/Alextechgamer
  * Requires at least: 6.0
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'TOC_VERSION', '1.4.0' );
+define( 'TOC_VERSION', '1.5.0' );
 define( 'TOC_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TOC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'TOC_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
@@ -31,6 +31,8 @@ require_once TOC_PLUGIN_DIR . 'includes/class-toc-webhooks.php';
 require_once TOC_PLUGIN_DIR . 'includes/class-toc-admin.php';
 require_once TOC_PLUGIN_DIR . 'includes/class-toc-order-meta.php';
 require_once TOC_PLUGIN_DIR . 'includes/class-toc-auto.php';
+require_once TOC_PLUGIN_DIR . 'includes/class-toc-checkout.php';
+require_once TOC_PLUGIN_DIR . 'includes/class-toc-onboarding.php';
 
 final class Twilio_Order_Communicator {
 
@@ -71,19 +73,27 @@ final class Twilio_Order_Communicator {
 	 */
 	public function seed_defaults() {
 		$defaults = array(
-			'toc_sms_consent_meta'         => '_toc_sms_consent',
-			'toc_pickup_match'             => 'local_title',
-			'toc_auto_on_completed'        => 1,
-			'toc_auto_voice'               => 1,
-			'toc_auto_sms'                 => 0,
-			'toc_require_sms_consent'      => 1,
-			'toc_voice'                    => 'alice',
-			'toc_bulk_delay_seconds'       => 8,
-			'toc_default_pickup_message'   => 'Hello {customer_first_name}. Your order #{order_number} is ready for pickup. Please come to the store when convenient. Thank you.',
-			'toc_default_reminder_message' => 'Hello {customer_first_name}. This is a reminder that your order #{order_number} is still waiting for pickup. Please stop by at your earliest convenience. Thank you.',
-			'toc_default_issue_message'    => 'Hello {customer_first_name}. There is an issue with your recent order #{order_number} that requires your attention. Please contact us or reply to this message. Thank you.',
-			'toc_stop_reply'               => 'You have been unsubscribed from SMS messages. Reply START to re-subscribe. Msg&data rates may apply.',
-			'toc_start_reply'              => 'You have been re-subscribed to SMS messages. Reply STOP to opt out.',
+			'toc_sms_consent_meta'           => '_toc_sms_consent',
+			'toc_pickup_match'               => 'local_title',
+			'toc_auto_on_completed'          => 1,
+			'toc_auto_voice'                 => 1,
+			'toc_auto_sms'                   => 0,
+			'toc_require_sms_consent'        => 1,
+			'toc_checkout_consent_enabled'   => 1,
+			'toc_checkout_consent_required'  => 0,
+			'toc_checkout_consent_label'     => 'I agree to receive SMS updates about my order (msg & data rates may apply). Reply STOP to opt out.',
+			'toc_quiet_hours_enabled'        => 0,
+			'toc_quiet_hours_start'          => '21:00',
+			'toc_quiet_hours_end'            => '08:00',
+			'toc_onboarding_done'            => 0,
+			'toc_onboarding_step'            => 1,
+			'toc_voice'                      => 'alice',
+			'toc_bulk_delay_seconds'         => 8,
+			'toc_default_pickup_message'     => 'Hello {customer_first_name}. Your order #{order_number} is ready for pickup. Please come to the store when convenient. Thank you.',
+			'toc_default_reminder_message'   => 'Hello {customer_first_name}. This is a reminder that your order #{order_number} is still waiting for pickup. Please stop by at your earliest convenience. Thank you.',
+			'toc_default_issue_message'      => 'Hello {customer_first_name}. There is an issue with your recent order #{order_number} that requires your attention. Please contact us or reply to this message. Thank you.',
+			'toc_stop_reply'                 => 'You have been unsubscribed from SMS messages. Reply START to re-subscribe. Msg&data rates may apply.',
+			'toc_start_reply'                => 'You have been re-subscribed to SMS messages. Reply STOP to opt out.',
 		);
 
 		foreach ( $defaults as $key => $value ) {
@@ -115,6 +125,8 @@ final class Twilio_Order_Communicator {
 		TOC_Admin::instance();
 		TOC_Order_Meta::instance();
 		TOC_Auto::instance();
+		TOC_Checkout::instance();
+		TOC_Onboarding::instance();
 	}
 
 	public function woocommerce_missing_notice() {

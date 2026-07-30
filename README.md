@@ -2,75 +2,51 @@
 
 WordPress / WooCommerce plugin for SMS and voice calls on Local Pickup orders via Twilio.
 
-**Current version: 1.4.0**
+**Current version: 1.5.0**
 
 ## Install
 
-Upload `twilio-order-communicator/` (or a release zip) to `/wp-content/plugins/`, activate, then configure under **WooCommerce → Order Communicator → Settings**.
+Upload `twilio-order-communicator/` (or a release zip) to `/wp-content/plugins/`, activate, then open **WooCommerce → Order Communicator → Setup**.
 
 Release zips:
 
+- [`twilio-order-communicator-1.5.0.zip`](./twilio-order-communicator-1.5.0.zip)
 - [`twilio-order-communicator-1.4.0.zip`](./twilio-order-communicator-1.4.0.zip)
-- [`twilio-order-communicator-1.3.0.zip`](./twilio-order-communicator-1.3.0.zip) (previous)
+- [`twilio-order-communicator-1.3.0.zip`](./twilio-order-communicator-1.3.0.zip)
 
-## What's in 1.4.0 (P0 cleanup)
-
-| Item | Notes |
-|------|--------|
-| HPOS declare | Compatible with WooCommerce custom order tables |
-| Brand headers | GitHub Plugin URI / Author / Domain Path |
-| i18n | Text domain loaded; admin, order UI, notes, JS strings wrapped |
-| Dashboard pagination | 40 per page |
-| START keywords | `START` / `UNSTOP` only (not `YES`) |
-| Opt-out table | `wp_toc_sms_opt_outs` (migrates legacy option) |
-| Activation defaults | Templates and toggles seeded when missing |
-| Tooling | `.editorconfig`, `phpcs.xml.dist`, LF line endings |
-
-## What's in 1.3.0
+## What's in 1.5.0
 
 | Feature | Notes |
 |---------|--------|
-| Merge tags | `{order_number}`, `{customer_first_name}`, `{customer_last_name}`, `{customer_full_name}`, `{store_name}`, `{phone}`, `{order_total}`, `{billing_email}`, `{order_id}` |
-| Auto-notify once | Order meta `_toc_auto_notified_at` — clear to re-send |
-| STOP / HELP / START | Inbound keywords + phone opt-out list |
-| Manual SMS consent warn | Confirm before force-send |
-| Local Pickup match | Setting: `method_id` / `local_title` (default) / `any_pickup` |
-| SMS StatusCallback | Delivery status updates; notes on failed/undelivered |
-| Auto SMS skip notes | Order notes always explain why SMS was skipped |
+| Checkout SMS consent | Built-in checkbox for classic + block checkout; stores `_toc_sms_consent` + timestamp/IP |
+| Quiet hours | Defers auto voice/SMS until the window ends (store timezone) |
+| Setup wizard | Credentials → connection test → webhook → consent → auto notify |
 
-Checkout consent UI is intentionally not bundled — use your existing snippet and set **Consent meta key** (default `_toc_sms_consent`).
+## What's in 1.4.0
+
+HPOS declare, brand headers, i18n, dashboard pagination, START/UNSTOP only, opt-out DB table, activation defaults, PHPCS tooling.
 
 ## Auto SMS troubleshooting
 
-**Also send an SMS** defaults to **off** (separate from Auto Voice). If a completed Local Pickup order only gets a call:
-
-1. Enable **Also send an SMS** and Save  
-2. Confirm consent meta matches your checkout snippet  
-3. Clear `_toc_auto_notified_at` on the order (or use a new order)  
-4. Check order notes for skip reasons  
+**Also send an SMS** defaults to **off**. Enable it under Settings, confirm consent, clear `_toc_auto_notified_at` to re-test. Quiet hours may defer sends — check order notes.
 
 ## Plugin layout
 
 ```
 twilio-order-communicator/
-  twilio-order-communicator.php   bootstrap
-  uninstall.php
-  readme.txt
-  languages/
-  assets/admin.{js,css}
+  twilio-order-communicator.php
   includes/
-    class-toc-twilio.php          REST SMS/calls + TwiML + merge tags
-    class-toc-webhooks.php        inbound SMS + status callbacks
-    class-toc-logger.php          communications + opt-outs tables
-    class-toc-order-meta.php      order chat UI
-    class-toc-admin.php           settings, bulk, tools
-    class-toc-auto.php            completed → auto notify
+    class-toc-checkout.php      checkout consent
+    class-toc-onboarding.php    setup wizard
+    class-toc-auto.php          completed + quiet hours
+    class-toc-twilio.php
+    class-toc-webhooks.php
+    class-toc-logger.php
+    class-toc-order-meta.php
+    class-toc-admin.php
+  assets/admin.{js,css}
 ```
 
-## Product analysis (sell / website)
+## Next (2.0 / commercial)
 
-See [`docs/PRODUCT-ANALYSIS.md`](./docs/PRODUCT-ANALYSIS.md) for cleanup priorities, commercial feature roadmap, and website/licensing notes.
-
-## Possible next work (1.5+)
-
-Built-in checkout SMS opt-in · quiet hours · onboarding wizard · licensing / auto-updates · marketing site
+License keys + auto-updates · scheduled reminders · CSV/analytics · marketing site

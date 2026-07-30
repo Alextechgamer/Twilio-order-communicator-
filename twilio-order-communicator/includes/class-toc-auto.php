@@ -5,6 +5,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class TOC_Auto {
 
+	const DEFERRED_HOOK = 'toc_deferred_auto_notify';
+
 	private static $instance = null;
 
 	public static function instance() {
@@ -16,6 +18,7 @@ class TOC_Auto {
 
 	private function __construct() {
 		add_action( 'woocommerce_order_status_completed', array( $this, 'on_completed' ), 25, 1 );
+		add_action( self::DEFERRED_HOOK, array( $this, 'run_deferred' ), 10, 1 );
 	}
 
 	/**
@@ -51,7 +54,6 @@ class TOC_Auto {
 				continue;
 			}
 
-			// any_pickup
 			if ( $is_method || stripos( $title, 'local pickup' ) !== false || stripos( $title, 'pickup' ) !== false ) {
 				return true;
 			}
@@ -60,7 +62,86 @@ class TOC_Auto {
 		return false;
 	}
 
+	/**
+	 * Whether the current store-local time is inside quiet hours.
+	 * Supports windows that wrap midnight (e.g. 21:00–08:00).
+	 */
+	public static function is_quiet_hours( $timestamp = null ) {
+		if ( ! (int) get_option( 'toc_quiet_hours_enabled', 0 ) ) {
+			return false;
+		}
+
+		$start = self::normalize_time_option( get_option( 'toc_quiet_hours_start', '21:00' ), '21:00' );
+		$end   = self::normalize_time_option( get_option( 'toc_quiet_hours_end', '08:00' ), '08:00' );
+
+		if ( $start === $end ) {
+			return false;
+		}
+
+		$tz  = wp_timezone();
+		$now = $timestamp ? ( new DateTimeImmutable( '@' . (int) $timestamp ) )->setTimezone( $tz ) : new DateTimeImmutable( 'now', $tz );
+		$hm  = (int) $now->format( 'G' ) * 60 + (int) $now->format( 'i' );
+
+		list( $sh, $sm ) = array_map( 'intval', explode( ':', $start ) );
+		list( $eh, $em ) = array_map( 'intval', explode( ':', $end ) );
+		$start_m         = $sh * 60 + $sm;
+		$end_m           = $eh * 60 + $em;
+
+		if ( $start_m < $end_m ) {
+			// Same-day window (e.g. 01:00–05:00).
+			return $hm >= $start_m && $hm < $end_m;
+		}
+
+		// Overnight window (e.g. 21:00–08:00).
+		return $hm >= $start_m || $hm < $end_m;
+	}
+
+	/**
+	 * Next timestamp (UTC epoch) when quiet hours end, in store timezone.
+	 */
+	public static function next_quiet_hours_end_timestamp( $from_timestamp = null ) {
+		$end = self::normalize_time_option( get_option( 'toc_quiet_hours_end', '08:00' ), '08:00' );
+		$tz  = wp_timezone();
+		$now = $from_timestamp ? ( new DateTimeImmutable( '@' . (int) $from_timestamp ) )->setTimezone( $tz ) : new DateTimeImmutable( 'now', $tz );
+
+		list( $eh, $em ) = array_map( 'intval', explode( ':', $end ) );
+		$candidate       = $now->setTime( $eh, $em, 0 );
+
+		if ( $candidate->getTimestamp() <= $now->getTimestamp() ) {
+			$candidate = $candidate->modify( '+1 day' );
+		}
+
+		// If still inside quiet hours at that candidate (edge: misconfigured), push another hour.
+		$ts = $candidate->getTimestamp();
+		if ( self::is_quiet_hours( $ts ) ) {
+			$ts = $candidate->modify( '+1 hour' )->getTimestamp();
+		}
+
+		return $ts;
+	}
+
+	public static function normalize_time_option( $value, $fallback ) {
+		$value = is_string( $value ) ? trim( $value ) : '';
+		if ( ! preg_match( '/^([01]?\d|2[0-3]):([0-5]\d)$/', $value ) ) {
+			return $fallback;
+		}
+		list( $h, $m ) = array_map( 'intval', explode( ':', $value ) );
+		return sprintf( '%02d:%02d', $h, $m );
+	}
+
 	public function on_completed( $order_id ) {
+		$this->process_order( (int) $order_id, false );
+	}
+
+	public function run_deferred( $order_id ) {
+		$this->process_order( (int) $order_id, true );
+	}
+
+	/**
+	 * @param int  $order_id Order ID.
+	 * @param bool $from_deferred Whether this run came from the deferred hook.
+	 */
+	private function process_order( $order_id, $from_deferred = false ) {
 		if ( ! get_option( 'toc_auto_on_completed', 1 ) ) {
 			return;
 		}
@@ -70,12 +151,28 @@ class TOC_Auto {
 			return;
 		}
 
-		// Idempotency — Completed can fire more than once.
 		if ( $order->get_meta( '_toc_auto_notified_at' ) ) {
 			return;
 		}
 
 		if ( ! self::is_local_pickup( $order ) ) {
+			return;
+		}
+
+		// Quiet hours: defer instead of calling/texting now.
+		if ( self::is_quiet_hours() ) {
+			$when = self::next_quiet_hours_end_timestamp();
+			$order->update_meta_data( '_toc_auto_deferred_until', $when );
+			$order->save();
+			$this->schedule_deferred( $order_id, $when );
+
+			$order->add_order_note(
+				sprintf(
+					/* translators: %s: local datetime when notification will run */
+					__( 'Auto notification deferred (quiet hours). Scheduled for %s.', 'twilio-order-communicator' ),
+					wp_date( 'M j, Y g:i a', $when )
+				)
+			);
 			return;
 		}
 
@@ -132,8 +229,31 @@ class TOC_Auto {
 			);
 		}
 
-		// Stamp once in-scope so re-completing does not spam. Clear meta to force re-send.
+		$order->delete_meta_data( '_toc_auto_deferred_until' );
 		$order->update_meta_data( '_toc_auto_notified_at', time() );
+		if ( $from_deferred ) {
+			$order->add_order_note( __( 'Deferred auto notification completed after quiet hours.', 'twilio-order-communicator' ) );
+		}
 		$order->save();
+	}
+
+	private function schedule_deferred( $order_id, $timestamp ) {
+		$order_id  = absint( $order_id );
+		$timestamp = absint( $timestamp );
+		if ( ! $order_id || ! $timestamp ) {
+			return;
+		}
+
+		if ( function_exists( 'as_has_scheduled_action' ) && function_exists( 'as_schedule_single_action' ) ) {
+			if ( ! as_has_scheduled_action( self::DEFERRED_HOOK, array( $order_id ), 'toc' ) ) {
+				as_schedule_single_action( $timestamp, self::DEFERRED_HOOK, array( $order_id ), 'toc' );
+			}
+			return;
+		}
+
+		$hook = self::DEFERRED_HOOK;
+		if ( ! wp_next_scheduled( $hook, array( $order_id ) ) ) {
+			wp_schedule_single_event( $timestamp, $hook, array( $order_id ) );
+		}
 	}
 }
