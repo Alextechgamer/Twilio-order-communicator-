@@ -4,7 +4,7 @@ Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
 WC requires at least: 7.0
-Stable tag: 1.6.0
+Stable tag: 1.7.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -21,13 +21,16 @@ Twilio Order Communicator turns every WooCommerce order into a communication hub
 * Independent auto-notify toggles (enable / voice / SMS) and message templates per status
 * Status mapping so you can point at existing WooCommerce statuses if needed
 * Optional Local Pickup shipping-method filter for Ready for Pickup (off by default)
-* SMS only sent when the customer has consented; STOP/HELP/START keyword handling
+* SMS only sent when the customer has consented; STOP/HELP/START keyword handling (auto-replies logged)
 * Built-in tokenized TwiML endpoint – no extra pages or snippets needed
+* REST webhook routes (`toc/v1`) with permanent query-string aliases
 * Bulk reminder tool for orders still in Ready for Pickup
+* Optional SMS compliance footer + Privacy Policy helper text
+* Filterable capabilities and optional wp-config credential constants
 * SMS delivery status callbacks
 * Mark messages or whole conversations as resolved
 * Dashboard with filters, pagination, and live stats
-* Incoming customer replies are logged and attached to the matching order
+* Incoming customer replies are logged and attached to the matching order (improved phone matching)
 * Twilio request signature validation on inbound webhooks
 * Declared compatible with WooCommerce HPOS (custom order tables)
 
@@ -38,12 +41,15 @@ Twilio Order Communicator turns every WooCommerce order into a communication hub
 3. Go to WooCommerce → Order Communicator → Setup (or Settings) and enter **your** Twilio credentials
 4. Map Ready for Pickup / Shipped statuses (defaults are registered by the plugin)
 5. Enable voice and/or SMS per status as needed (SMS defaults off)
-6. Configure the Incoming SMS webhook (instructions on the Tools & Docs tab)
+6. Configure the Incoming SMS webhook (preferred REST URL on the Tools & Docs tab)
 
 == Frequently Asked Questions ==
 
 = Do I need a Twilio account? =
 Yes. This plugin connects to **your** Twilio account. You provide Account SID, Auth Token, and From Number. Message and call costs are billed by Twilio.
+
+= Can I set credentials in wp-config.php? =
+Yes. Define `TOC_ACCOUNT_SID`, `TOC_AUTH_TOKEN`, and/or `TOC_FROM_NUMBER`. Constants override Settings fields.
 
 = Do voice calls require SMS consent? =
 No. Only SMS respects the consent setting. Voice calls can always be placed.
@@ -67,6 +73,16 @@ No. The plugin includes its own tokenized TwiML endpoint.
 They text START or UNSTOP. Plain "YES" is intentionally not treated as re-subscribe.
 
 == Changelog ==
+
+= 1.7.0 =
+* Shared Twilio HTTP `request()` helper for SMS, calls, and credential tests
+* Split admin UI into focused traits (settings, dashboard, bulk, tools, ajax)
+* Improved inbound phone → order matching (communications log, HPOS/CPT billing phone, broader status scan)
+* REST webhook routes under `toc/v1` (query-string aliases kept permanently)
+* STOP / HELP / START auto-replies logged in communications history
+* Filterable capabilities `toc_manage_settings` / `toc_send_sms`
+* Optional wp-config credentials: TOC_ACCOUNT_SID, TOC_AUTH_TOKEN, TOC_FROM_NUMBER
+* Optional outbound SMS compliance footer + Privacy Policy helper on Tools & Docs
 
 = 1.6.0 =
 * Custom WooCommerce statuses: Ready for Pickup (`wc-ready-for-pickup`) and Shipped (`wc-shipped`)

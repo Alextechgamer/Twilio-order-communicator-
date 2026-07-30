@@ -141,7 +141,7 @@ class TOC_Order_Meta {
 
 	public function ajax_sms() {
 		check_ajax_referer( 'toc_nonce', 'nonce' );
-		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+		if ( ! current_user_can( TOC_Caps::send() ) ) {
 			wp_send_json_error( __( 'Permission denied', 'twilio-order-communicator' ) );
 		}
 
@@ -187,7 +187,7 @@ class TOC_Order_Meta {
 
 	public function ajax_call() {
 		check_ajax_referer( 'toc_nonce', 'nonce' );
-		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+		if ( ! current_user_can( TOC_Caps::send() ) ) {
 			wp_send_json_error( __( 'Permission denied', 'twilio-order-communicator' ) );
 		}
 
@@ -219,7 +219,7 @@ class TOC_Order_Meta {
 
 	public function ajax_history() {
 		check_ajax_referer( 'toc_nonce', 'nonce' );
-		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+		if ( ! current_user_can( TOC_Caps::manage() ) ) {
 			wp_send_json_error( __( 'Permission denied', 'twilio-order-communicator' ) );
 		}
 
