@@ -56,6 +56,14 @@ twilio-order-communicator/
 - **1.2.2** — Bulk Pickup Reminders overhaul  
 - **1.2.1** — checkbox save, Twilio signature validation, tokenized TwiML, connection test, HPOS links, uninstall  
 
+## Product analysis (sell / website)
+
+See [`docs/PRODUCT-ANALYSIS.md`](./docs/PRODUCT-ANALYSIS.md) for:
+
+- Code cleanup priorities (P0–P2)
+- Commercial feature roadmap
+- Website / licensing / branding notes for selling the plugin
+
 ## Possible next work
 
-Quiet hours for auto voice · dashboard pagination · packaging/release automation
+P0 cleanup (HPOS declare, i18n, pagination, brand headers) · checkout consent field · quiet hours · licensing + marketing site
