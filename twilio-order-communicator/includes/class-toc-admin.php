@@ -37,21 +37,28 @@ class TOC_Admin {
 
 	public function register_settings() {
 		$text_fields = array(
-			'toc_account_sid'              => 'sanitize_text_field',
-			'toc_from_number'              => 'sanitize_text_field',
-			'toc_voice'                    => array( $this, 'sanitize_voice' ),
-			'toc_sms_consent_meta'         => 'sanitize_key',
-			'toc_pickup_match'             => array( $this, 'sanitize_pickup_match' ),
-			'toc_webhook_base_url'         => array( $this, 'sanitize_webhook_base' ),
-			'toc_default_pickup_message'   => 'sanitize_textarea_field',
-			'toc_default_reminder_message' => 'sanitize_textarea_field',
-			'toc_default_issue_message'    => 'sanitize_textarea_field',
-			'toc_stop_reply'               => 'sanitize_textarea_field',
-			'toc_help_reply'               => 'sanitize_textarea_field',
-			'toc_start_reply'              => 'sanitize_textarea_field',
-			'toc_checkout_consent_label'   => 'sanitize_textarea_field',
-			'toc_quiet_hours_start'        => array( $this, 'sanitize_time' ),
-			'toc_quiet_hours_end'          => array( $this, 'sanitize_time' ),
+			'toc_account_sid'               => 'sanitize_text_field',
+			'toc_from_number'               => 'sanitize_text_field',
+			'toc_voice'                     => array( $this, 'sanitize_voice' ),
+			'toc_sms_consent_meta'          => 'sanitize_key',
+			'toc_pickup_match'              => array( $this, 'sanitize_pickup_match' ),
+			'toc_status_ready_for_pickup'   => array( $this, 'sanitize_order_status' ),
+			'toc_status_shipped'            => array( $this, 'sanitize_order_status_shipped' ),
+			'toc_webhook_base_url'          => array( $this, 'sanitize_webhook_base' ),
+			'toc_message_ready_for_pickup'  => 'sanitize_textarea_field',
+			'toc_message_shipped'           => 'sanitize_textarea_field',
+			'toc_message_reminder'          => 'sanitize_textarea_field',
+			'toc_message_issue'             => 'sanitize_textarea_field',
+			// Legacy keys kept registered so old forms / migrations do not fatal.
+			'toc_default_pickup_message'    => 'sanitize_textarea_field',
+			'toc_default_reminder_message'  => 'sanitize_textarea_field',
+			'toc_default_issue_message'     => 'sanitize_textarea_field',
+			'toc_stop_reply'                => 'sanitize_textarea_field',
+			'toc_help_reply'                => 'sanitize_textarea_field',
+			'toc_start_reply'               => 'sanitize_textarea_field',
+			'toc_checkout_consent_label'    => 'sanitize_textarea_field',
+			'toc_quiet_hours_start'         => array( $this, 'sanitize_time' ),
+			'toc_quiet_hours_end'           => array( $this, 'sanitize_time' ),
 		);
 
 		foreach ( $text_fields as $option => $cb ) {
@@ -78,13 +85,17 @@ class TOC_Admin {
 		);
 
 		$checkboxes = array(
-			'toc_auto_on_completed'         => 1,
-			'toc_auto_voice'                => 1,
-			'toc_auto_sms'                  => 0,
-			'toc_require_sms_consent'       => 1,
-			'toc_checkout_consent_enabled'  => 1,
-			'toc_checkout_consent_required' => 0,
-			'toc_quiet_hours_enabled'       => 0,
+			'toc_auto_ready_enabled'         => 1,
+			'toc_auto_ready_voice'           => 1,
+			'toc_auto_ready_sms'             => 0,
+			'toc_auto_shipped_enabled'       => 0,
+			'toc_auto_shipped_voice'         => 0,
+			'toc_auto_shipped_sms'           => 0,
+			'toc_ready_require_local_pickup' => 0,
+			'toc_require_sms_consent'        => 1,
+			'toc_checkout_consent_enabled'   => 1,
+			'toc_checkout_consent_required'  => 0,
+			'toc_quiet_hours_enabled'        => 0,
 		);
 
 		foreach ( $checkboxes as $option => $default ) {
@@ -122,6 +133,14 @@ class TOC_Admin {
 		$value = sanitize_key( $value );
 		$allowed = array( 'method_id', 'local_title', 'any_pickup' );
 		return in_array( $value, $allowed, true ) ? $value : 'local_title';
+	}
+
+	public function sanitize_order_status( $value ) {
+		return TOC_Statuses::normalize_wc_status( $value, TOC_Statuses::READY_FOR_PICKUP );
+	}
+
+	public function sanitize_order_status_shipped( $value ) {
+		return TOC_Statuses::normalize_wc_status( $value, TOC_Statuses::SHIPPED );
 	}
 
 	public function sanitize_webhook_base( $value ) {
@@ -389,6 +408,9 @@ class TOC_Admin {
 			$hide_recent = 0;
 		}
 
+		$ready_status = TOC_Statuses::mapped_ready_status();
+		$ready_label  = TOC_Statuses::all_order_statuses()[ $ready_status ] ?? TOC_Statuses::bare_status( $ready_status );
+
 		$orders = TOC_Logger::instance()->get_bulk_pickup_orders(
 			array(
 				'days'              => $days,
@@ -397,10 +419,7 @@ class TOC_Admin {
 			)
 		);
 
-		$msg = get_option(
-			'toc_default_reminder_message',
-			'Hello. This is a reminder that your order is still waiting for pickup. Please stop by at your earliest convenience. Thank you.'
-		);
+		$msg = TOC_Auto::get_message_template( 'reminder' );
 
 		$delay_default = (int) get_option( 'toc_bulk_delay_seconds', 8 );
 		if ( $delay_default < 1 ) {
@@ -409,64 +428,86 @@ class TOC_Admin {
 		$consent_required = (int) get_option( 'toc_require_sms_consent', 1 ) === 1;
 		$twilio           = TOC_Twilio::instance();
 		?>
-		<h2>Bulk Pickup Reminders</h2>
-		<p>Completed <strong>Local Pickup</strong> orders with a phone number. Voice calls never require SMS consent. SMS is only sent when the customer has consented<?php echo $consent_required ? '' : ' (consent currently disabled in Settings)'; ?>.</p>
+		<h2><?php echo esc_html__( 'Bulk Pickup Reminders', 'twilio-order-communicator' ); ?></h2>
+		<p>
+			<?php
+			echo esc_html(
+				sprintf(
+					/* translators: %s: order status label */
+					__( 'Orders currently in “%s” with a phone number. Voice calls never require SMS consent. SMS is only sent when the customer has consented', 'twilio-order-communicator' ),
+					wp_strip_all_tags( $ready_label )
+				)
+			);
+			echo $consent_required ? '' : esc_html__( ' (consent currently disabled in Settings)', 'twilio-order-communicator' );
+			echo '.';
+			?>
+		</p>
 
 		<form method="get" class="toc-filters toc-bulk-filters">
 			<input type="hidden" name="page" value="toc-communicator" />
 			<input type="hidden" name="tab" value="bulk" />
-			<label>Completed within
+			<label><?php echo esc_html__( 'Created within', 'twilio-order-communicator' ); ?>
 				<select name="days">
 					<?php foreach ( array( 7, 14, 30, 60, 90, 180 ) as $d ) : ?>
-						<option value="<?php echo (int) $d; ?>" <?php selected( $days, $d ); ?>><?php echo (int) $d; ?> days</option>
+						<option value="<?php echo (int) $d; ?>" <?php selected( $days, $d ); ?>><?php echo (int) $d; ?> <?php echo esc_html__( 'days', 'twilio-order-communicator' ); ?></option>
 					<?php endforeach; ?>
 				</select>
 			</label>
-			<label>Recently reminded
+			<label><?php echo esc_html__( 'Recently reminded', 'twilio-order-communicator' ); ?>
 				<select name="hide_recent">
-					<option value="0" <?php selected( $hide_recent, 0 ); ?>>Show all</option>
-					<option value="24" <?php selected( $hide_recent, 24 ); ?>>Hide if reminded &lt; 24h ago</option>
-					<option value="48" <?php selected( $hide_recent, 48 ); ?>>Hide if reminded &lt; 48h ago</option>
-					<option value="72" <?php selected( $hide_recent, 72 ); ?>>Hide if reminded &lt; 72h ago</option>
-					<option value="168" <?php selected( $hide_recent, 168 ); ?>>Hide if reminded &lt; 7 days ago</option>
+					<option value="0" <?php selected( $hide_recent, 0 ); ?>><?php echo esc_html__( 'Show all', 'twilio-order-communicator' ); ?></option>
+					<option value="24" <?php selected( $hide_recent, 24 ); ?>><?php echo esc_html__( 'Hide if reminded < 24h ago', 'twilio-order-communicator' ); ?></option>
+					<option value="48" <?php selected( $hide_recent, 48 ); ?>><?php echo esc_html__( 'Hide if reminded < 48h ago', 'twilio-order-communicator' ); ?></option>
+					<option value="72" <?php selected( $hide_recent, 72 ); ?>><?php echo esc_html__( 'Hide if reminded < 72h ago', 'twilio-order-communicator' ); ?></option>
+					<option value="168" <?php selected( $hide_recent, 168 ); ?>><?php echo esc_html__( 'Hide if reminded < 7 days ago', 'twilio-order-communicator' ); ?></option>
 				</select>
 			</label>
-			<button class="button">Apply filters</button>
+			<button class="button"><?php echo esc_html__( 'Apply filters', 'twilio-order-communicator' ); ?></button>
 		</form>
 
 		<?php if ( empty( $orders ) ) : ?>
-			<div class="notice notice-info inline"><p>No matching completed Local Pickup orders in this window.</p></div>
+			<div class="notice notice-info inline"><p>
+				<?php
+				echo esc_html(
+					sprintf(
+						/* translators: %s: order status label */
+						__( 'No matching “%s” orders in this window.', 'twilio-order-communicator' ),
+						wp_strip_all_tags( $ready_label )
+					)
+				);
+				?>
+			</p></div>
 		<?php else : ?>
 			<form id="toc-bulk-form">
-				<p><label for="toc-bulk-message"><strong>Message</strong></label><br>
+				<p><label for="toc-bulk-message"><strong><?php echo esc_html__( 'Message', 'twilio-order-communicator' ); ?></strong></label><br>
 				<textarea id="toc-bulk-message" rows="3" class="large-text"><?php echo esc_textarea( $msg ); ?></textarea></p>
 
 				<div class="toc-bulk-options">
-					<p><strong>Send as</strong></p>
+					<p><strong><?php echo esc_html__( 'Send as', 'twilio-order-communicator' ); ?></strong></p>
 					<p class="toc-bulk-modes">
-						<label><input type="radio" name="mode" value="call" checked> Voice call only</label>
-						<label><input type="radio" name="mode" value="sms"> SMS only <span class="description">(consent required)</span></label>
-						<label><input type="radio" name="mode" value="both"> Call + SMS when consented</label>
+						<label><input type="radio" name="mode" value="call" checked> <?php echo esc_html__( 'Voice call only', 'twilio-order-communicator' ); ?></label>
+						<label><input type="radio" name="mode" value="sms"> <?php echo esc_html__( 'SMS only', 'twilio-order-communicator' ); ?> <span class="description">(<?php echo esc_html__( 'consent required', 'twilio-order-communicator' ); ?>)</span></label>
+						<label><input type="radio" name="mode" value="both"> <?php echo esc_html__( 'Call + SMS when consented', 'twilio-order-communicator' ); ?></label>
 					</p>
 					<p>
-						<label for="toc-bulk-delay"><strong>Delay between each order</strong></label>
-						<input type="number" id="toc-bulk-delay" min="1" max="120" step="1" value="<?php echo (int) $delay_default; ?>" style="width:5em" /> seconds
-						<span class="description">Wait between each order so Twilio and your site are not flooded. Recommended 5–15s for calls.</span>
+						<label for="toc-bulk-delay"><strong><?php echo esc_html__( 'Delay between each order', 'twilio-order-communicator' ); ?></strong></label>
+						<input type="number" id="toc-bulk-delay" min="1" max="120" step="1" value="<?php echo (int) $delay_default; ?>" style="width:5em" /> <?php echo esc_html__( 'seconds', 'twilio-order-communicator' ); ?>
+						<span class="description"><?php echo esc_html__( 'Wait between each order so Twilio and your site are not flooded. Recommended 5–15s for calls.', 'twilio-order-communicator' ); ?></span>
 					</p>
 				</div>
 
-				<p class="toc-count"><?php echo (int) count( $orders ); ?> order(s) listed · <span id="toc-bulk-selected-count"></span></p>
+				<p class="toc-count"><?php echo (int) count( $orders ); ?> <?php echo esc_html__( 'order(s) listed', 'twilio-order-communicator' ); ?> · <span id="toc-bulk-selected-count"></span></p>
 
 				<table class="wp-list-table widefat fixed striped toc-bulk-table">
 					<thead>
 						<tr>
 							<td class="check-column"><input type="checkbox" id="toc-check-all" checked></td>
-							<th>Order</th>
-							<th>Customer</th>
-							<th>Phone</th>
-							<th>Completed</th>
-							<th>SMS consent</th>
-							<th>Last reminder</th>
+							<th><?php echo esc_html__( 'Order', 'twilio-order-communicator' ); ?></th>
+							<th><?php echo esc_html__( 'Customer', 'twilio-order-communicator' ); ?></th>
+							<th><?php echo esc_html__( 'Phone', 'twilio-order-communicator' ); ?></th>
+							<th><?php echo esc_html__( 'Status date', 'twilio-order-communicator' ); ?></th>
+							<th><?php echo esc_html__( 'SMS consent', 'twilio-order-communicator' ); ?></th>
+							<th><?php echo esc_html__( 'Last reminder', 'twilio-order-communicator' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -481,6 +522,7 @@ class TOC_Admin {
 								$last_lbl = date_i18n( 'M j, g:i a', $ts );
 							}
 						}
+						$mod = $order->get_date_modified();
 						?>
 						<tr data-order-id="<?php echo (int) $oid; ?>" data-consent="<?php echo $consented ? '1' : '0'; ?>">
 							<th class="check-column">
@@ -489,12 +531,12 @@ class TOC_Admin {
 							<td><a href="<?php echo esc_url( $order->get_edit_order_url() ); ?>">#<?php echo (int) $oid; ?></a></td>
 							<td><?php echo esc_html( $order->get_formatted_billing_full_name() ); ?></td>
 							<td><?php echo esc_html( $order->get_billing_phone() ); ?></td>
-							<td><?php echo $order->get_date_completed() ? esc_html( $order->get_date_completed()->date_i18n( 'M j, Y g:i a' ) ) : '—'; ?></td>
+							<td><?php echo $mod ? esc_html( $mod->date_i18n( 'M j, Y g:i a' ) ) : '—'; ?></td>
 							<td>
 								<?php if ( $consented ) : ?>
-									<span class="toc-badge toc-badge-ok">Yes</span>
+									<span class="toc-badge toc-badge-ok"><?php echo esc_html__( 'Yes', 'twilio-order-communicator' ); ?></span>
 								<?php else : ?>
-									<span class="toc-badge toc-badge-no">No</span>
+									<span class="toc-badge toc-badge-no"><?php echo esc_html__( 'No', 'twilio-order-communicator' ); ?></span>
 								<?php endif; ?>
 							</td>
 							<td><?php echo esc_html( $last_lbl ); ?></td>
@@ -504,8 +546,8 @@ class TOC_Admin {
 				</table>
 
 				<p style="margin-top:16px">
-					<button type="button" class="button button-primary button-hero" id="toc-run-bulk">Send to Selected</button>
-					<button type="button" class="button" id="toc-stop-bulk" style="display:none;margin-left:8px;">Stop</button>
+					<button type="button" class="button button-primary button-hero" id="toc-run-bulk"><?php echo esc_html__( 'Send to Selected', 'twilio-order-communicator' ); ?></button>
+					<button type="button" class="button" id="toc-stop-bulk" style="display:none;margin-left:8px;"><?php echo esc_html__( 'Stop', 'twilio-order-communicator' ); ?></button>
 					<span id="toc-bulk-status" style="margin-left:12px;"></span>
 				</p>
 				<div id="toc-bulk-log" class="toc-bulk-log" style="display:none;"></div>
@@ -521,10 +563,11 @@ class TOC_Admin {
 		<form method="post" action="options.php">
 			<?php settings_fields( 'toc_settings' ); ?>
 
-			<h2>Twilio Credentials</h2>
+			<h2><?php echo esc_html__( 'Twilio Credentials', 'twilio-order-communicator' ); ?></h2>
+			<p class="description"><?php echo esc_html__( 'Use your own Twilio account. This plugin does not provide or resell SMS, voice, or calling services — Twilio bills you directly.', 'twilio-order-communicator' ); ?></p>
 			<table class="form-table">
 				<tr>
-					<th>Account SID</th>
+					<th><?php echo esc_html__( 'Account SID', 'twilio-order-communicator' ); ?></th>
 					<td><input type="text" name="toc_account_sid" value="<?php echo esc_attr( get_option( 'toc_account_sid' ) ); ?>" class="regular-text" autocomplete="off" /></td>
 				</tr>
 				<tr>
@@ -576,44 +619,94 @@ class TOC_Admin {
 				</tr>
 			</table>
 
-			<h2>Automatic Notifications (Completed status)</h2>
+			<h2><?php echo esc_html__( 'Order Status Mapping', 'twilio-order-communicator' ); ?></h2>
+			<p class="description"><?php echo esc_html__( 'Choose which WooCommerce statuses trigger Ready for Pickup and Shipped notifications. Defaults are the statuses registered by this plugin.', 'twilio-order-communicator' ); ?></p>
 			<table class="form-table">
 				<tr>
-					<th>Enable auto notifications</th>
+					<th><?php echo esc_html__( 'Ready for Pickup status', 'twilio-order-communicator' ); ?></th>
 					<td>
-						<?php $this->checkbox( 'toc_auto_on_completed', 1 ); ?>
-						<label for="toc_auto_on_completed">When an order is marked Completed</label>
-						<p class="description">Runs once per order (order meta <code>_toc_auto_notified_at</code>). Delete that meta to allow a re-send.</p>
+						<?php $this->status_dropdown( 'toc_status_ready_for_pickup', TOC_Statuses::mapped_ready_status() ); ?>
 					</td>
 				</tr>
 				<tr>
-					<th>Auto Voice Call</th>
+					<th><?php echo esc_html__( 'Shipped status', 'twilio-order-communicator' ); ?></th>
 					<td>
-						<?php $this->checkbox( 'toc_auto_voice', 1 ); ?>
-						<label for="toc_auto_voice">Place a voice call (Local Pickup only)</label>
-						<p class="description">Voice calls do <strong>not</strong> require SMS consent.</p>
+						<?php $this->status_dropdown( 'toc_status_shipped', TOC_Statuses::mapped_shipped_status() ); ?>
+					</td>
+				</tr>
+			</table>
+
+			<h2><?php echo esc_html__( 'Automatic Notifications', 'twilio-order-communicator' ); ?></h2>
+			<p class="description"><?php echo esc_html__( 'Independent controls for each status. Uses your own Twilio account — message and call costs are billed by Twilio.', 'twilio-order-communicator' ); ?></p>
+
+			<h3><?php echo esc_html__( 'Ready for Pickup', 'twilio-order-communicator' ); ?></h3>
+			<table class="form-table">
+				<tr>
+					<th><?php echo esc_html__( 'Enable', 'twilio-order-communicator' ); ?></th>
+					<td>
+						<?php $this->checkbox( 'toc_auto_ready_enabled', 1 ); ?>
+						<label for="toc_auto_ready_enabled"><?php echo esc_html__( 'Auto-notify when an order enters the mapped Ready for Pickup status', 'twilio-order-communicator' ); ?></label>
+						<p class="description"><?php echo esc_html__( 'Runs once per order (meta', 'twilio-order-communicator' ); ?> <code>_toc_notified_ready_for_pickup_at</code>). <?php echo esc_html__( 'Delete that meta to allow a re-send.', 'twilio-order-communicator' ); ?></p>
 					</td>
 				</tr>
 				<tr>
-					<th>Auto SMS</th>
+					<th><?php echo esc_html__( 'Voice call', 'twilio-order-communicator' ); ?></th>
 					<td>
-						<?php $this->checkbox( 'toc_auto_sms', 0 ); ?>
-						<label for="toc_auto_sms">Also send an SMS (Local Pickup + consent required)</label>
-						<p class="description"><strong>Must be checked</strong> for automatic SMS. Voice and SMS are separate toggles — if this is off you will only get calls.</p>
+						<?php $this->checkbox( 'toc_auto_ready_voice', 1 ); ?>
+						<label for="toc_auto_ready_voice"><?php echo esc_html__( 'Place a voice call', 'twilio-order-communicator' ); ?></label>
+						<p class="description"><?php echo esc_html__( 'Voice calls do not require SMS consent.', 'twilio-order-communicator' ); ?></p>
 					</td>
 				</tr>
 				<tr>
-					<th>Local Pickup match</th>
+					<th><?php echo esc_html__( 'SMS', 'twilio-order-communicator' ); ?></th>
 					<td>
+						<?php $this->checkbox( 'toc_auto_ready_sms', 0 ); ?>
+						<label for="toc_auto_ready_sms"><?php echo esc_html__( 'Also send an SMS (consent required)', 'twilio-order-communicator' ); ?></label>
+					</td>
+				</tr>
+				<tr>
+					<th><?php echo esc_html__( 'Local Pickup filter', 'twilio-order-communicator' ); ?></th>
+					<td>
+						<?php $this->checkbox( 'toc_ready_require_local_pickup', 0 ); ?>
+						<label for="toc_ready_require_local_pickup"><?php echo esc_html__( 'Only auto-notify Ready for Pickup if shipping method looks like Local Pickup', 'twilio-order-communicator' ); ?></label>
+						<p class="description"><?php echo esc_html__( 'Optional secondary filter. Primary trigger is order status. Off by default for new installs.', 'twilio-order-communicator' ); ?></p>
 						<?php $pm = get_option( 'toc_pickup_match', 'local_title' ); ?>
-						<select name="toc_pickup_match">
-							<option value="method_id" <?php selected( $pm, 'method_id' ); ?>>Strict: shipping method ID = local_pickup only</option>
-							<option value="local_title" <?php selected( $pm, 'local_title' ); ?>>Recommended: method ID or title contains "local pickup"</option>
-							<option value="any_pickup" <?php selected( $pm, 'any_pickup' ); ?>>Loose (legacy): any title containing "pickup"</option>
+						<select name="toc_pickup_match" style="margin-top:8px;">
+							<option value="method_id" <?php selected( $pm, 'method_id' ); ?>><?php echo esc_html__( 'Strict: shipping method ID = local_pickup only', 'twilio-order-communicator' ); ?></option>
+							<option value="local_title" <?php selected( $pm, 'local_title' ); ?>><?php echo esc_html__( 'Recommended: method ID or title contains "local pickup"', 'twilio-order-communicator' ); ?></option>
+							<option value="any_pickup" <?php selected( $pm, 'any_pickup' ); ?>><?php echo esc_html__( 'Loose (legacy): any title containing "pickup"', 'twilio-order-communicator' ); ?></option>
 						</select>
-						<p class="description">Controls which orders get automatic calls/SMS and appear in Bulk Reminders.</p>
 					</td>
 				</tr>
+			</table>
+
+			<h3><?php echo esc_html__( 'Shipped', 'twilio-order-communicator' ); ?></h3>
+			<table class="form-table">
+				<tr>
+					<th><?php echo esc_html__( 'Enable', 'twilio-order-communicator' ); ?></th>
+					<td>
+						<?php $this->checkbox( 'toc_auto_shipped_enabled', 0 ); ?>
+						<label for="toc_auto_shipped_enabled"><?php echo esc_html__( 'Auto-notify when an order enters the mapped Shipped status', 'twilio-order-communicator' ); ?></label>
+						<p class="description"><?php echo esc_html__( 'Runs once per order (meta', 'twilio-order-communicator' ); ?> <code>_toc_notified_shipped_at</code>). <?php echo esc_html__( 'Delete that meta to allow a re-send. An order can receive both Ready for Pickup and Shipped notifications.', 'twilio-order-communicator' ); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th><?php echo esc_html__( 'Voice call', 'twilio-order-communicator' ); ?></th>
+					<td>
+						<?php $this->checkbox( 'toc_auto_shipped_voice', 0 ); ?>
+						<label for="toc_auto_shipped_voice"><?php echo esc_html__( 'Place a voice call', 'twilio-order-communicator' ); ?></label>
+					</td>
+				</tr>
+				<tr>
+					<th><?php echo esc_html__( 'SMS', 'twilio-order-communicator' ); ?></th>
+					<td>
+						<?php $this->checkbox( 'toc_auto_shipped_sms', 0 ); ?>
+						<label for="toc_auto_shipped_sms"><?php echo esc_html__( 'Also send an SMS (consent required)', 'twilio-order-communicator' ); ?></label>
+					</td>
+				</tr>
+			</table>
+
+			<table class="form-table">
 				<tr>
 					<th><?php echo esc_html__( 'Quiet hours', 'twilio-order-communicator' ); ?></th>
 					<td>
@@ -627,7 +720,7 @@ class TOC_Admin {
 								<input type="time" name="toc_quiet_hours_end" value="<?php echo esc_attr( TOC_Auto::normalize_time_option( get_option( 'toc_quiet_hours_end', '08:00' ), '08:00' ) ); ?>" />
 							</label>
 						</p>
-						<p class="description"><?php echo esc_html( sprintf( __( 'Uses the WordPress timezone (%s). Overnight windows like 21:00–08:00 are supported. Deferred with Action Scheduler when available.', 'twilio-order-communicator' ), wp_timezone_string() ) ); ?></p>
+						<p class="description"><?php echo esc_html( sprintf( __( 'Uses the WordPress timezone (%s). Overnight windows like 21:00–08:00 are supported. Deferred with Action Scheduler when available. Applies to both Ready for Pickup and Shipped.', 'twilio-order-communicator' ), wp_timezone_string() ) ); ?></p>
 					</td>
 				</tr>
 			</table>
@@ -672,20 +765,25 @@ class TOC_Admin {
 				</tr>
 			</table>
 
-			<h2>Message Templates</h2>
-			<p class="description">Merge tags: <code>{order_number}</code> <code>{order_id}</code> <code>{customer_first_name}</code> <code>{customer_last_name}</code> <code>{customer_full_name}</code> <code>{store_name}</code> <code>{phone}</code> <code>{order_total}</code> <code>{billing_email}</code></p>
+			<h2><?php echo esc_html__( 'Message Templates', 'twilio-order-communicator' ); ?></h2>
+			<p class="description"><?php echo esc_html__( 'Merge tags:', 'twilio-order-communicator' ); ?> <code>{order_number}</code> <code>{order_id}</code> <code>{customer_first_name}</code> <code>{customer_last_name}</code> <code>{customer_full_name}</code> <code>{store_name}</code> <code>{phone}</code> <code>{order_total}</code> <code>{billing_email}</code></p>
 			<table class="form-table">
 				<tr>
-					<th>Ready for Pickup</th>
-					<td><textarea name="toc_default_pickup_message" rows="3" class="large-text"><?php echo esc_textarea( get_option( 'toc_default_pickup_message', 'Hello {customer_first_name}. Your order #{order_number} is ready for pickup. Please come to the store when convenient. Thank you.' ) ); ?></textarea></td>
+					<th><?php echo esc_html__( 'Ready for Pickup', 'twilio-order-communicator' ); ?></th>
+					<td><textarea name="toc_message_ready_for_pickup" rows="3" class="large-text"><?php echo esc_textarea( TOC_Auto::get_message_template( TOC_Auto::KIND_READY ) ); ?></textarea></td>
 				</tr>
 				<tr>
-					<th>Pickup Reminder</th>
-					<td><textarea name="toc_default_reminder_message" rows="3" class="large-text"><?php echo esc_textarea( get_option( 'toc_default_reminder_message', 'Hello {customer_first_name}. This is a reminder that your order #{order_number} is still waiting for pickup. Please stop by at your earliest convenience. Thank you.' ) ); ?></textarea></td>
+					<th><?php echo esc_html__( 'Shipped', 'twilio-order-communicator' ); ?></th>
+					<td><textarea name="toc_message_shipped" rows="3" class="large-text"><?php echo esc_textarea( TOC_Auto::get_message_template( TOC_Auto::KIND_SHIPPED ) ); ?></textarea></td>
 				</tr>
 				<tr>
-					<th>Issue / Contact</th>
-					<td><textarea name="toc_default_issue_message" rows="3" class="large-text"><?php echo esc_textarea( get_option( 'toc_default_issue_message', 'Hello {customer_first_name}. There is an issue with your recent order #{order_number} that requires your attention. Please contact us or reply to this message. Thank you.' ) ); ?></textarea></td>
+					<th><?php echo esc_html__( 'Pickup Reminder', 'twilio-order-communicator' ); ?></th>
+					<td><textarea name="toc_message_reminder" rows="3" class="large-text"><?php echo esc_textarea( TOC_Auto::get_message_template( 'reminder' ) ); ?></textarea>
+					<p class="description"><?php echo esc_html__( 'Used by Bulk Reminders for orders still in Ready for Pickup.', 'twilio-order-communicator' ); ?></p></td>
+				</tr>
+				<tr>
+					<th><?php echo esc_html__( 'Issue / Contact', 'twilio-order-communicator' ); ?></th>
+					<td><textarea name="toc_message_issue" rows="3" class="large-text"><?php echo esc_textarea( TOC_Auto::get_message_template( 'issue' ) ); ?></textarea></td>
 				</tr>
 			</table>
 
@@ -737,6 +835,25 @@ class TOC_Admin {
 		);
 	}
 
+	/**
+	 * Order status dropdown for mapping settings.
+	 *
+	 * @param string $name    Option name.
+	 * @param string $current Current wc- status slug.
+	 */
+	private function status_dropdown( $name, $current ) {
+		echo '<select name="' . esc_attr( $name ) . '">';
+		foreach ( TOC_Statuses::all_order_statuses() as $slug => $label ) {
+			printf(
+				'<option value="%s" %s>%s</option>',
+				esc_attr( $slug ),
+				selected( $current, $slug, false ),
+				esc_html( wp_strip_all_tags( $label ) )
+			);
+		}
+		echo '</select>';
+	}
+
 	/* ---------- TOOLS & DOCS ---------- */
 	private function render_tools() {
 		$sms_hook = add_query_arg( 'toc_sms', '1', home_url( '/' ) );
@@ -770,31 +887,33 @@ class TOC_Admin {
 
 		<hr>
 
-		<h2>How Automatic Notifications Work</h2>
+		<h2><?php echo esc_html__( 'How Automatic Notifications Work', 'twilio-order-communicator' ); ?></h2>
 		<ul>
-			<li><strong>Only Local Pickup orders</strong> receive automatic calls/SMS when marked Completed (see Local Pickup match setting).</li>
-			<li>Shipped / Flat rate orders are never contacted automatically.</li>
-			<li>Voice calls do <strong>not</strong> require SMS consent.</li>
-			<li><strong>Auto SMS must be enabled</strong> in Settings — it is separate from Auto Voice and defaults to off.</li>
-			<li>SMS is only sent automatically if the customer has consented (when Require consent is on) and has not texted STOP.</li>
-			<li>Each order is notified once (<code>_toc_auto_notified_at</code>). Clear that meta to re-fire.</li>
-			<li>Order notes always explain if Auto SMS was skipped (setting off, no consent, Twilio error).</li>
+			<li><?php echo esc_html__( 'Primary trigger is order status (mapped Ready for Pickup and/or Shipped), not shipping method.', 'twilio-order-communicator' ); ?></li>
+			<li><?php echo esc_html__( 'Each status has independent Enable / Voice / SMS toggles and its own message template.', 'twilio-order-communicator' ); ?></li>
+			<li><?php echo esc_html__( 'An order can receive both notifications (Ready for Pickup first, later Shipped).', 'twilio-order-communicator' ); ?></li>
+			<li><?php echo esc_html__( 'Optional: restrict Ready for Pickup auto-notify to orders whose shipping method looks like Local Pickup (off by default on new installs).', 'twilio-order-communicator' ); ?></li>
+			<li><?php echo esc_html__( 'Voice calls do not require SMS consent.', 'twilio-order-communicator' ); ?></li>
+			<li><?php echo esc_html__( 'SMS is only sent automatically if the customer has consented (when Require consent is on) and has not texted STOP.', 'twilio-order-communicator' ); ?></li>
+			<li><?php echo wp_kses_post( __( 'Each status notifies once: <code>_toc_notified_ready_for_pickup_at</code> / <code>_toc_notified_shipped_at</code>. Clear the relevant meta to re-fire.', 'twilio-order-communicator' ) ); ?></li>
+			<li><?php echo esc_html__( 'Bulk Reminders target orders currently in the mapped Ready for Pickup status (uses the Reminder template).', 'twilio-order-communicator' ); ?></li>
+			<li><?php echo esc_html__( 'Order notes always explain if Auto SMS was skipped (setting off, no consent, Twilio error).', 'twilio-order-communicator' ); ?></li>
+			<li><?php echo esc_html__( 'You must use your own Twilio Account SID, Auth Token, and From Number. This plugin does not provide messaging services.', 'twilio-order-communicator' ); ?></li>
 		</ul>
 
 		<hr>
 
-		<h2>Settings Reference</h2>
+		<h2><?php echo esc_html__( 'Settings Reference', 'twilio-order-communicator' ); ?></h2>
 		<table class="widefat striped">
-			<thead><tr><th>Setting</th><th>Purpose</th></tr></thead>
+			<thead><tr><th><?php echo esc_html__( 'Setting', 'twilio-order-communicator' ); ?></th><th><?php echo esc_html__( 'Purpose', 'twilio-order-communicator' ); ?></th></tr></thead>
 			<tbody>
-				<tr><td>Account SID / Auth Token / From Number</td><td>Your Twilio credentials. From Number must be E.164 (+1…).</td></tr>
-				<tr><td>Voice</td><td>Which Twilio voice speaks the message (Alice, Man, Woman, or Polly neural voices).</td></tr>
-				<tr><td>Auto on Completed</td><td>Master switch for automatic notifications.</td></tr>
-				<tr><td>Auto Voice Call</td><td>Place a voice call for Local Pickup orders.</td></tr>
-				<tr><td>Auto SMS</td><td>Also send SMS (only if consent exists).</td></tr>
-				<tr><td>Require SMS consent</td><td>Block automatic/bulk SMS unless the customer opted in.</td></tr>
-				<tr><td>Consent meta key</td><td>Order meta field that stores the opt-in (default <code>_toc_sms_consent</code>).</td></tr>
-				<tr><td>Message templates</td><td>Default text used by auto-calls, quick buttons, and bulk tool.</td></tr>
+				<tr><td><?php echo esc_html__( 'Account SID / Auth Token / From Number', 'twilio-order-communicator' ); ?></td><td><?php echo esc_html__( 'Your Twilio credentials (bring your own account). From Number must be E.164 (+1…).', 'twilio-order-communicator' ); ?></td></tr>
+				<tr><td><?php echo esc_html__( 'Status mapping', 'twilio-order-communicator' ); ?></td><td><?php echo esc_html__( 'Which WooCommerce statuses trigger Ready for Pickup / Shipped logic.', 'twilio-order-communicator' ); ?></td></tr>
+				<tr><td><?php echo esc_html__( 'Ready for Pickup / Shipped toggles', 'twilio-order-communicator' ); ?></td><td><?php echo esc_html__( 'Per-status enable, voice, and SMS controls.', 'twilio-order-communicator' ); ?></td></tr>
+				<tr><td><?php echo esc_html__( 'Local Pickup filter', 'twilio-order-communicator' ); ?></td><td><?php echo esc_html__( 'Optional secondary check for Ready for Pickup auto-notify only.', 'twilio-order-communicator' ); ?></td></tr>
+				<tr><td><?php echo esc_html__( 'Require SMS consent', 'twilio-order-communicator' ); ?></td><td><?php echo esc_html__( 'Block automatic/bulk SMS unless the customer opted in.', 'twilio-order-communicator' ); ?></td></tr>
+				<tr><td><?php echo esc_html__( 'Consent meta key', 'twilio-order-communicator' ); ?></td><td><?php echo wp_kses_post( __( 'Order meta field that stores the opt-in (default <code>_toc_sms_consent</code>).', 'twilio-order-communicator' ) ); ?></td></tr>
+				<tr><td><?php echo esc_html__( 'Message templates', 'twilio-order-communicator' ); ?></td><td><?php echo esc_html__( 'Default text for Ready for Pickup, Shipped, reminders, and Issue / Contact.', 'twilio-order-communicator' ); ?></td></tr>
 			</tbody>
 		</table>
 		<?php

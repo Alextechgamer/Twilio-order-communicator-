@@ -7,6 +7,9 @@ class TOC_Auto {
 
 	const DEFERRED_HOOK = 'toc_deferred_auto_notify';
 
+	const KIND_READY   = 'ready_for_pickup';
+	const KIND_SHIPPED = 'shipped';
+
 	private static $instance = null;
 
 	public static function instance() {
@@ -17,12 +20,13 @@ class TOC_Auto {
 	}
 
 	private function __construct() {
-		add_action( 'woocommerce_order_status_completed', array( $this, 'on_completed' ), 25, 1 );
-		add_action( self::DEFERRED_HOOK, array( $this, 'run_deferred' ), 10, 1 );
+		add_action( 'woocommerce_order_status_changed', array( $this, 'on_status_changed' ), 25, 4 );
+		add_action( self::DEFERRED_HOOK, array( $this, 'run_deferred' ), 10, 2 );
 	}
 
 	/**
 	 * Local Pickup detection — mode from Settings (toc_pickup_match).
+	 * Optional secondary filter when toc_ready_require_local_pickup is on.
 	 * method_id | local_title (default) | any_pickup (legacy loose)
 	 */
 	public static function is_local_pickup( $order ) {
@@ -129,20 +133,119 @@ class TOC_Auto {
 		return sprintf( '%02d:%02d', $h, $m );
 	}
 
-	public function on_completed( $order_id ) {
-		$this->process_order( (int) $order_id, false );
-	}
+	/**
+	 * Message template with fallback to legacy option keys.
+	 *
+	 * @param string $kind KIND_READY | KIND_SHIPPED | 'reminder' | 'issue'
+	 * @return string
+	 */
+	public static function get_message_template( $kind ) {
+		$defaults = array(
+			self::KIND_READY   => 'Hello {customer_first_name}. Your order #{order_number} is ready for pickup. Please come to the store when convenient. Thank you.',
+			self::KIND_SHIPPED => 'Hello {customer_first_name}. Your order #{order_number} has shipped. Thank you for your order.',
+			'reminder'         => 'Hello {customer_first_name}. This is a reminder that your order #{order_number} is still waiting for pickup. Please stop by at your earliest convenience. Thank you.',
+			'issue'            => 'Hello {customer_first_name}. There is an issue with your recent order #{order_number} that requires your attention. Please contact us or reply to this message. Thank you.',
+		);
 
-	public function run_deferred( $order_id ) {
-		$this->process_order( (int) $order_id, true );
+		$map = array(
+			self::KIND_READY   => array( 'toc_message_ready_for_pickup', 'toc_default_pickup_message' ),
+			self::KIND_SHIPPED => array( 'toc_message_shipped' ),
+			'reminder'         => array( 'toc_message_reminder', 'toc_default_reminder_message' ),
+			'issue'            => array( 'toc_message_issue', 'toc_default_issue_message' ),
+		);
+
+		if ( ! isset( $map[ $kind ] ) ) {
+			return '';
+		}
+
+		$default = $defaults[ $kind ] ?? '';
+		foreach ( $map[ $kind ] as $option_key ) {
+			$val = get_option( $option_key, null );
+			if ( null !== $val && false !== $val && $val !== '' ) {
+				return (string) $val;
+			}
+		}
+
+		return $default;
 	}
 
 	/**
-	 * @param int  $order_id Order ID.
-	 * @param bool $from_deferred Whether this run came from the deferred hook.
+	 * Config for a notification kind.
+	 *
+	 * @param string $kind KIND_READY | KIND_SHIPPED
+	 * @return array|null
 	 */
-	private function process_order( $order_id, $from_deferred = false ) {
-		if ( ! get_option( 'toc_auto_on_completed', 1 ) ) {
+	public static function kind_config( $kind ) {
+		if ( $kind === self::KIND_READY ) {
+			return array(
+				'kind'          => self::KIND_READY,
+				'label'         => __( 'Ready for Pickup', 'twilio-order-communicator' ),
+				'enabled'       => (int) get_option( 'toc_auto_ready_enabled', 1 ) === 1,
+				'voice'         => (int) get_option( 'toc_auto_ready_voice', 1 ) === 1,
+				'sms'           => (int) get_option( 'toc_auto_ready_sms', 0 ) === 1,
+				'meta'          => '_toc_notified_ready_for_pickup_at',
+				'deferred_meta' => '_toc_deferred_ready_until',
+				'message'       => self::get_message_template( self::KIND_READY ),
+				'mapped_status' => TOC_Statuses::mapped_ready_status(),
+			);
+		}
+		if ( $kind === self::KIND_SHIPPED ) {
+			return array(
+				'kind'          => self::KIND_SHIPPED,
+				'label'         => __( 'Shipped', 'twilio-order-communicator' ),
+				'enabled'       => (int) get_option( 'toc_auto_shipped_enabled', 0 ) === 1,
+				'voice'         => (int) get_option( 'toc_auto_shipped_voice', 0 ) === 1,
+				'sms'           => (int) get_option( 'toc_auto_shipped_sms', 0 ) === 1,
+				'meta'          => '_toc_notified_shipped_at',
+				'deferred_meta' => '_toc_deferred_shipped_until',
+				'message'       => self::get_message_template( self::KIND_SHIPPED ),
+				'mapped_status' => TOC_Statuses::mapped_shipped_status(),
+			);
+		}
+		return null;
+	}
+
+	/**
+	 * @param int    $order_id   Order ID.
+	 * @param string $from       Previous status (bare).
+	 * @param string $to         New status (bare).
+	 * @param object $order      WC_Order.
+	 */
+	public function on_status_changed( $order_id, $from, $to, $order ) {
+		$order_id = absint( $order_id );
+		$to       = (string) $to;
+
+		$ready_bare   = TOC_Statuses::bare_status( TOC_Statuses::mapped_ready_status() );
+		$shipped_bare = TOC_Statuses::bare_status( TOC_Statuses::mapped_shipped_status() );
+
+		if ( $to === $ready_bare ) {
+			$this->process_order( $order_id, self::KIND_READY, false );
+		}
+		if ( $to === $shipped_bare ) {
+			$this->process_order( $order_id, self::KIND_SHIPPED, false );
+		}
+	}
+
+	/**
+	 * @param int         $order_id Order ID.
+	 * @param string|null $kind     Notification kind (defaults to ready for legacy deferred jobs).
+	 */
+	public function run_deferred( $order_id, $kind = null ) {
+		$kind = is_string( $kind ) && $kind !== '' ? $kind : self::KIND_READY;
+		if ( ! in_array( $kind, array( self::KIND_READY, self::KIND_SHIPPED ), true ) ) {
+			$kind = self::KIND_READY;
+		}
+		$this->process_order( (int) $order_id, $kind, true );
+	}
+
+	/**
+	 * @param int    $order_id      Order ID.
+	 * @param string $kind          KIND_READY | KIND_SHIPPED.
+	 * @param bool   $from_deferred Whether this run came from the deferred hook.
+	 */
+	private function process_order( $order_id, $kind, $from_deferred = false ) {
+		$config = self::kind_config( $kind );
+		if ( ! $config || ! $config['enabled'] ) {
 			return;
 		}
 
@@ -151,25 +254,59 @@ class TOC_Auto {
 			return;
 		}
 
-		if ( $order->get_meta( '_toc_auto_notified_at' ) ) {
+		// Still on the mapped status? (status may have changed while deferred).
+		$current = $order->get_status();
+		$expected = TOC_Statuses::bare_status( $config['mapped_status'] );
+		if ( $current !== $expected ) {
 			return;
 		}
 
-		if ( ! self::is_local_pickup( $order ) ) {
+		if ( $order->get_meta( $config['meta'] ) ) {
 			return;
+		}
+
+		// Legacy 1.5.x meta: treat as already notified for Ready for Pickup.
+		if ( $kind === self::KIND_READY && $order->get_meta( '_toc_auto_notified_at' ) ) {
+			$order->update_meta_data( $config['meta'], $order->get_meta( '_toc_auto_notified_at' ) );
+			$order->save();
+			return;
+		}
+
+		if ( ! $config['voice'] && ! $config['sms'] ) {
+			$order->add_order_note(
+				sprintf(
+					/* translators: %s: notification label */
+					__( 'Auto notification skipped (%s): voice and SMS are both disabled.', 'twilio-order-communicator' ),
+					$config['label']
+				)
+			);
+			$order->update_meta_data( $config['meta'], time() );
+			$order->save();
+			return;
+		}
+
+		// Optional Local Pickup filter (Ready for Pickup only).
+		if ( $kind === self::KIND_READY && (int) get_option( 'toc_ready_require_local_pickup', 0 ) === 1 ) {
+			if ( ! self::is_local_pickup( $order ) ) {
+				$order->add_order_note(
+					__( 'Auto notification skipped (Ready for Pickup): shipping method does not look like Local Pickup.', 'twilio-order-communicator' )
+				);
+				return;
+			}
 		}
 
 		// Quiet hours: defer instead of calling/texting now.
 		if ( self::is_quiet_hours() ) {
 			$when = self::next_quiet_hours_end_timestamp();
-			$order->update_meta_data( '_toc_auto_deferred_until', $when );
+			$order->update_meta_data( $config['deferred_meta'], $when );
 			$order->save();
-			$this->schedule_deferred( $order_id, $when );
+			$this->schedule_deferred( $order_id, $kind, $when );
 
 			$order->add_order_note(
 				sprintf(
-					/* translators: %s: local datetime when notification will run */
-					__( 'Auto notification deferred (quiet hours). Scheduled for %s.', 'twilio-order-communicator' ),
+					/* translators: 1: notification label, 2: local datetime when notification will run */
+					__( 'Auto notification deferred (quiet hours, %1$s). Scheduled for %2$s.', 'twilio-order-communicator' ),
+					$config['label'],
 					wp_date( 'M j, Y g:i a', $when )
 				)
 			);
@@ -178,82 +315,110 @@ class TOC_Auto {
 
 		$phone = $order->get_billing_phone();
 		if ( empty( $phone ) ) {
-			$order->add_order_note( __( 'Auto notification skipped: no phone number.', 'twilio-order-communicator' ) );
+			$order->add_order_note(
+				sprintf(
+					/* translators: %s: notification label */
+					__( 'Auto notification skipped (%s): no phone number.', 'twilio-order-communicator' ),
+					$config['label']
+				)
+			);
+			// Still stamp so we do not retry endlessly on every status touch.
+			$order->update_meta_data( $config['meta'], time() );
+			$order->delete_meta_data( $config['deferred_meta'] );
+			$order->save();
 			return;
 		}
 
-		$raw_message = get_option(
-			'toc_default_pickup_message',
-			'Hello {customer_first_name}. Your order #{order_number} is ready for pickup. Please come to the store when convenient. Thank you.'
-		);
 		$twilio  = TOC_Twilio::instance();
-		$message = $twilio->merge_tags( $raw_message, $order );
+		$message = $twilio->merge_tags( $config['message'], $order );
 
-		if ( get_option( 'toc_auto_voice', 1 ) ) {
+		if ( $config['voice'] ) {
 			$result = $twilio->make_call( $phone, $message, $order_id );
 			if ( ! empty( $result['success'] ) ) {
 				$order->add_order_note(
 					sprintf(
-						/* translators: %s: Twilio call SID */
-						__( 'Auto voice call placed (Ready for Pickup). SID: %s', 'twilio-order-communicator' ),
+						/* translators: 1: notification label, 2: Twilio call SID */
+						__( 'Auto voice call placed (%1$s). SID: %2$s', 'twilio-order-communicator' ),
+						$config['label'],
 						$result['sid']
 					)
 				);
 			} else {
 				$order->add_order_note(
 					sprintf(
-						/* translators: %s: error message */
-						__( 'Auto voice call failed: %s', 'twilio-order-communicator' ),
+						/* translators: 1: notification label, 2: error message */
+						__( 'Auto voice call failed (%1$s): %2$s', 'twilio-order-communicator' ),
+						$config['label'],
 						$result['error'] ?? 'unknown'
 					)
 				);
 			}
 		}
 
-		if ( get_option( 'toc_auto_sms', 0 ) ) {
+		if ( $config['sms'] ) {
 			$result = $twilio->send_sms( $phone, $message, $order_id, false );
 			if ( ! empty( $result['success'] ) ) {
-				$order->add_order_note( __( 'Auto SMS sent (Ready for Pickup).', 'twilio-order-communicator' ) );
+				$order->add_order_note(
+					sprintf(
+						/* translators: %s: notification label */
+						__( 'Auto SMS sent (%s).', 'twilio-order-communicator' ),
+						$config['label']
+					)
+				);
 			} else {
 				$order->add_order_note(
 					sprintf(
-						/* translators: %s: error / skip reason */
-						__( 'Auto SMS not sent: %s', 'twilio-order-communicator' ),
+						/* translators: 1: notification label, 2: error / skip reason */
+						__( 'Auto SMS not sent (%1$s): %2$s', 'twilio-order-communicator' ),
+						$config['label'],
 						$result['error'] ?? 'unknown'
 					)
 				);
 			}
 		} else {
 			$order->add_order_note(
-				__( 'Auto SMS skipped: "Also send an SMS" is disabled in Order Communicator → Settings.', 'twilio-order-communicator' )
+				sprintf(
+					/* translators: %s: notification label */
+					__( 'Auto SMS skipped (%s): SMS toggle is disabled in Order Communicator → Settings.', 'twilio-order-communicator' ),
+					$config['label']
+				)
 			);
 		}
 
-		$order->delete_meta_data( '_toc_auto_deferred_until' );
-		$order->update_meta_data( '_toc_auto_notified_at', time() );
+		$order->delete_meta_data( $config['deferred_meta'] );
+		$order->update_meta_data( $config['meta'], time() );
 		if ( $from_deferred ) {
-			$order->add_order_note( __( 'Deferred auto notification completed after quiet hours.', 'twilio-order-communicator' ) );
+			$order->add_order_note(
+				sprintf(
+					/* translators: %s: notification label */
+					__( 'Deferred auto notification completed after quiet hours (%s).', 'twilio-order-communicator' ),
+					$config['label']
+				)
+			);
 		}
 		$order->save();
 	}
 
-	private function schedule_deferred( $order_id, $timestamp ) {
+	private function schedule_deferred( $order_id, $kind, $timestamp ) {
 		$order_id  = absint( $order_id );
 		$timestamp = absint( $timestamp );
-		if ( ! $order_id || ! $timestamp ) {
+		$kind      = sanitize_key( $kind );
+		if ( ! $order_id || ! $timestamp || ! $kind ) {
 			return;
 		}
 
+		$args = array( $order_id, $kind );
+
 		if ( function_exists( 'as_has_scheduled_action' ) && function_exists( 'as_schedule_single_action' ) ) {
-			if ( ! as_has_scheduled_action( self::DEFERRED_HOOK, array( $order_id ), 'toc' ) ) {
-				as_schedule_single_action( $timestamp, self::DEFERRED_HOOK, array( $order_id ), 'toc' );
+			if ( ! as_has_scheduled_action( self::DEFERRED_HOOK, $args, 'toc' ) ) {
+				as_schedule_single_action( $timestamp, self::DEFERRED_HOOK, $args, 'toc' );
 			}
 			return;
 		}
 
 		$hook = self::DEFERRED_HOOK;
-		if ( ! wp_next_scheduled( $hook, array( $order_id ) ) ) {
-			wp_schedule_single_event( $timestamp, $hook, array( $order_id ) );
+		if ( ! wp_next_scheduled( $hook, $args ) ) {
+			wp_schedule_single_event( $timestamp, $hook, $args );
 		}
 	}
 }
