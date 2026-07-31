@@ -8,3 +8,7 @@ Thumbs.db
 node_modules/
 vendor/
 .cursor/
+
+smoke-wp/
+license-server/config.php
+*.sqlite

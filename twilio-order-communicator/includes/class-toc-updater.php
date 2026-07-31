@@ -27,6 +27,38 @@ class TOC_Updater {
 	}
 
 	/**
+	 * Transient name for a license key's cached update answer.
+	 *
+	 * @param string $key License key.
+	 * @return string
+	 */
+	private static function cache_key( $key ) {
+		return 'toc_update_check_' . md5( (string) $key . TOC_VERSION );
+	}
+
+	/**
+	 * Drop cached update answers so the next check hits the license server.
+	 * Called when license state changes; steady-state checks keep the 6-hour cache.
+	 *
+	 * @param array $keys License keys to clear in addition to the stored one.
+	 */
+	public static function flush_update_cache( $keys = array() ) {
+		$keys   = array_map( 'strval', (array) $keys );
+		$keys[] = (string) get_option( 'toc_license_key', '' );
+
+		foreach ( array_unique( array_filter( $keys ) ) as $key ) {
+			delete_site_transient( self::cache_key( $key ) );
+		}
+
+		if ( self::$instance instanceof self ) {
+			self::$instance->plugin_info = null;
+		}
+
+		// Force WordPress to rebuild its plugin update list on the next request.
+		delete_site_transient( 'update_plugins' );
+	}
+
+	/**
 	 * @param object $transient Update transient.
 	 * @return object
 	 */
@@ -112,7 +144,7 @@ class TOC_Updater {
 			return null;
 		}
 
-		$cache_key = 'toc_update_check_' . md5( $key . TOC_VERSION );
+		$cache_key = self::cache_key( $key );
 		$cached    = get_site_transient( $cache_key );
 		if ( is_object( $cached ) ) {
 			$this->plugin_info = $cached;

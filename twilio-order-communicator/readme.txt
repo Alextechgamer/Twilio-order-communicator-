@@ -4,7 +4,7 @@ Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
 WC requires at least: 7.0
-Stable tag: 1.8.0
+Stable tag: 1.8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -78,6 +78,12 @@ No. The plugin includes its own tokenized TwiML endpoint.
 They text START or UNSTOP. Plain "YES" is intentionally not treated as re-subscribe.
 
 == Changelog ==
+
+= 1.8.1 =
+* Fix: license data option no longer nests its own payload on every activate/validate
+* Fix: unschedule the daily license check on plugin deactivation and uninstall
+* Fix: clear cached update checks when a license becomes active, so updates appear right away
+* Fix: Ready for Pickup orders skipped by the optional Local Pickup filter no longer add a repeat order note on every save
 
 = 1.8.0 =
 * Custom first-party licensing client (activate / deactivate / validate) — does not lock SMS/voice
