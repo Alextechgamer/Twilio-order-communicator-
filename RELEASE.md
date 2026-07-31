@@ -12,9 +12,10 @@ Run from the repo root. The zip contains **only** the plugin folder — `license
 
 ```bash
 cd /path/to/repo
-rm -f twilio-order-communicator-1.8.0.zip
+VERSION=1.8.1
+rm -f twilio-order-communicator-${VERSION}.zip
 
-zip -r -X twilio-order-communicator-1.8.0.zip twilio-order-communicator \
+zip -r -X twilio-order-communicator-${VERSION}.zip twilio-order-communicator \
   -x '*/.git/*' '*/.git' \
   -x '*/node_modules/*' \
   -x '*.DS_Store' '*/.DS_Store' \
@@ -26,8 +27,8 @@ zip -r -X twilio-order-communicator-1.8.0.zip twilio-order-communicator \
 Verify before shipping:
 
 ```bash
-unzip -l twilio-order-communicator-1.8.0.zip | head -5   # single top-level folder
-unzip -l twilio-order-communicator-1.8.0.zip | grep -c license-server   # must be 0
+unzip -l twilio-order-communicator-${VERSION}.zip | head -5   # single top-level folder
+unzip -l twilio-order-communicator-${VERSION}.zip | grep -c license-server   # must be 0
 ```
 
 WordPress requires exactly one top-level directory (`twilio-order-communicator/`) inside the archive.
@@ -67,7 +68,7 @@ curl https://licenses.example.com/v1/health
 
 ---
 
-## 3. Create a key and register the 1.8.0 release
+## 3. Create a key and register the release
 
 ```bash
 cd /path/to/license-server
@@ -75,12 +76,14 @@ cd /path/to/license-server
 # One key per customer. Prints the key once — store it in your records.
 php bin/create-key.php --email=customer@example.com --sites=1 --expires=lifetime
 
-# Register the release so licensed sites can update to it
+# Register 1.8.1 so licensed sites can update to it
 php bin/add-release.php \
-  --version=1.8.0 \
-  --file=/path/to/twilio-order-communicator-1.8.0.zip \
-  --changelog="Custom licensing + P0 hardening"
+  --version=1.8.1 \
+  --file=/path/to/twilio-order-communicator-1.8.1.zip \
+  --changelog="Fix G1–G4: license data nesting, cron cleanup, update cache flush, Local Pickup skip meta"
 ```
+
+(For historical reference, 1.8.0 was registered the same way with `--version=1.8.0` and the 1.8.0 zip.)
 
 Key options:
 
