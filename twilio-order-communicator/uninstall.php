@@ -9,6 +9,24 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 
 global $wpdb;
 
+// Scheduled work must go before the data it depends on.
+$toc_hooks = array(
+	'toc_license_validate_cron',
+	'toc_deferred_auto_notify',
+);
+
+foreach ( $toc_hooks as $toc_hook ) {
+	if ( function_exists( 'as_unschedule_all_actions' ) ) {
+		// null args = every scheduled job for this hook in group toc (deferred notify carries order args).
+		as_unschedule_all_actions( $toc_hook, null, 'toc' );
+	}
+	if ( function_exists( 'wp_unschedule_hook' ) ) {
+		wp_unschedule_hook( $toc_hook );
+	} else {
+		wp_clear_scheduled_hook( $toc_hook );
+	}
+}
+
 $tables = array(
 	$wpdb->prefix . 'toc_communications',
 	$wpdb->prefix . 'toc_sms_opt_outs',
@@ -71,6 +89,19 @@ $options = array(
 	'toc_license_instance_id',
 	'toc_license_server_url',
 );
+
+// Cached update answers are keyed by license key + plugin version. TOC_VERSION is not
+// defined during uninstall (only this file is loaded), so wipe by name pattern.
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+$wpdb->query(
+	"DELETE FROM {$wpdb->options} WHERE option_name LIKE '_site_transient_toc_update_check_%' OR option_name LIKE '_site_transient_timeout_toc_update_check_%'"
+);
+if ( is_multisite() ) {
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	$wpdb->query(
+		"DELETE FROM {$wpdb->sitemeta} WHERE meta_key LIKE '_site_transient_toc_update_check_%' OR meta_key LIKE '_site_transient_timeout_toc_update_check_%'"
+	);
+}
 
 foreach ( $options as $option ) {
 	delete_option( $option );
