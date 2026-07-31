@@ -703,6 +703,9 @@ class TOC_Logger {
 		$cutoff     = $skip > 0 ? ( time() - ( $skip * HOUR_IN_SECONDS ) ) : 0;
 
 		foreach ( $orders as $order ) {
+			if ( class_exists( 'TOC_Order_Meta' ) && TOC_Order_Meta::is_collected( $order ) ) {
+				continue;
+			}
 			if ( (int) get_option( 'toc_ready_require_local_pickup', 0 ) === 1 && ! TOC_Auto::is_local_pickup( $order ) ) {
 				continue;
 			}

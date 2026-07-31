@@ -4,30 +4,164 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Dashboard tab UI.
+ * Dashboard tab UI + CSV export.
  */
 trait TOC_Admin_Dashboard {
+
+	/**
+	 * Build filter args from the current request (GET), matching the Dashboard form.
+	 *
+	 * @return array
+	 */
+	private function dashboard_filter_args_from_request() {
+		return array(
+			'type'      => isset( $_GET['type'] ) ? sanitize_key( wp_unslash( $_GET['type'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			'direction' => isset( $_GET['direction'] ) ? sanitize_key( wp_unslash( $_GET['direction'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			'resolved'  => isset( $_GET['resolved'] ) ? sanitize_text_field( wp_unslash( $_GET['resolved'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			'search'    => isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			'date_from' => isset( $_GET['date_from'] ) ? sanitize_text_field( wp_unslash( $_GET['date_from'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			'date_to'   => isset( $_GET['date_to'] ) ? sanitize_text_field( wp_unslash( $_GET['date_to'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		);
+	}
+
+	/**
+	 * Escape a single CSV field (RFC 4180-ish).
+	 *
+	 * @param mixed $value Cell value.
+	 * @return string
+	 */
+	private function csv_escape_field( $value ) {
+		$value = (string) $value;
+		// Normalize line endings inside cells.
+		$value = str_replace( array( "\r\n", "\r" ), "\n", $value );
+		if ( strpbrk( $value, ",\"\n" ) !== false ) {
+			$value = '"' . str_replace( '"', '""', $value ) . '"';
+		}
+		return $value;
+	}
+
+	/**
+	 * admin-post.php?action=toc_export_csv — stream filtered communications as CSV.
+	 */
+	public function handle_export_csv() {
+		if ( ! current_user_can( TOC_Caps::manage() ) ) {
+			wp_die( esc_html__( 'Permission denied', 'twilio-order-communicator' ), 403 );
+		}
+
+		check_admin_referer( 'toc_export_csv' );
+
+		$filters = $this->dashboard_filter_args_from_request();
+		$logger  = TOC_Logger::instance();
+		$total   = $logger->count_filtered( $filters );
+
+		$filename = 'toc-communications-' . gmdate( 'Y-m-d-His' ) . '.csv';
+
+		nocache_headers();
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+		header( 'X-Content-Type-Options: nosniff' );
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- stream download, not filesystem write.
+		$out = fopen( 'php://output', 'w' );
+		if ( ! $out ) {
+			wp_die( esc_html__( 'Could not open output stream.', 'twilio-order-communicator' ) );
+		}
+
+		// UTF-8 BOM for Excel.
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite
+		fwrite( $out, "\xEF\xBB\xBF" );
+
+		$headers = array( 'date', 'order_id', 'phone', 'type', 'direction', 'message', 'status', 'resolved' );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite
+		fwrite( $out, implode( ',', $headers ) . "\n" );
+
+		// Paginated fetch so large logs do not OOM.
+		$chunk  = 500;
+		$offset = 0;
+		$max    = 50000; // hard safety cap per export.
+		$written = 0;
+
+		while ( $offset < $total && $written < $max ) {
+			$rows = $logger->get_filtered(
+				array_merge(
+					$filters,
+					array(
+						'limit'  => $chunk,
+						'offset' => $offset,
+					)
+				)
+			);
+			if ( empty( $rows ) ) {
+				break;
+			}
+
+			foreach ( $rows as $row ) {
+				$line = array(
+					$this->csv_escape_field( $row->created_at ?? '' ),
+					$this->csv_escape_field( $row->order_id ?? '' ),
+					$this->csv_escape_field( $row->phone ?? '' ),
+					$this->csv_escape_field( $row->type ?? '' ),
+					$this->csv_escape_field( $row->direction ?? '' ),
+					$this->csv_escape_field( $row->body ?? '' ),
+					$this->csv_escape_field( $row->status ?? '' ),
+					$this->csv_escape_field( ! empty( $row->resolved ) ? '1' : '0' ),
+				);
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite
+				fwrite( $out, implode( ',', $line ) . "\n" );
+				$written++;
+				if ( $written >= $max ) {
+					break 2;
+				}
+			}
+
+			$offset += $chunk;
+			// Free memory between chunks when possible.
+			unset( $rows );
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+		fclose( $out );
+		exit;
+	}
 
 	/* ---------- DASHBOARD ---------- */
 	private function render_dashboard() {
 		$logger   = TOC_Logger::instance();
 		$stats    = $logger->get_stats();
 		$per_page = 40;
-		$page_num = isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1;
+		$page_num = isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
-		$filters = array(
-			'type'      => isset( $_GET['type'] ) ? sanitize_key( wp_unslash( $_GET['type'] ) ) : '',
-			'direction' => isset( $_GET['direction'] ) ? sanitize_key( wp_unslash( $_GET['direction'] ) ) : '',
-			'resolved'  => isset( $_GET['resolved'] ) ? sanitize_text_field( wp_unslash( $_GET['resolved'] ) ) : '',
-			'search'    => isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '',
-			'date_from' => isset( $_GET['date_from'] ) ? sanitize_text_field( wp_unslash( $_GET['date_from'] ) ) : '',
-			'date_to'   => isset( $_GET['date_to'] ) ? sanitize_text_field( wp_unslash( $_GET['date_to'] ) ) : '',
-			'limit'     => $per_page,
-			'offset'    => ( $page_num - 1 ) * $per_page,
+		$filters = array_merge(
+			$this->dashboard_filter_args_from_request(),
+			array(
+				'limit'  => $per_page,
+				'offset' => ( $page_num - 1 ) * $per_page,
+			)
 		);
 		$results     = $logger->get_filtered( $filters );
 		$total       = $logger->count_filtered( $filters );
 		$total_pages = max( 1, (int) ceil( $total / $per_page ) );
+
+		$export_args = array_merge(
+			array(
+				'action'   => 'toc_export_csv',
+				'_wpnonce' => wp_create_nonce( 'toc_export_csv' ),
+			),
+			array_filter(
+				array(
+					'type'      => $filters['type'],
+					'direction' => $filters['direction'],
+					'resolved'  => $filters['resolved'],
+					's'         => $filters['search'],
+					'date_from' => $filters['date_from'],
+					'date_to'   => $filters['date_to'],
+				),
+				static function ( $v ) {
+					return $v !== '' && $v !== null;
+				}
+			)
+		);
+		$export_url = add_query_arg( $export_args, admin_url( 'admin-post.php' ) );
 		?>
 		<div class="toc-stats">
 			<div class="toc-stat"><span class="num"><?php echo (int) $stats['today_sms']; ?></span><span class="lbl"><?php echo esc_html__( 'SMS today', 'twilio-order-communicator' ); ?></span></div>
@@ -58,6 +192,7 @@ trait TOC_Admin_Dashboard {
 			<input type="search" name="s" value="<?php echo esc_attr( $filters['search'] ); ?>" placeholder="<?php echo esc_attr__( 'Search…', 'twilio-order-communicator' ); ?>" />
 			<button class="button"><?php echo esc_html__( 'Filter', 'twilio-order-communicator' ); ?></button>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator' ) ); ?>" class="button"><?php echo esc_html__( 'Reset', 'twilio-order-communicator' ); ?></a>
+			<a href="<?php echo esc_url( $export_url ); ?>" class="button button-secondary"><?php echo esc_html__( 'Export CSV', 'twilio-order-communicator' ); ?></a>
 		</form>
 
 		<p class="toc-count">

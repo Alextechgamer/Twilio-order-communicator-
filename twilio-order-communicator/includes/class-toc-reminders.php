@@ -86,6 +86,10 @@ class TOC_Reminders {
 
 		if ( $to === $ready_bare ) {
 			if ( self::is_enabled() ) {
+				// Do not schedule for already-collected orders.
+				if ( class_exists( 'TOC_Order_Meta' ) && TOC_Order_Meta::is_collected( $order_id ) ) {
+					return;
+				}
 				$this->schedule_for_order( $order_id );
 			}
 			return;
@@ -106,6 +110,9 @@ class TOC_Reminders {
 	public function schedule_for_order( $order_id, $timestamp = null ) {
 		$order_id = absint( $order_id );
 		if ( ! $order_id || ! self::is_enabled() ) {
+			return;
+		}
+		if ( class_exists( 'TOC_Order_Meta' ) && TOC_Order_Meta::is_collected( $order_id ) ) {
 			return;
 		}
 
@@ -179,6 +186,14 @@ class TOC_Reminders {
 
 		$order = wc_get_order( $order_id );
 		if ( ! $order ) {
+			return;
+		}
+
+		// Collected after schedule was created.
+		if ( class_exists( 'TOC_Order_Meta' ) && TOC_Order_Meta::is_collected( $order ) ) {
+			$order->add_order_note(
+				__( 'Scheduled pickup reminder skipped: order is marked as collected.', 'twilio-order-communicator' )
+			);
 			return;
 		}
 
