@@ -4,7 +4,7 @@ Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
 WC requires at least: 7.0
-Stable tag: 1.10.0
+Stable tag: 1.11.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -28,6 +28,7 @@ Twilio Order Communicator turns every WooCommerce order into a communication hub
 * Optional scheduled pickup reminders after a configurable delay (Action Scheduler)
 * Dashboard CSV export of filtered communications
 * Mark order as collected (suppresses auto-notify / bulk / scheduled reminders)
+* Optional email alerts when Twilio reports SMS failed or undelivered
 * Optional SMS compliance footer + Privacy Policy helper text
 * Filterable capabilities and optional wp-config credential constants
 * Optional first-party license key for premium updates (messaging works without a license)
@@ -81,6 +82,12 @@ No. The plugin includes its own tokenized TwiML endpoint.
 They text START or UNSTOP. Plain "YES" is intentionally not treated as re-subscribe.
 
 == Changelog ==
+
+= 1.11.0 =
+* Feature: optional staff email when Twilio SMS StatusCallback reports failed or undelivered
+* Settings: enable toggle (default off) + alert email (falls back to WordPress admin email)
+* Deduplicated per MessageSid (transient) so Twilio retries do not spam; order notes unchanged
+* Messaging remains ungated by license
 
 = 1.10.0 =
 * Feature: Export CSV from the Dashboard (respects current filters; nonce-protected; paginated fetch)

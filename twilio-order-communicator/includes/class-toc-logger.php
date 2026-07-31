@@ -288,6 +288,29 @@ class TOC_Logger {
 	}
 
 	/**
+	 * Full communications row for a Twilio SID (SMS or call).
+	 *
+	 * @param string $sid Twilio SID.
+	 * @return object|null
+	 */
+	public function get_row_by_sid( $sid ) {
+		global $wpdb;
+		$sid = sanitize_text_field( (string) $sid );
+		if ( $sid === '' ) {
+			return null;
+		}
+
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$this->table} WHERE twilio_sid = %s LIMIT 1",
+				$sid
+			)
+		);
+
+		return $row ? $row : null;
+	}
+
+	/**
 	 * Resolve order_id for a Twilio SID (call or message).
 	 *
 	 * @param string $sid Twilio SID.
