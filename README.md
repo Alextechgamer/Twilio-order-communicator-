@@ -24,12 +24,11 @@ Seller docs: [`RELEASE.md`](./RELEASE.md) (build + deploy + keys) · [`license-s
 
 ## Download
 
-- [`twilio-order-communicator-1.9.0.zip`](./twilio-order-communicator-1.9.0.zip) — latest packaged release (scheduled reminders)
+- [`twilio-order-communicator-1.12.0.zip`](./twilio-order-communicator-1.12.0.zip) — **current** (role permissions UI; includes 1.9–1.11 features)
+- [`twilio-order-communicator-1.9.0.zip`](./twilio-order-communicator-1.9.0.zip) — scheduled reminders
 - [`twilio-order-communicator-1.8.2.zip`](./twilio-order-communicator-1.8.2.zip) — G5–G8 audit fixes
 - [`twilio-order-communicator-1.8.1.zip`](./twilio-order-communicator-1.8.1.zip) — G1–G4 audit fixes
 - [`twilio-order-communicator-1.8.0.zip`](./twilio-order-communicator-1.8.0.zip) — licensing release
-
-*(1.12.0 role permissions is on this branch; packaging deferred — rebuild per `RELEASE.md` when shipping.)*
 
 ## What's in 1.12.0
 
@@ -38,6 +37,7 @@ Seller docs: [`RELEASE.md`](./RELEASE.md) (build + deploy + keys) · [`license-s
 | Role permissions | Settings matrix for Manage plugin vs Send SMS & calls |
 | Caps | `toc_manage` / `toc_send` (admin + shop_manager seeded once) |
 | Safety | Administrator always keeps manage; filters still override |
+| Prior in this line | Delivery alerts (1.11), CSV + collected (1.10), scheduled reminders (1.9) |
 
 ## What's in 1.11.0
 
