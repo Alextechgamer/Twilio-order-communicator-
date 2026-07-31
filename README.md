@@ -2,7 +2,7 @@
 
 WordPress / WooCommerce plugin for SMS and voice calls via **your own Twilio account**. Order communication is driven by custom statuses (**Ready for Pickup** and **Shipped**), with consent-aware SMS, quiet hours, bulk reminders, and order chat history.
 
-**Current version: 1.8.0**
+**Current version: 1.8.2**
 
 ## Install
 
