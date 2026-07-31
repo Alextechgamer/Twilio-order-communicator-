@@ -9,6 +9,23 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 
 global $wpdb;
 
+// Scheduled work must go before the data it depends on.
+$toc_hooks = array(
+	'toc_license_validate_cron',
+	'toc_deferred_auto_notify',
+);
+
+foreach ( $toc_hooks as $toc_hook ) {
+	if ( function_exists( 'as_unschedule_all_actions' ) ) {
+		as_unschedule_all_actions( $toc_hook, array(), 'toc' );
+	}
+	if ( function_exists( 'wp_unschedule_hook' ) ) {
+		wp_unschedule_hook( $toc_hook );
+	} else {
+		wp_clear_scheduled_hook( $toc_hook );
+	}
+}
+
 $tables = array(
 	$wpdb->prefix . 'toc_communications',
 	$wpdb->prefix . 'toc_sms_opt_outs',
@@ -71,6 +88,12 @@ $options = array(
 	'toc_license_instance_id',
 	'toc_license_server_url',
 );
+
+// Cached update answers are keyed by license key, so clear them before the key is removed.
+$toc_license_key = (string) get_option( 'toc_license_key', '' );
+if ( $toc_license_key !== '' && defined( 'TOC_VERSION' ) ) {
+	delete_site_transient( 'toc_update_check_' . md5( $toc_license_key . TOC_VERSION ) );
+}
 
 foreach ( $options as $option ) {
 	delete_option( $option );

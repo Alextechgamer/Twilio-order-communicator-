@@ -3,7 +3,7 @@
  * Plugin Name:       Twilio Order Communicator
  * Plugin URI:        https://github.com/Alextechgamer/Twilio-order-communicator-
  * Description:       Send SMS and place voice calls from WooCommerce orders using your own Twilio account. Status-based Ready for Pickup and Shipped notifications, chat history, bulk reminders, and consent-aware messaging.
- * Version:           1.8.0
+ * Version:           1.8.1
  * Author:            Alextechgamer
  * Author URI:        https://github.com/Alextechgamer
  * Requires at least: 6.0
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'TOC_VERSION', '1.8.0' );
+define( 'TOC_VERSION', '1.8.1' );
 define( 'TOC_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TOC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'TOC_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
@@ -51,8 +51,17 @@ final class Twilio_Order_Communicator {
 
 	private function __construct() {
 		register_activation_hook( TOC_PLUGIN_FILE, array( $this, 'activate' ) );
+		register_deactivation_hook( TOC_PLUGIN_FILE, array( $this, 'deactivate' ) );
 		add_action( 'before_woocommerce_init', array( $this, 'declare_compatibility' ) );
 		add_action( 'plugins_loaded', array( $this, 'init' ) );
+	}
+
+	/**
+	 * Leave no scheduled work behind when the plugin is switched off.
+	 * Settings, logs, and license state are kept for reactivation.
+	 */
+	public function deactivate() {
+		TOC_License::unschedule_cron();
 	}
 
 	/**

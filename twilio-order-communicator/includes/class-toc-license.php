@@ -166,6 +166,21 @@ class TOC_License {
 		}
 	}
 
+	/**
+	 * Remove the recurring validation job from Action Scheduler and WP-Cron.
+	 * Called on plugin deactivation so no orphan job keeps firing.
+	 */
+	public static function unschedule_cron() {
+		if ( function_exists( 'as_unschedule_all_actions' ) ) {
+			as_unschedule_all_actions( self::CRON_HOOK, array(), 'toc' );
+		}
+		if ( function_exists( 'wp_unschedule_hook' ) ) {
+			wp_unschedule_hook( self::CRON_HOOK );
+			return;
+		}
+		wp_clear_scheduled_hook( self::CRON_HOOK );
+	}
+
 	public function cron_validate() {
 		if ( ! $this->is_configured() || $this->get_key() === '' ) {
 			return;
@@ -244,9 +259,15 @@ class TOC_License {
 		}
 		update_option( 'toc_license_status', self::STATUS_INACTIVE, false );
 		$data = $this->get_data();
+		unset( $data['last_payload'] );
 		$data['was_active'] = false;
 		update_option( 'toc_license_data', $data, false );
 		update_option( 'toc_license_last_check', time(), false );
+
+		// Drop any cached "update available" answer that was fetched while licensed.
+		if ( class_exists( 'TOC_Updater' ) ) {
+			TOC_Updater::flush_update_cache( array( $key ) );
+		}
 
 		return array(
 			'success' => true,
@@ -383,15 +404,43 @@ class TOC_License {
 	}
 
 	private function persist( $key, $status, $data, $was_active_flag ) {
+		$previous_key = (string) get_option( 'toc_license_key', '' );
+
 		update_option( 'toc_license_key', (string) $key, false );
 		update_option( 'toc_license_status', $status, false );
 		if ( ! is_array( $data ) ) {
 			$data = array();
 		}
+		// Drop any previously stored snapshot before rebuilding, so nothing accumulates.
+		unset( $data['last_payload'] );
 		$data['was_active']   = (bool) $was_active_flag;
-		$data['last_payload'] = $data;
+		$data['last_payload'] = self::payload_snapshot( $data, $status );
 		update_option( 'toc_license_data', $data, false );
 		update_option( 'toc_license_last_check', time(), false );
+
+		// Let WordPress see a licensed update now instead of waiting out the update cache.
+		if ( $this->allows_updates() && class_exists( 'TOC_Updater' ) ) {
+			TOC_Updater::flush_update_cache( array( $previous_key, (string) $key ) );
+		}
+	}
+
+	/**
+	 * Fixed-size summary of the last server payload.
+	 * Never contains another snapshot, so repeated saves cannot grow the option.
+	 *
+	 * @param array  $data   Payload from the license server.
+	 * @param string $status Resolved local status.
+	 * @return array
+	 */
+	private static function payload_snapshot( array $data, $status ) {
+		return array(
+			'status'      => (string) $status,
+			'expires_at'  => isset( $data['expires_at'] ) ? (string) $data['expires_at'] : '',
+			'max_sites'   => isset( $data['max_sites'] ) ? (int) $data['max_sites'] : 0,
+			'activations' => isset( $data['activations'] ) ? (int) $data['activations'] : 0,
+			'site_url'    => isset( $data['site_url'] ) ? (string) $data['site_url'] : '',
+			'saved_at'    => time(),
+		);
 	}
 
 	private function map_remote_status( $result ) {
