@@ -12,7 +12,7 @@ Run from the repo root. The zip contains **only** the plugin folder — `license
 
 ```bash
 cd /path/to/repo
-VERSION=1.8.1
+VERSION=1.8.2
 rm -f twilio-order-communicator-${VERSION}.zip
 
 zip -r -X twilio-order-communicator-${VERSION}.zip twilio-order-communicator \
@@ -76,14 +76,14 @@ cd /path/to/license-server
 # One key per customer. Prints the key once — store it in your records.
 php bin/create-key.php --email=customer@example.com --sites=1 --expires=lifetime
 
-# Register 1.8.1 so licensed sites can update to it
+# Register 1.8.2 so licensed sites can update to it
 php bin/add-release.php \
-  --version=1.8.1 \
-  --file=/path/to/twilio-order-communicator-1.8.1.zip \
-  --changelog="Fix G1–G4: license data nesting, cron cleanup, update cache flush, Local Pickup skip meta"
+  --version=1.8.2 \
+  --file=/path/to/twilio-order-communicator-1.8.2.zip \
+  --changelog="Close remaining audit gaps G5–G8: webhook URLs, paid statuses, inbound phone match, docs"
 ```
 
-(For historical reference, 1.8.0 was registered the same way with `--version=1.8.0` and the 1.8.0 zip.)
+(For historical reference, 1.8.1 was registered the same way with `--version=1.8.1` and the 1.8.1 zip.)
 
 Key options:
 
