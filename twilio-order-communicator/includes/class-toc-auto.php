@@ -291,6 +291,9 @@ class TOC_Auto {
 				$order->add_order_note(
 					__( 'Auto notification skipped (Ready for Pickup): shipping method does not look like Local Pickup.', 'twilio-order-communicator' )
 				);
+				// Stamp so a re-save does not repeat this check and add another note.
+				$order->update_meta_data( $config['meta'], time() );
+				$order->save();
 				return;
 			}
 		}
