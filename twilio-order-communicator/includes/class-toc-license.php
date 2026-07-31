@@ -172,7 +172,7 @@ class TOC_License {
 	 */
 	public static function unschedule_cron() {
 		if ( function_exists( 'as_unschedule_all_actions' ) ) {
-			as_unschedule_all_actions( self::CRON_HOOK, array(), 'toc' );
+			as_unschedule_all_actions( self::CRON_HOOK, null, 'toc' );
 		}
 		if ( function_exists( 'wp_unschedule_hook' ) ) {
 			wp_unschedule_hook( self::CRON_HOOK );
