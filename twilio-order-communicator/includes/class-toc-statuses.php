@@ -25,6 +25,27 @@ class TOC_Statuses {
 		add_filter( 'wc_order_statuses', array( $this, 'add_to_order_statuses' ) );
 		add_filter( 'bulk_actions-edit-shop_order', array( $this, 'bulk_actions' ) );
 		add_filter( 'bulk_actions-woocommerce_page_wc-orders', array( $this, 'bulk_actions' ) );
+		// Fulfillment statuses after payment — keep WC_Order::is_paid() true.
+		add_filter( 'woocommerce_order_is_paid_statuses', array( $this, 'paid_statuses' ) );
+	}
+
+	/**
+	 * Treat Ready for Pickup / Shipped as paid.
+	 *
+	 * These are post-payment fulfillment states (pickup desk / carrier). Orders
+	 * typically arrive here from Processing/Completed; leaving them unpaid would
+	 * make is_paid() flip false mid-fulfillment and break stock/reporting helpers.
+	 *
+	 * @param string[] $statuses Bare status slugs (no wc- prefix).
+	 * @return string[]
+	 */
+	public function paid_statuses( $statuses ) {
+		if ( ! is_array( $statuses ) ) {
+			$statuses = array();
+		}
+		$statuses[] = 'ready-for-pickup';
+		$statuses[] = 'shipped';
+		return array_values( array_unique( $statuses ) );
 	}
 
 	/**

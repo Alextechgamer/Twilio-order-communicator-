@@ -2,7 +2,7 @@
 
 WordPress / WooCommerce plugin for SMS and voice calls via **your own Twilio account**. Order communication is driven by custom statuses (**Ready for Pickup** and **Shipped**), with consent-aware SMS, quiet hours, bulk reminders, and order chat history.
 
-**Current version: 1.8.1**
+**Current version: 1.8.2**
 
 ## Install
 
@@ -24,8 +24,19 @@ Seller docs: [`RELEASE.md`](./RELEASE.md) (build + deploy + keys) · [`license-s
 
 ## Download
 
-- [`twilio-order-communicator-1.8.1.zip`](./twilio-order-communicator-1.8.1.zip) — current release (G1–G4 audit fixes)
+- [`twilio-order-communicator-1.8.1.zip`](./twilio-order-communicator-1.8.1.zip) — latest packaged release (G1–G4)
 - [`twilio-order-communicator-1.8.0.zip`](./twilio-order-communicator-1.8.0.zip) — licensing release
+
+*(1.8.2 is on `main`; rebuild the customer zip per `RELEASE.md` when shipping.)*
+
+## What's in 1.8.2
+
+| Fix | Notes |
+|-----|--------|
+| Webhook URLs | Prefer WordPress `rest_url()` + `toc_webhook_base_url` origin rewrite |
+| Paid statuses | Ready for Pickup / Shipped included so `is_paid()` stays true |
+| Inbound phone match | Full last-10 LIKE needle, filterable limits; log-first kept |
+| Docs | `phpcs.xml.dist` scope; tasks.md marks G1–G8 done |
 
 ## What's in 1.8.1
 

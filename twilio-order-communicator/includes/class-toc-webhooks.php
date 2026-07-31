@@ -24,13 +24,40 @@ class TOC_Webhooks {
 	/**
 	 * Preferred REST webhook URL for a channel.
 	 *
+	 * Uses WordPress rest_url() so plain permalinks (index.php?rest_route=…),
+	 * pretty permalinks (/wp-json/…), and subdirectory installs stay correct.
+	 * When toc_webhook_base_url is set (reverse proxy), the home_url origin is
+	 * swapped for that override while keeping the REST path/query intact.
+	 *
 	 * @param string $route sms|voice-status|message-status
 	 * @return string
 	 */
 	public static function rest_url( $route ) {
-		$base = TOC_Twilio::instance()->public_base_url();
-		$path = 'wp-json/' . self::REST_NAMESPACE . '/' . ltrim( $route, '/' );
-		return trailingslashit( $base ) . $path;
+		$route = ltrim( (string) $route, '/' );
+		$path  = self::REST_NAMESPACE . '/' . $route;
+		// Call the global WP helper (not this method).
+		$url = \rest_url( $path );
+
+		$override = trim( (string) get_option( 'toc_webhook_base_url', '' ) );
+		if ( $override === '' ) {
+			return $url;
+		}
+
+		$home = untrailingslashit( home_url( '/' ) );
+		$over = untrailingslashit( $override );
+		if ( $home !== '' && strpos( $url, $home ) === 0 ) {
+			return $over . substr( $url, strlen( $home ) );
+		}
+
+		// Fallback when home_url prefix does not match (odd proxy setups).
+		$parts = wp_parse_url( $url );
+		$path  = isset( $parts['path'] ) ? (string) $parts['path'] : '';
+		$query = isset( $parts['query'] ) ? (string) $parts['query'] : '';
+		$built = trailingslashit( $over ) . ltrim( $path, '/' );
+		if ( $query !== '' ) {
+			$built .= '?' . $query;
+		}
+		return $built;
 	}
 
 	/**

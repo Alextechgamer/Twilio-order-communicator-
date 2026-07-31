@@ -4,7 +4,7 @@ Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
 WC requires at least: 7.0
-Stable tag: 1.8.1
+Stable tag: 1.8.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -78,6 +78,12 @@ No. The plugin includes its own tokenized TwiML endpoint.
 They text START or UNSTOP. Plain "YES" is intentionally not treated as re-subscribe.
 
 == Changelog ==
+
+= 1.8.2 =
+* Fix: webhook REST URLs use WordPress rest_url() (plain permalinks, subdirectory, reverse-proxy override)
+* Fix: Ready for Pickup and Shipped are included in WooCommerce paid statuses (is_paid() stays true)
+* Perf: tighter inbound phone → order matching (full last-10 LIKE needle, lower bounded limit, filterable)
+* Docs: phpcs.xml.dist notes license-server/ is out of scope; tasks.md marks G1–G8 closed
 
 = 1.8.1 =
 * Fix: license data option no longer nests its own payload on every activate/validate

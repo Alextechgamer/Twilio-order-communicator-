@@ -47,6 +47,7 @@ trait TOC_Admin_Tools {
 			<li><?php echo esc_html__( 'HTTP POST', 'twilio-order-communicator' ); ?></li>
 		</ul>
 		<p class="description"><?php echo wp_kses_post( __( 'Requests are validated with Twilio’s <code>X-Twilio-Signature</code> header. Unsigned requests are rejected (403). STOP / HELP / START keywords are handled automatically and logged in order chat.', 'twilio-order-communicator' ) ); ?></p>
+		<p class="description"><?php echo esc_html__( 'The preferred URL is built with WordPress rest_url(), so it stays correct for plain permalinks, subdirectory installs, and reverse proxies (when Webhook base URL is set in Settings).', 'twilio-order-communicator' ); ?></p>
 		<p><?php echo wp_kses_post( sprintf( __( 'SMS delivery status callbacks are attached automatically on each outbound message (<code>%s</code>) — no extra Twilio console setup needed.', 'twilio-order-communicator' ), esc_html( $msg_status ) ) ); ?></p>
 
 		<hr>

@@ -423,6 +423,7 @@ class TOC_Logger {
 		}
 
 		// 3) Broader recent-order scan including custom TOC statuses.
+		// Soft fallback only — keep the hydrate count modest (unindexed phone walk).
 		$statuses = array( 'processing', 'completed', 'on-hold', 'pending', 'ready-for-pickup', 'shipped' );
 		if ( class_exists( 'TOC_Statuses' ) ) {
 			$statuses[] = TOC_Statuses::bare_status( TOC_Statuses::mapped_ready_status() );
@@ -430,9 +431,17 @@ class TOC_Logger {
 		}
 		$statuses = array_values( array_unique( $statuses ) );
 
+		$scan_limit = (int) apply_filters( 'toc_inbound_phone_scan_limit', 80 );
+		if ( $scan_limit < 10 ) {
+			$scan_limit = 10;
+		}
+		if ( $scan_limit > 150 ) {
+			$scan_limit = 150;
+		}
+
 		$orders = wc_get_orders(
 			array(
-				'limit'   => 150,
+				'limit'   => $scan_limit,
 				'orderby' => 'date',
 				'order'   => 'DESC',
 				'status'  => $statuses,
@@ -457,7 +466,8 @@ class TOC_Logger {
 	private function find_order_id_from_communications( $tail ) {
 		global $wpdb;
 
-		$like4 = '%' . $wpdb->esc_like( substr( $tail, -4 ) );
+		$like  = $this->phone_like_needle( $tail );
+		$limit = $this->inbound_phone_lookup_limit();
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is internal.
 		$rows = $wpdb->get_results(
@@ -465,8 +475,9 @@ class TOC_Logger {
 				"SELECT order_id, phone FROM {$this->table}
 				 WHERE order_id > 0 AND phone LIKE %s
 				 ORDER BY created_at DESC
-				 LIMIT 200",
-				$like4
+				 LIMIT %d",
+				$like,
+				$limit
 			)
 		);
 
@@ -493,7 +504,8 @@ class TOC_Logger {
 	private function find_order_id_from_billing_phone( $tail ) {
 		global $wpdb;
 
-		$like4 = '%' . $wpdb->esc_like( substr( $tail, -4 ) );
+		$like  = $this->phone_like_needle( $tail );
+		$limit = $this->inbound_phone_lookup_limit();
 		$ids   = array();
 
 		$hpos = false;
@@ -511,8 +523,9 @@ class TOC_Logger {
 					"SELECT order_id FROM {$addresses}
 					 WHERE address_type = 'billing' AND phone LIKE %s
 					 ORDER BY order_id DESC
-					 LIMIT 100",
-					$like4
+					 LIMIT %d",
+					$like,
+					$limit
 				)
 			);
 		} else {
@@ -522,8 +535,9 @@ class TOC_Logger {
 					"SELECT post_id FROM {$wpdb->postmeta}
 					 WHERE meta_key = '_billing_phone' AND meta_value LIKE %s
 					 ORDER BY post_id DESC
-					 LIMIT 100",
-					$like4
+					 LIMIT %d",
+					$like,
+					$limit
 				)
 			);
 		}
@@ -544,6 +558,47 @@ class TOC_Logger {
 		}
 
 		return 0;
+	}
+
+	/**
+	 * LIKE needle for inbound phone SQL.
+	 * Prefer the full last-10 digit tail when available — last-4 alone is too broad
+	 * on busy stores (unindexed LIKE '%1234' returns many false candidates).
+	 *
+	 * @param string $tail Last up-to-10 digits of the inbound number.
+	 * @return string
+	 */
+	private function phone_like_needle( $tail ) {
+		$tail   = (string) $tail;
+		$needle = strlen( $tail ) >= 10 ? $tail : substr( $tail, -4 );
+		if ( $needle === '' ) {
+			$needle = $tail;
+		}
+		global $wpdb;
+		return '%' . $wpdb->esc_like( $needle );
+	}
+
+	/**
+	 * Max candidate rows to hydrate when matching inbound SMS to phones.
+	 * Bounded because billing-phone / log LIKE queries are unindexed.
+	 * Filter: toc_inbound_phone_lookup_limit (clamped 5–100).
+	 *
+	 * @return int
+	 */
+	private function inbound_phone_lookup_limit() {
+		/**
+		 * Max SQL candidate rows for inbound phone → order matching.
+		 *
+		 * @param int $limit Default 40.
+		 */
+		$limit = (int) apply_filters( 'toc_inbound_phone_lookup_limit', 40 );
+		if ( $limit < 5 ) {
+			$limit = 5;
+		}
+		if ( $limit > 100 ) {
+			$limit = 100;
+		}
+		return $limit;
 	}
 
 	/**
