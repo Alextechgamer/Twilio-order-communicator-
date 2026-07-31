@@ -4,7 +4,7 @@ Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
 WC requires at least: 7.0
-Stable tag: 1.8.2
+Stable tag: 1.9.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -25,6 +25,7 @@ Twilio Order Communicator turns every WooCommerce order into a communication hub
 * Built-in tokenized TwiML endpoint – no extra pages or snippets needed
 * REST webhook routes (`toc/v1`) with permanent query-string aliases
 * Bulk reminder tool for orders still in Ready for Pickup
+* Optional scheduled pickup reminders after a configurable delay (Action Scheduler)
 * Optional SMS compliance footer + Privacy Policy helper text
 * Filterable capabilities and optional wp-config credential constants
 * Optional first-party license key for premium updates (messaging works without a license)
@@ -78,6 +79,12 @@ No. The plugin includes its own tokenized TwiML endpoint.
 They text START or UNSTOP. Plain "YES" is intentionally not treated as re-subscribe.
 
 == Changelog ==
+
+= 1.9.0 =
+* Feature: scheduled Ready for Pickup reminders after a configurable delay (default off, 24h)
+* Uses Action Scheduler when available (WP-Cron fallback); cancelled when the order leaves Ready
+* Respects quiet hours (re-defer), SMS consent, `_toc_last_reminder_at` cooldown, and the Pickup Reminder template
+* Channels follow Ready for Pickup voice/SMS toggles; messaging remains ungated by license
 
 = 1.8.2 =
 * Fix: webhook REST URLs use WordPress rest_url() (plain permalinks, subdirectory, reverse-proxy override)
