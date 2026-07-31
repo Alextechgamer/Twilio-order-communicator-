@@ -81,29 +81,29 @@ Expose the capability filters in Settings (simple role checkboxes or matrix).
 
 Found by code audit of v1.8.0. Fix before or alongside the next feature pass.
 
-### G1. License data option bloat — `class-toc-license.php:392`
-`persist()` does `$data['last_payload'] = $data`, nesting the array inside itself. Repeated saves grow `toc_license_data` each time. Store a trimmed payload (or drop `last_payload`).
+### G1. License data option bloat — ✅ DONE (v1.8.1)
+`persist()` nested `$data` inside itself as `last_payload`. Fixed with a fixed scalar snapshot; existing nested data self-heals on the next save.
 
-### G2. Scheduled license check is never unscheduled
-No `register_deactivation_hook`, `wp_clear_scheduled_hook`, or `as_unschedule_all_actions` anywhere. `toc_license_validate_cron` keeps firing after plugin deactivate/uninstall. Add a deactivation hook and clean up in `uninstall.php`.
+### G2. Scheduled license check is never unscheduled — ✅ DONE (v1.8.1)
+Deactivation hook + uninstall clear `toc_license_validate_cron` (and deferred auto-notify on uninstall) from Action Scheduler and WP-Cron.
 
-### G3. Update cache not invalidated on license change — `class-toc-updater.php:115`
-`toc_update_check_*` site transient lives 6 hours and is never deleted on activate / deactivate. After activating a license, a pending update can stay hidden for up to 6 hours. Delete the transient in `TOC_License::persist()` and `deactivate()`.
+### G3. Update cache not invalidated on license change — ✅ DONE (v1.8.1)
+`TOC_Updater::flush_update_cache()` runs when `allows_updates()` becomes true and on license deactivate. Steady-state 6-hour cache kept.
 
-### G4. Local Pickup skip re-processes forever — `class-toc-auto.php:288`
-When the optional Local Pickup filter rejects an order, the code returns **without** stamping `_toc_notified_ready_for_pickup_at`, so every re-save adds another order note. Stamp the meta (or a separate skip meta) like the no-phone path does.
+### G4. Local Pickup skip re-processes forever — ✅ DONE (v1.8.1)
+Local Pickup filter skip path stamps `_toc_notified_ready_for_pickup_at` like the no-phone skip.
 
-### G5. Webhook URLs built by string concat — `class-toc-webhooks.php:30`
-`rest_url()` is hand-built as `{base}/wp-json/...`. Plain permalinks, `index.php` URLs, or subdirectory installs can produce a Tools-tab URL that differs from the URL Twilio actually hits. Prefer WordPress `rest_url()` with the existing base override applied.
+### G5. Webhook URLs built by string concat — ✅ DONE (v1.8.2)
+`TOC_Webhooks::rest_url()` now uses WordPress `\rest_url()` and rewrites the origin when `toc_webhook_base_url` is set. Legacy `?toc_sms=1` aliases unchanged.
 
-### G6. Custom statuses are not in WooCommerce's paid list
-`wc-ready-for-pickup` / `wc-shipped` are registered but not added via `woocommerce_order_is_paid_statuses`, so `WC_Order::is_paid()` is false while an order sits in them. Decide intentionally; add the filter if orders can reach these statuses from unpaid states.
+### G6. Custom statuses are not in WooCommerce's paid list — ✅ DONE (v1.8.2)
+`woocommerce_order_is_paid_statuses` includes `ready-for-pickup` and `shipped` so `WC_Order::is_paid()` stays true in those fulfillment states.
 
-### G7. Inbound phone lookup performance — `class-toc-logger.php:506`
-HPOS lookup uses `phone LIKE '%1234'` (no index) then loads up to 100 orders per inbound SMS. Fine for small stores; revisit with a normalized phone column if volume grows.
+### G7. Inbound phone lookup performance — ✅ DONE (v1.8.2, incremental)
+Still prefers communications-log matches first. Billing/log SQL now uses a full last-10 LIKE needle (not last-4 alone), with a filterable hard limit (`toc_inbound_phone_lookup_limit`, default 40, max 100). No schema/migration in this pass.
 
-### G8. No automated tests; PHPCS not passing
-No PHPUnit or `tests/` directory. `phpcs.xml.dist` covers only `twilio-order-communicator/` (not `license-server/`) and the code currently reports several hundred WPCS errors (mostly docblocks / Yoda / alignment). Decide whether to enforce in CI or relax the ruleset.
+### G8. No automated tests; PHPCS not passing — ✅ DOCUMENTED (v1.8.2)
+No PHPUnit suite added (deferred). `phpcs.xml.dist` documents that only `twilio-order-communicator/` is in scope (`license-server/` excluded) and that a full WPCS clean pass is not a hard CI gate yet.
 
 ---
 
@@ -184,21 +184,22 @@ No PHPUnit or `tests/` directory. `phpcs.xml.dist` covers only `twilio-order-com
 1. ~~P0 Core Product Expansion (1–6)~~ ✅ v1.6.0  
 2. ~~P0 Hardening (7–13)~~ ✅ v1.7.0  
 3. ~~License system (P1 #14, custom)~~ ✅ v1.8.0  
-4. **P1.5 gap fixes (G1–G4 at minimum)** ← recommended next  
-5. Scheduled reminders + CSV + Mark as collected (15, 16, 18)  
-6. Delivery alerts + role UI (17, 19)  
-7. P2 after first sales feedback
+4. ~~P1.5 gap fixes G1–G4~~ ✅ v1.8.1  
+5. ~~P1.5 gap fixes G5–G8~~ ✅ v1.8.2  
+6. Scheduled reminders + CSV + Mark as collected (15, 16, 18)  
+7. Delivery alerts + role UI (17, 19)  
+8. P2 after first sales feedback
 
 ---
 
-## Cursor Prompt — Next Pass (P1.5 fixes + P1 features)
+## Cursor Prompt — Next Pass (P1 features)
 
 ```
-You are working on the WooCommerce plugin “Twilio Order Communicator” (current version 1.8.0).
+You are working on the WooCommerce plugin “Twilio Order Communicator” (current version 1.8.2).
 
-Read tasks.md. P0 (1–13) and P1 #14 (custom licensing) are complete and merged. Do not rework
-status-based auto-notify, admin traits, the Twilio HTTP client, REST webhooks, consent, quiet hours,
-or the license system unless fixing a listed gap.
+Read tasks.md. P0 (1–13), P1 #14 (custom licensing), and P1.5 gaps G1–G8 are complete.
+Do not rework status-based auto-notify, admin traits, the Twilio HTTP client, REST webhooks,
+consent, quiet hours, or the license system unless fixing a clear bug.
 
 Key constraints:
 - Users always bring their own Twilio Account SID, Auth Token, and From Number. We never provide
@@ -208,10 +209,7 @@ Key constraints:
 - Preserve HPOS, security (signature validation, nonces, tokenized TwiML), and capability filters.
 - Prefer small, reviewable changes. Bump version and changelog when shipping a feature set.
 
-First: fix the P1.5 gaps G1–G4 (license option bloat, cron cleanup on deactivate/uninstall,
-update transient invalidation, Local Pickup skip re-processing). Keep each fix small.
-
-Then continue P1 in this order: 15 scheduled reminders, 16 CSV export, 18 mark as collected,
+Continue P1 in this order: 15 scheduled reminders, 16 CSV export, 18 mark as collected,
 17 delivery failure alerts, 19 role permissions UI.
 
 For each task:
