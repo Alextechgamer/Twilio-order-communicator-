@@ -41,6 +41,50 @@ class TOC_Admin {
 		add_action( 'wp_ajax_toc_test_connection', array( $this, 'ajax_test' ) );
 		add_action( 'wp_ajax_toc_license_save_server', array( $this, 'ajax_license_save_server' ) );
 		add_action( 'admin_post_toc_export_csv', array( $this, 'handle_export_csv' ) );
+		add_action( 'admin_post_toc_save_role_caps', array( $this, 'handle_save_role_caps' ) );
+	}
+
+	/**
+	 * Save role capability matrix from Settings.
+	 */
+	public function handle_save_role_caps() {
+		if ( ! current_user_can( TOC_Caps::manage() ) ) {
+			wp_die( esc_html__( 'Permission denied', 'twilio-order-communicator' ), 403 );
+		}
+		check_admin_referer( 'toc_save_role_caps' );
+
+		$posted = isset( $_POST['toc_role_caps'] ) ? wp_unslash( $_POST['toc_role_caps'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		if ( ! is_array( $posted ) ) {
+			$posted = array();
+		}
+
+		// Sanitize nested checkboxes to 0/1.
+		$clean = array();
+		foreach ( $posted as $role_key => $row ) {
+			$role_key = sanitize_key( $role_key );
+			if ( $role_key === '' || ! is_array( $row ) ) {
+				continue;
+			}
+			$clean[ $role_key ] = array(
+				'manage' => ! empty( $row['manage'] ) ? 1 : 0,
+				'send'   => ! empty( $row['send'] ) ? 1 : 0,
+			);
+		}
+
+		$result = TOC_Caps::save_role_matrix( $clean );
+		$redirect = add_query_arg(
+			array(
+				'page'            => 'toc-communicator',
+				'tab'             => 'settings',
+				'toc_roles_saved' => is_wp_error( $result ) ? '0' : '1',
+			),
+			admin_url( 'admin.php' )
+		);
+		if ( is_wp_error( $result ) ) {
+			$redirect = add_query_arg( 'toc_roles_error', rawurlencode( $result->get_error_message() ), $redirect );
+		}
+		wp_safe_redirect( $redirect );
+		exit;
 	}
 
 	public function menu() {

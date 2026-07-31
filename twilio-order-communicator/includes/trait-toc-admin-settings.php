@@ -536,6 +536,101 @@ trait TOC_Admin_Settings {
 
 			<?php submit_button( 'Save Settings' ); ?>
 		</form>
+
+		<?php $this->render_role_permissions(); ?>
+		<?php
+	}
+
+	/**
+	 * Role matrix: who can manage the plugin vs send SMS/calls.
+	 * Separate form (not options.php) — updates WP_Role caps directly.
+	 */
+	private function render_role_permissions() {
+		if ( ! current_user_can( TOC_Caps::manage() ) ) {
+			return;
+		}
+
+		$roles = TOC_Caps::editable_roles();
+		if ( empty( $roles ) ) {
+			return;
+		}
+
+		if ( isset( $_GET['toc_roles_saved'] ) && (string) $_GET['toc_roles_saved'] === '1' ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Role permissions saved.', 'twilio-order-communicator' ) . '</p></div>';
+		} elseif ( isset( $_GET['toc_roles_error'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( sanitize_text_field( wp_unslash( $_GET['toc_roles_error'] ) ) ) . '</p></div>'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		}
+		?>
+		<hr />
+		<h2><?php echo esc_html__( 'Role permissions', 'twilio-order-communicator' ); ?></h2>
+		<p class="description">
+			<?php echo esc_html__( 'Control which WordPress roles can open Order Communicator admin pages, and which can send SMS or place calls from orders. Messaging is never gated by license — these are WordPress capabilities only.', 'twilio-order-communicator' ); ?>
+		</p>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<input type="hidden" name="action" value="toc_save_role_caps" />
+			<?php wp_nonce_field( 'toc_save_role_caps' ); ?>
+			<table class="widefat striped" style="max-width:720px">
+				<thead>
+					<tr>
+						<th><?php echo esc_html__( 'Role', 'twilio-order-communicator' ); ?></th>
+						<th style="width:40%">
+							<?php echo esc_html__( 'Manage plugin', 'twilio-order-communicator' ); ?>
+							<br><span class="description" style="font-weight:normal"><?php echo esc_html__( 'Who can open Order Communicator admin pages', 'twilio-order-communicator' ); ?></span>
+						</th>
+						<th style="width:40%">
+							<?php echo esc_html__( 'Send SMS & calls', 'twilio-order-communicator' ); ?>
+							<br><span class="description" style="font-weight:normal"><?php echo esc_html__( 'Who can send SMS / place calls from orders', 'twilio-order-communicator' ); ?></span>
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+				<?php foreach ( $roles as $role_key => $role_data ) :
+					$label   = isset( $role_data['name'] ) ? translate_user_role( $role_data['name'] ) : $role_key;
+					$caps    = isset( $role_data['capabilities'] ) && is_array( $role_data['capabilities'] ) ? $role_data['capabilities'] : array();
+					// Live role object is authoritative for our custom caps.
+					$role_obj = get_role( $role_key );
+					$has_manage = $role_obj ? $role_obj->has_cap( TOC_Caps::CAP_MANAGE ) : ! empty( $caps[ TOC_Caps::CAP_MANAGE ] );
+					$has_send   = $role_obj ? $role_obj->has_cap( TOC_Caps::CAP_SEND ) : ! empty( $caps[ TOC_Caps::CAP_SEND ] );
+					$is_admin   = ( $role_key === 'administrator' );
+					?>
+					<tr>
+						<td><strong><?php echo esc_html( $label ); ?></strong> <code><?php echo esc_html( $role_key ); ?></code></td>
+						<td>
+							<?php if ( $is_admin ) : ?>
+								<input type="hidden" name="toc_role_caps[<?php echo esc_attr( $role_key ); ?>][manage]" value="1" />
+								<input type="checkbox" checked disabled />
+								<span class="description"><?php echo esc_html__( 'Always on for Administrator', 'twilio-order-communicator' ); ?></span>
+							<?php else : ?>
+								<label>
+									<input type="checkbox" name="toc_role_caps[<?php echo esc_attr( $role_key ); ?>][manage]" value="1" <?php checked( $has_manage ); ?> />
+									<?php echo esc_html__( 'Allow', 'twilio-order-communicator' ); ?>
+								</label>
+							<?php endif; ?>
+						</td>
+						<td>
+							<label>
+								<input type="checkbox" name="toc_role_caps[<?php echo esc_attr( $role_key ); ?>][send]" value="1" <?php checked( $has_send ); ?> />
+								<?php echo esc_html__( 'Allow', 'twilio-order-communicator' ); ?>
+							</label>
+						</td>
+					</tr>
+				<?php endforeach; ?>
+				</tbody>
+			</table>
+			<p class="description" style="max-width:720px">
+				<?php
+				echo esc_html(
+					sprintf(
+						/* translators: 1: toc_manage, 2: toc_send */
+						__( 'Capabilities: %1$s (manage) and %2$s (send). Advanced sites can still override the required capability string with the toc_manage_settings / toc_send_sms filters.', 'twilio-order-communicator' ),
+						TOC_Caps::CAP_MANAGE,
+						TOC_Caps::CAP_SEND
+					)
+				);
+				?>
+			</p>
+			<?php submit_button( __( 'Save role permissions', 'twilio-order-communicator' ), 'secondary' ); ?>
+		</form>
 		<?php
 	}
 
