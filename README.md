@@ -24,11 +24,10 @@ Seller docs: [`RELEASE.md`](./RELEASE.md) (build + deploy + keys) · [`license-s
 
 ## Download
 
-- [`twilio-order-communicator-1.8.2.zip`](./twilio-order-communicator-1.8.2.zip) — latest packaged release (G5–G8)
+- [`twilio-order-communicator-1.9.0.zip`](./twilio-order-communicator-1.9.0.zip) — current release (scheduled reminders)
+- [`twilio-order-communicator-1.8.2.zip`](./twilio-order-communicator-1.8.2.zip) — G5–G8 audit fixes
 - [`twilio-order-communicator-1.8.1.zip`](./twilio-order-communicator-1.8.1.zip) — G1–G4 audit fixes
 - [`twilio-order-communicator-1.8.0.zip`](./twilio-order-communicator-1.8.0.zip) — licensing release
-
-*(1.9.0 scheduled reminders is on this branch; rebuild the customer zip per `RELEASE.md` when shipping.)*
 
 ## What's in 1.9.0
 
