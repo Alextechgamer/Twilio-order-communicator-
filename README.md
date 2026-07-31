@@ -20,7 +20,11 @@ define( 'TOC_LICENSE_SERVER_URL', 'https://licenses.example.com' );
 
 Then activate a key under **Order Communicator → License**.
 
-Seller docs: [`license-server/README.md`](./license-server/README.md)
+Seller docs: [`RELEASE.md`](./RELEASE.md) (build + deploy + keys) · [`license-server/README.md`](./license-server/README.md) (API reference)
+
+## Download
+
+- [`twilio-order-communicator-1.8.0.zip`](./twilio-order-communicator-1.8.0.zip) — current release
 
 ## What's in 1.8.0
 
