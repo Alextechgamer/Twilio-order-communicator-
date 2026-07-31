@@ -259,11 +259,113 @@ class TOC_Webhooks {
 						) : ''
 					)
 				);
+				$this->maybe_send_delivery_failure_alert( $sid, $status, $err );
 			}
 		}
 
 		status_header( 200 );
 		echo 'OK';
+	}
+
+	/**
+	 * Optional staff email when SMS delivery fails (Settings → Delivery failure alerts).
+	 * Deduplicated per MessageSid so Twilio retries do not spam.
+	 *
+	 * @param string $sid    MessageSid.
+	 * @param string $status failed|undelivered.
+	 * @param string $error  Twilio ErrorCode (may be empty).
+	 */
+	private function maybe_send_delivery_failure_alert( $sid, $status, $error = '' ) {
+		if ( (int) get_option( 'toc_delivery_alert_enabled', 0 ) !== 1 ) {
+			return;
+		}
+
+		$sid = sanitize_text_field( (string) $sid );
+		if ( $sid === '' ) {
+			return;
+		}
+
+		// Dedup: one alert per SID for 7 days (covers Twilio retry windows).
+		$transient_key = 'toc_sms_fail_alert_' . md5( $sid );
+		if ( get_transient( $transient_key ) ) {
+			return;
+		}
+		// Claim immediately so concurrent retries do not double-send.
+		set_transient( $transient_key, 1, WEEK_IN_SECONDS );
+
+		$to = trim( (string) get_option( 'toc_delivery_alert_email', '' ) );
+		if ( $to === '' || ! is_email( $to ) ) {
+			$to = (string) get_option( 'admin_email' );
+		}
+		if ( $to === '' || ! is_email( $to ) ) {
+			return;
+		}
+
+		$logger = TOC_Logger::instance();
+		$row    = $logger->get_row_by_sid( $sid );
+		$order_id = $row && ! empty( $row->order_id ) ? absint( $row->order_id ) : $logger->get_order_id_by_sid( $sid );
+		$order    = $order_id ? wc_get_order( $order_id ) : null;
+
+		$store = wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
+		if ( $store === '' ) {
+			$store = 'Store';
+		}
+
+		$order_label = $order ? $order->get_order_number() : ( $order_id ? (string) $order_id : '—' );
+		$status_lbl  = sanitize_text_field( (string) $status );
+		$error       = sanitize_text_field( (string) $error );
+
+		$subject = sprintf(
+			/* translators: 1: store name, 2: SMS status (failed/undelivered), 3: order number */
+			__( '[%1$s] SMS %2$s — order #%3$s', 'twilio-order-communicator' ),
+			$store,
+			$status_lbl,
+			$order_label
+		);
+
+		$phone = $row && ! empty( $row->phone ) ? (string) $row->phone : '';
+		if ( $phone === '' && $order ) {
+			$phone = (string) $order->get_billing_phone();
+		}
+
+		$body_snippet = '';
+		if ( $row && isset( $row->body ) && (string) $row->body !== '' ) {
+			$body_snippet = wp_trim_words( wp_strip_all_tags( (string) $row->body ), 40, '…' );
+		}
+
+		$edit_url = $order ? $order->get_edit_order_url() : '';
+
+		$lines   = array();
+		$lines[] = sprintf(
+			/* translators: 1: SMS status, 2: order number */
+			__( 'An outbound SMS was reported as %1$s for order #%2$s.', 'twilio-order-communicator' ),
+			$status_lbl,
+			$order_label
+		);
+		$lines[] = '';
+		if ( $edit_url ) {
+			$lines[] = __( 'Order:', 'twilio-order-communicator' ) . ' ' . $edit_url;
+		} elseif ( $order_id ) {
+			$lines[] = __( 'Order ID:', 'twilio-order-communicator' ) . ' ' . $order_id;
+		}
+		if ( $phone !== '' ) {
+			$lines[] = __( 'Phone:', 'twilio-order-communicator' ) . ' ' . $phone;
+		}
+		$lines[] = __( 'Status:', 'twilio-order-communicator' ) . ' ' . $status_lbl;
+		if ( $error !== '' ) {
+			$lines[] = __( 'Twilio ErrorCode:', 'twilio-order-communicator' ) . ' ' . $error;
+		}
+		$lines[] = __( 'MessageSid:', 'twilio-order-communicator' ) . ' ' . $sid;
+		if ( $body_snippet !== '' ) {
+			$lines[] = __( 'Message:', 'twilio-order-communicator' ) . ' ' . $body_snippet;
+		}
+		$lines[] = '';
+		$lines[] = __( 'This alert was sent by Twilio Order Communicator. Messaging is not blocked by license state.', 'twilio-order-communicator' );
+
+		$body = implode( "\n", $lines );
+
+		$headers = array( 'Content-Type: text/plain; charset=UTF-8' );
+		wp_mail( $to, $subject, $body, $headers );
 	}
 
 	private function incoming_sms() {

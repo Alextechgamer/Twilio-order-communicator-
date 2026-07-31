@@ -72,6 +72,7 @@ trait TOC_Admin_Settings {
 			'toc_quiet_hours_enabled'        => 0,
 			'toc_sms_footer_enabled'         => 0,
 			'toc_scheduled_reminder_enabled' => 0,
+			'toc_delivery_alert_enabled'     => 0,
 		);
 
 		foreach ( $checkboxes as $option => $default ) {
@@ -95,6 +96,16 @@ trait TOC_Admin_Settings {
 				'default'           => 24,
 			)
 		);
+
+		register_setting(
+			'toc_settings',
+			'toc_delivery_alert_email',
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => array( $this, 'sanitize_delivery_alert_email' ),
+				'default'           => '',
+			)
+		);
 	}
 
 	public function sanitize_checkbox( $value ) {
@@ -116,6 +127,21 @@ trait TOC_Admin_Settings {
 			$hours = TOC_Reminders::MAX_DELAY_HOURS;
 		}
 		return $hours;
+	}
+
+	/**
+	 * Optional staff email for SMS delivery failure alerts. Empty = use admin_email.
+	 *
+	 * @param mixed $value Raw input.
+	 * @return string
+	 */
+	public function sanitize_delivery_alert_email( $value ) {
+		$value = is_string( $value ) ? trim( $value ) : '';
+		if ( $value === '' ) {
+			return '';
+		}
+		$email = sanitize_email( $value );
+		return is_email( $email ) ? $email : '';
 	}
 
 	public function sanitize_voice( $value ) {
@@ -473,6 +499,26 @@ trait TOC_Admin_Settings {
 					<th><?php echo esc_html__( 'Footer text', 'twilio-order-communicator' ); ?></th>
 					<td>
 						<textarea name="toc_sms_footer_text" rows="2" class="large-text"><?php echo esc_textarea( get_option( 'toc_sms_footer_text', 'Reply STOP to opt out. Msg & data rates may apply.' ) ); ?></textarea>
+					</td>
+				</tr>
+			</table>
+
+			<h2><?php echo esc_html__( 'Delivery failure alerts', 'twilio-order-communicator' ); ?></h2>
+			<p class="description"><?php echo esc_html__( 'When Twilio reports an outbound SMS as failed or undelivered (StatusCallback), optionally email staff. SMS/voice sending is never gated by license.', 'twilio-order-communicator' ); ?></p>
+			<table class="form-table">
+				<tr>
+					<th><?php echo esc_html__( 'Enable', 'twilio-order-communicator' ); ?></th>
+					<td>
+						<?php $this->checkbox( 'toc_delivery_alert_enabled', 0 ); ?>
+						<label for="toc_delivery_alert_enabled"><?php echo esc_html__( 'Email staff when an SMS is failed or undelivered', 'twilio-order-communicator' ); ?></label>
+						<p class="description"><?php echo esc_html__( 'Deduplicated per MessageSid so Twilio retries do not send multiple emails. Order notes are always written regardless of this setting.', 'twilio-order-communicator' ); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th><label for="toc_delivery_alert_email"><?php echo esc_html__( 'Alert email', 'twilio-order-communicator' ); ?></label></th>
+					<td>
+						<input type="email" id="toc_delivery_alert_email" name="toc_delivery_alert_email" value="<?php echo esc_attr( get_option( 'toc_delivery_alert_email', '' ) ); ?>" class="regular-text" placeholder="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>" />
+						<p class="description"><?php echo esc_html__( 'Leave blank to use the WordPress admin email.', 'twilio-order-communicator' ); ?> <code><?php echo esc_html( get_option( 'admin_email' ) ); ?></code></p>
 					</td>
 				</tr>
 			</table>

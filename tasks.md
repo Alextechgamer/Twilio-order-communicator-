@@ -1,6 +1,6 @@
 # Twilio Order Communicator — Tasks & Roadmap
 
-**Plugin version baseline:** 1.10.0 (P1 #16 CSV export + #18 mark as collected)  
+**Plugin version baseline:** 1.11.0 (P1 #17 delivery failure alerts)  
 **Last updated:** 2026-07-31  
 **Purpose:** Single source of truth for Cursor AI / developers.
 
@@ -74,8 +74,10 @@ Auto-remind after X hours while order is still in Ready for Pickup.
 - [x] `admin_post_toc_export_csv` + nonce + `TOC_Caps::manage()`
 - [x] Streamed CSV via `TOC_Logger::get_filtered()` in chunks; proper cell escaping
 
-### 17. Delivery failure alerts
-Email admin (or configurable address) when SMS status becomes `undelivered` or `failed`.
+### 17. Delivery failure alerts — ✅ DONE (v1.11.0)
+- [x] Optional email when Twilio SMS StatusCallback is `failed` / `undelivered` (`TOC_Webhooks::message_status`)
+- [x] Settings: `toc_delivery_alert_enabled` (default off), `toc_delivery_alert_email` (empty → admin_email)
+- [x] Dedup per MessageSid via transient; keep order notes; SMS-only scope
 
 ### 18. “Mark as collected” action — ✅ DONE (v1.10.0)
 - [x] Order action Mark / Unmark collected → `_toc_collected` timestamp (HPOS CRUD meta)
@@ -199,20 +201,20 @@ No PHPUnit suite added (deferred). `phpcs.xml.dist` documents that only `twilio-
 5. ~~P1.5 gap fixes G5–G8~~ ✅ v1.8.2  
 6. ~~Scheduled reminders (15)~~ ✅ v1.9.0  
 7. ~~CSV + Mark as collected (16, 18)~~ ✅ v1.10.0  
-8. Delivery alerts + role UI (17, 19)  
-9. P2 after first sales feedback
+8. ~~Delivery failure alerts (17)~~ ✅ v1.11.0  
+9. Role permissions UI (19)  
+10. P2 after first sales feedback
 
 ---
 
 ## Cursor Prompt — Next Pass (P1 features)
 
 ```
-You are working on the WooCommerce plugin “Twilio Order Communicator” (current version 1.10.0).
+You are working on the WooCommerce plugin “Twilio Order Communicator” (current version 1.11.0).
 
-Read tasks.md. P0 (1–13), P1 #14 (custom licensing), P1.5 gaps G1–G8, P1 #15 (scheduled reminders),
-and P1 #16/#18 (CSV export + mark as collected) are complete.
-Do not rework status-based auto-notify, scheduled reminders, CSV export, collected flag, admin traits,
-the Twilio HTTP client, REST webhooks, consent, quiet hours, or the license system unless fixing a clear bug.
+Read tasks.md. P0–P1 through #18 (and delivery alerts #17) are complete.
+Do not rework licensing, webhooks URL construction, auto-notify, reminders, CSV export,
+mark-as-collected, or delivery alerts unless fixing a clear bug.
 
 Key constraints:
 - Users always bring their own Twilio Account SID, Auth Token, and From Number. We never provide
@@ -222,7 +224,7 @@ Key constraints:
 - Preserve HPOS, security (signature validation, nonces, tokenized TwiML), and capability filters.
 - Prefer small, reviewable changes. Bump version and changelog when shipping a feature set.
 
-Continue P1 in this order: 17 delivery failure alerts, 19 role permissions UI.
+Continue P1: 19 role permissions UI.
 
 For each task:
 1. State what you will change and which files.
