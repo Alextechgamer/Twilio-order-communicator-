@@ -1,12 +1,20 @@
 <?xml version="1.0"?>
 <ruleset name="Twilio Order Communicator">
-	<description>WordPress coding standards for Twilio Order Communicator.</description>
+	<description>
+		WordPress coding standards for the Twilio Order Communicator plugin.
+		Scope is intentionally limited to twilio-order-communicator/ — the
+		sibling license-server/ tree is a separate PHP app and is not linted here.
+		A full WPCS clean pass is deferred; this ruleset is for local/CI guidance,
+		not a hard gate until the historical docblock/Yoda/alignment debt is paid down.
+	</description>
 
 	<file>twilio-order-communicator</file>
 
 	<exclude-pattern>*/vendor/*</exclude-pattern>
 	<exclude-pattern>*/node_modules/*</exclude-pattern>
 	<exclude-pattern>*/languages/*</exclude-pattern>
+	<!-- Sibling app at repo root; never pulled into this ruleset. -->
+	<exclude-pattern>*/license-server/*</exclude-pattern>
 
 	<arg name="extensions" value="php"/>
 	<arg value="sp"/>
