@@ -1,6 +1,6 @@
 # Twilio Order Communicator — Tasks & Roadmap
 
-**Plugin version baseline:** 1.11.0 (P1 #17 delivery failure alerts)  
+**Plugin version baseline:** 1.12.0 (P1 #19 role permissions UI)  
 **Last updated:** 2026-07-31  
 **Purpose:** Single source of truth for Cursor AI / developers.
 
@@ -84,9 +84,10 @@ Auto-remind after X hours while order is still in Ready for Pickup.
 - [x] Auto-notify skips + stamps; scheduled reminders cancel/skip; bulk list excludes
 - [x] Badge on order communications meta box + order notes
 
-### 19. Role-based permissions UI
-Expose the capability filters in Settings (simple role checkboxes or matrix).  
-*Partial:* `toc_manage_settings` / `toc_send_sms` filters exist in `class-toc-caps.php`; no Settings UI.
+### 19. Role-based permissions UI — ✅ DONE (v1.12.0)
+- [x] Caps `toc_manage` / `toc_send`; defaults to admin + shop_manager (seed once)
+- [x] Settings role matrix; `TOC_Caps::manage()` / `send()` use new caps (filters kept)
+- [x] Administrator always retains manage; messaging still license-free
 
 ---
 
@@ -202,7 +203,7 @@ No PHPUnit suite added (deferred). `phpcs.xml.dist` documents that only `twilio-
 6. ~~Scheduled reminders (15)~~ ✅ v1.9.0  
 7. ~~CSV + Mark as collected (16, 18)~~ ✅ v1.10.0  
 8. ~~Delivery failure alerts (17)~~ ✅ v1.11.0  
-9. Role permissions UI (19)  
+9. ~~Role permissions UI (19)~~ ✅ v1.12.0  
 10. P2 after first sales feedback
 
 ---
@@ -210,26 +211,19 @@ No PHPUnit suite added (deferred). `phpcs.xml.dist` documents that only `twilio-
 ## Cursor Prompt — Next Pass (P1 features)
 
 ```
-You are working on the WooCommerce plugin “Twilio Order Communicator” (current version 1.11.0).
+You are working on the WooCommerce plugin “Twilio Order Communicator” (current version 1.12.0).
 
-Read tasks.md. P0–P1 through #18 (and delivery alerts #17) are complete.
-Do not rework licensing, webhooks URL construction, auto-notify, reminders, CSV export,
-mark-as-collected, or delivery alerts unless fixing a clear bug.
+Read tasks.md. P0 and P1 items 14–19 are complete (including role permissions).
+Do not rework licensing, webhooks, auto-notify, reminders, CSV, mark-as-collected,
+delivery alerts, or role caps unless fixing a clear bug.
 
 Key constraints:
-- Users always bring their own Twilio Account SID, Auth Token, and From Number. We never provide
-  messaging or calling services.
-- Licensing stays custom (our own license-server/). Do not add Freemius / EDD / Lemon Squeezy.
-- Invalid/expired license must never disable SMS, voice, or chat — only premium updates.
-- Preserve HPOS, security (signature validation, nonces, tokenized TwiML), and capability filters.
-- Prefer small, reviewable changes. Bump version and changelog when shipping a feature set.
+- Users always bring their own Twilio Account SID, Auth Token, and From Number.
+- Licensing stays custom; invalid/expired license must never disable SMS/voice/chat.
+- Preserve HPOS, security, and capability filters.
+- Prefer small, reviewable changes. Bump version and changelog when shipping.
 
-Continue P1: 19 role permissions UI.
-
-For each task:
-1. State what you will change and which files.
-2. Implement cleanly in the existing style.
-3. Summarize what was done and what remains.
+Continue with P2 items from tasks.md as prioritized by sales feedback.
 ```
 
 ---

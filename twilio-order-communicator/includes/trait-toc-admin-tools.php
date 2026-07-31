@@ -86,7 +86,7 @@ trait TOC_Admin_Tools {
 				<tr><td><?php echo esc_html__( 'SMS footer', 'twilio-order-communicator' ); ?></td><td><?php echo esc_html__( 'Optional compliance footer appended to outbound SMS.', 'twilio-order-communicator' ); ?></td></tr>
 				<tr><td><?php echo esc_html__( 'Consent meta key', 'twilio-order-communicator' ); ?></td><td><?php echo wp_kses_post( __( 'Order meta field that stores the opt-in (default <code>_toc_sms_consent</code>).', 'twilio-order-communicator' ) ); ?></td></tr>
 				<tr><td><?php echo esc_html__( 'Message templates', 'twilio-order-communicator' ); ?></td><td><?php echo esc_html__( 'Default text for Ready for Pickup, Shipped, reminders, and Issue / Contact.', 'twilio-order-communicator' ); ?></td></tr>
-				<tr><td><?php echo esc_html__( 'Capabilities', 'twilio-order-communicator' ); ?></td><td><code>toc_manage_settings</code> / <code>toc_send_sms</code> <?php echo esc_html__( 'filters (default manage_woocommerce).', 'twilio-order-communicator' ); ?></td></tr>
+				<tr><td><?php echo esc_html__( 'Capabilities', 'twilio-order-communicator' ); ?></td><td><code>toc_manage</code> / <code>toc_send</code> <?php echo esc_html__( '(assign in Settings → Role permissions). Filters', 'twilio-order-communicator' ); ?> <code>toc_manage_settings</code> / <code>toc_send_sms</code> <?php echo esc_html__( 'still override the required string.', 'twilio-order-communicator' ); ?></td></tr>
 			</tbody>
 		</table>
 		<?php

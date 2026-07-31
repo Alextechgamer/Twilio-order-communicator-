@@ -3,7 +3,7 @@
  * Plugin Name:       Twilio Order Communicator
  * Plugin URI:        https://github.com/Alextechgamer/Twilio-order-communicator-
  * Description:       Send SMS and place voice calls from WooCommerce orders using your own Twilio account. Status-based Ready for Pickup and Shipped notifications, chat history, bulk reminders, and consent-aware messaging.
- * Version:           1.11.0
+ * Version:           1.12.0
  * Author:            Alextechgamer
  * Author URI:        https://github.com/Alextechgamer
  * Requires at least: 6.0
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'TOC_VERSION', '1.11.0' );
+define( 'TOC_VERSION', '1.12.0' );
 define( 'TOC_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TOC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'TOC_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
@@ -81,6 +81,7 @@ final class Twilio_Order_Communicator {
 		TOC_Logger::migrate_opt_outs_from_option();
 		$this->seed_defaults();
 		$this->migrate_from_legacy();
+		TOC_Caps::maybe_seed();
 		update_option( 'toc_db_version', TOC_VERSION );
 	}
 
@@ -193,8 +194,12 @@ final class Twilio_Order_Communicator {
 			TOC_Logger::migrate_opt_outs_from_option();
 			$this->seed_defaults();
 			$this->migrate_from_legacy();
+			TOC_Caps::maybe_seed();
 			update_option( 'toc_db_version', TOC_VERSION );
 		}
+
+		// Ensure custom caps are seeded once for existing installs upgrading without re-activate.
+		TOC_Caps::maybe_seed();
 
 		TOC_Logger::instance();
 		TOC_Twilio::instance();

@@ -82,6 +82,7 @@ $options = array(
 	'toc_scheduled_reminder_delay_hours',
 	'toc_delivery_alert_enabled',
 	'toc_delivery_alert_email',
+	'toc_caps_seeded',
 	'toc_onboarding_done',
 	'toc_onboarding_step',
 	'toc_migrated_auto_v160',
