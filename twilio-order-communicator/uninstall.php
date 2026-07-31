@@ -64,6 +64,12 @@ $options = array(
 	'toc_migrated_auto_v160',
 	'toc_sms_footer_enabled',
 	'toc_sms_footer_text',
+	'toc_license_key',
+	'toc_license_status',
+	'toc_license_data',
+	'toc_license_last_check',
+	'toc_license_instance_id',
+	'toc_license_server_url',
 );
 
 foreach ( $options as $option ) {

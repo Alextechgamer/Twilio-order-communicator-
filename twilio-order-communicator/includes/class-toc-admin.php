@@ -8,6 +8,7 @@ require_once TOC_PLUGIN_DIR . 'includes/trait-toc-admin-dashboard.php';
 require_once TOC_PLUGIN_DIR . 'includes/trait-toc-admin-bulk.php';
 require_once TOC_PLUGIN_DIR . 'includes/trait-toc-admin-tools.php';
 require_once TOC_PLUGIN_DIR . 'includes/trait-toc-admin-ajax.php';
+require_once TOC_PLUGIN_DIR . 'includes/trait-toc-admin-license.php';
 
 /**
  * Thin admin orchestrator — UI and AJAX live in focused traits.
@@ -19,6 +20,7 @@ class TOC_Admin {
 	use TOC_Admin_Bulk;
 	use TOC_Admin_Tools;
 	use TOC_Admin_Ajax;
+	use TOC_Admin_License;
 
 	private static $instance = null;
 
@@ -37,6 +39,7 @@ class TOC_Admin {
 		add_action( 'wp_ajax_toc_mark_resolved', array( $this, 'ajax_resolve' ) );
 		add_action( 'wp_ajax_toc_bulk_reminder', array( $this, 'ajax_bulk' ) );
 		add_action( 'wp_ajax_toc_test_connection', array( $this, 'ajax_test' ) );
+		add_action( 'wp_ajax_toc_license_save_server', array( $this, 'ajax_license_save_server' ) );
 	}
 
 	public function menu() {
@@ -92,7 +95,37 @@ class TOC_Admin {
 					'unknown'          => __( 'Unknown', 'twilio-order-communicator' ),
 					'needsForce'       => __( 'SMS blocked by consent', 'twilio-order-communicator' ),
 					'sendAnyway'       => __( 'Send anyway?', 'twilio-order-communicator' ),
+					'activating'       => __( 'Activating…', 'twilio-order-communicator' ),
+					'deactivating'     => __( 'Deactivating…', 'twilio-order-communicator' ),
+					'checking'         => __( 'Checking…', 'twilio-order-communicator' ),
+					'saving'           => __( 'Saving…', 'twilio-order-communicator' ),
+					'activate'         => __( 'Activate', 'twilio-order-communicator' ),
+					'deactivate'       => __( 'Deactivate', 'twilio-order-communicator' ),
+					'recheck'          => __( 'Re-check', 'twilio-order-communicator' ),
+					'saveServer'       => __( 'Save server URL', 'twilio-order-communicator' ),
+					'updatesOn'        => __( 'premium updates enabled', 'twilio-order-communicator' ),
+					'updatesOff'       => __( 'premium updates paused', 'twilio-order-communicator' ),
+					'lifetime'         => __( 'Lifetime / none set', 'twilio-order-communicator' ),
 				),
+			)
+		);
+	}
+
+	public function ajax_license_save_server() {
+		check_ajax_referer( 'toc_nonce', 'nonce' );
+		if ( ! current_user_can( TOC_Caps::manage() ) ) {
+			wp_send_json_error( __( 'Permission denied', 'twilio-order-communicator' ) );
+		}
+		if ( defined( 'TOC_LICENSE_SERVER_URL' ) && TOC_LICENSE_SERVER_URL ) {
+			wp_send_json_error( __( 'Server URL is locked by TOC_LICENSE_SERVER_URL.', 'twilio-order-communicator' ) );
+		}
+		$url = isset( $_POST['server_url'] ) ? esc_url_raw( wp_unslash( $_POST['server_url'] ) ) : '';
+		$url = $url ? untrailingslashit( $url ) : '';
+		update_option( 'toc_license_server_url', $url, false );
+		wp_send_json_success(
+			array(
+				'message' => __( 'License server URL saved.', 'twilio-order-communicator' ),
+				'server_configured' => TOC_License::instance()->is_configured(),
 			)
 		);
 	}
@@ -111,6 +144,7 @@ class TOC_Admin {
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator&tab=bulk' ) ); ?>" class="nav-tab <?php echo $tab === 'bulk' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__( 'Bulk Reminders', 'twilio-order-communicator' ); ?></a>
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator&tab=settings' ) ); ?>" class="nav-tab <?php echo $tab === 'settings' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__( 'Settings', 'twilio-order-communicator' ); ?></a>
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator&tab=setup' ) ); ?>" class="nav-tab <?php echo $tab === 'setup' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__( 'Setup', 'twilio-order-communicator' ); ?></a>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator&tab=license' ) ); ?>" class="nav-tab <?php echo $tab === 'license' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__( 'License', 'twilio-order-communicator' ); ?></a>
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator&tab=tools' ) ); ?>" class="nav-tab <?php echo $tab === 'tools' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__( 'Tools & Docs', 'twilio-order-communicator' ); ?></a>
 			</nav>
 			<div class="toc-content">
@@ -121,6 +155,8 @@ class TOC_Admin {
 					$this->render_bulk();
 				} elseif ( $tab === 'setup' ) {
 					TOC_Onboarding::instance()->render();
+				} elseif ( $tab === 'license' ) {
+					$this->render_license();
 				} elseif ( $tab === 'tools' ) {
 					$this->render_tools();
 				} else {
