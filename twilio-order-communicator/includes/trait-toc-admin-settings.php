@@ -71,6 +71,7 @@ trait TOC_Admin_Settings {
 			'toc_checkout_consent_required'  => 0,
 			'toc_quiet_hours_enabled'        => 0,
 			'toc_sms_footer_enabled'         => 0,
+			'toc_scheduled_reminder_enabled' => 0,
 		);
 
 		foreach ( $checkboxes as $option => $default ) {
@@ -84,10 +85,37 @@ trait TOC_Admin_Settings {
 				)
 			);
 		}
+
+		register_setting(
+			'toc_settings',
+			'toc_scheduled_reminder_delay_hours',
+			array(
+				'type'              => 'integer',
+				'sanitize_callback' => array( $this, 'sanitize_reminder_delay_hours' ),
+				'default'           => 24,
+			)
+		);
 	}
 
 	public function sanitize_checkbox( $value ) {
 		return ( ! empty( $value ) && (string) $value !== '0' ) ? 1 : 0;
+	}
+
+	/**
+	 * Hours until a scheduled Ready-for-Pickup reminder fires (1–720).
+	 *
+	 * @param mixed $value Raw input.
+	 * @return int
+	 */
+	public function sanitize_reminder_delay_hours( $value ) {
+		$hours = absint( $value );
+		if ( $hours < TOC_Reminders::MIN_DELAY_HOURS ) {
+			$hours = TOC_Reminders::DEFAULT_DELAY_HOURS;
+		}
+		if ( $hours > TOC_Reminders::MAX_DELAY_HOURS ) {
+			$hours = TOC_Reminders::MAX_DELAY_HOURS;
+		}
+		return $hours;
 	}
 
 	public function sanitize_voice( $value ) {
@@ -258,7 +286,7 @@ trait TOC_Admin_Settings {
 					<td>
 						<?php $this->checkbox( 'toc_auto_ready_voice', 1 ); ?>
 						<label for="toc_auto_ready_voice"><?php echo esc_html__( 'Place a voice call', 'twilio-order-communicator' ); ?></label>
-						<p class="description"><?php echo esc_html__( 'Voice calls do not require SMS consent.', 'twilio-order-communicator' ); ?></p>
+						<p class="description"><?php echo esc_html__( 'Voice calls do not require SMS consent. Also used by scheduled pickup reminders.', 'twilio-order-communicator' ); ?></p>
 					</td>
 				</tr>
 				<tr>
@@ -266,6 +294,7 @@ trait TOC_Admin_Settings {
 					<td>
 						<?php $this->checkbox( 'toc_auto_ready_sms', 0 ); ?>
 						<label for="toc_auto_ready_sms"><?php echo esc_html__( 'Also send an SMS (consent required)', 'twilio-order-communicator' ); ?></label>
+						<p class="description"><?php echo esc_html__( 'Also used by scheduled pickup reminders.', 'twilio-order-communicator' ); ?></p>
 					</td>
 				</tr>
 				<tr>
@@ -324,7 +353,28 @@ trait TOC_Admin_Settings {
 								<input type="time" name="toc_quiet_hours_end" value="<?php echo esc_attr( TOC_Auto::normalize_time_option( get_option( 'toc_quiet_hours_end', '08:00' ), '08:00' ) ); ?>" />
 							</label>
 						</p>
-						<p class="description"><?php echo esc_html( sprintf( __( 'Uses the WordPress timezone (%s). Overnight windows like 21:00–08:00 are supported. Deferred with Action Scheduler when available. Applies to both Ready for Pickup and Shipped.', 'twilio-order-communicator' ), wp_timezone_string() ) ); ?></p>
+						<p class="description"><?php echo esc_html( sprintf( __( 'Uses the WordPress timezone (%s). Overnight windows like 21:00–08:00 are supported. Deferred with Action Scheduler when available. Applies to Ready for Pickup, Shipped, and scheduled pickup reminders.', 'twilio-order-communicator' ), wp_timezone_string() ) ); ?></p>
+					</td>
+				</tr>
+			</table>
+
+			<h3><?php echo esc_html__( 'Scheduled pickup reminders', 'twilio-order-communicator' ); ?></h3>
+			<p class="description"><?php echo esc_html__( 'Automatically remind customers whose orders are still in Ready for Pickup after a delay. Uses the Pickup Reminder template, quiet hours, SMS consent, and the Ready for Pickup voice/SMS channel toggles above. Never gated by license.', 'twilio-order-communicator' ); ?></p>
+			<table class="form-table">
+				<tr>
+					<th><?php echo esc_html__( 'Enable', 'twilio-order-communicator' ); ?></th>
+					<td>
+						<?php $this->checkbox( 'toc_scheduled_reminder_enabled', 0 ); ?>
+						<label for="toc_scheduled_reminder_enabled"><?php echo esc_html__( 'Schedule a reminder when an order enters Ready for Pickup', 'twilio-order-communicator' ); ?></label>
+						<p class="description"><?php echo esc_html__( 'One Action Scheduler job per order. Cancelled if the order leaves Ready for Pickup. Skips if _toc_last_reminder_at is still recent (same delay window).', 'twilio-order-communicator' ); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th><label for="toc_scheduled_reminder_delay_hours"><?php echo esc_html__( 'Delay', 'twilio-order-communicator' ); ?></label></th>
+					<td>
+						<input type="number" id="toc_scheduled_reminder_delay_hours" name="toc_scheduled_reminder_delay_hours" min="1" max="720" step="1" value="<?php echo (int) TOC_Reminders::delay_hours(); ?>" style="width:5em" />
+						<?php echo esc_html__( 'hours after entering Ready for Pickup', 'twilio-order-communicator' ); ?>
+						<p class="description"><?php echo esc_html__( 'Default 24. Range 1–720 (30 days).', 'twilio-order-communicator' ); ?></p>
 					</td>
 				</tr>
 			</table>
@@ -383,7 +433,7 @@ trait TOC_Admin_Settings {
 				<tr>
 					<th><?php echo esc_html__( 'Pickup Reminder', 'twilio-order-communicator' ); ?></th>
 					<td><textarea name="toc_message_reminder" rows="3" class="large-text"><?php echo esc_textarea( TOC_Auto::get_message_template( 'reminder' ) ); ?></textarea>
-					<p class="description"><?php echo esc_html__( 'Used by Bulk Reminders for orders still in Ready for Pickup.', 'twilio-order-communicator' ); ?></p></td>
+					<p class="description"><?php echo esc_html__( 'Used by Bulk Reminders and scheduled pickup reminders for orders still in Ready for Pickup.', 'twilio-order-communicator' ); ?></p></td>
 				</tr>
 				<tr>
 					<th><?php echo esc_html__( 'Issue / Contact', 'twilio-order-communicator' ); ?></th>

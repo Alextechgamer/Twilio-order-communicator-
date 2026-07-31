@@ -1,6 +1,6 @@
 # Twilio Order Communicator — Tasks & Roadmap
 
-**Plugin version baseline:** 1.8.0 (P0 1–13 + P1 #14 custom licensing merged to `main`)  
+**Plugin version baseline:** 1.9.0 (P1 #15 scheduled reminders)  
 **Last updated:** 2026-07-31  
 **Purpose:** Single source of truth for Cursor AI / developers.
 
@@ -60,8 +60,14 @@
 - [x] `license-server/` PHP + SQLite API with key / release CLIs (`license-server/README.md`)
 - [x] Constants `TOC_LICENSE_SERVER_URL`, optional `TOC_LICENSE_ITEM_SLUG`
 
-### 15. Scheduled reminders (Ready for Pickup) ← **next**
-Auto-remind after X hours/days while order is still in Ready for Pickup. Respect quiet hours, consent, and `_toc_last_reminder_at`.
+### 15. Scheduled reminders (Ready for Pickup) — ✅ DONE (v1.9.0)
+Auto-remind after X hours while order is still in Ready for Pickup.
+- [x] Settings: `toc_scheduled_reminder_enabled` (default off), `toc_scheduled_reminder_delay_hours` (default 24)
+- [x] Schedule single AS action when order enters mapped Ready status (`class-toc-reminders.php`)
+- [x] On fire: still Ready, quiet hours re-defer, phone, consent (SMS), `_toc_last_reminder_at` cooldown
+- [x] Send via Twilio paths + stamp `_toc_last_reminder_at` + order notes
+- [x] Cancel on leave Ready / deactivate / uninstall
+- [x] Messaging ungated by license
 
 ### 16. CSV export from Dashboard
 
@@ -186,19 +192,20 @@ No PHPUnit suite added (deferred). `phpcs.xml.dist` documents that only `twilio-
 3. ~~License system (P1 #14, custom)~~ ✅ v1.8.0  
 4. ~~P1.5 gap fixes G1–G4~~ ✅ v1.8.1  
 5. ~~P1.5 gap fixes G5–G8~~ ✅ v1.8.2  
-6. Scheduled reminders + CSV + Mark as collected (15, 16, 18)  
-7. Delivery alerts + role UI (17, 19)  
-8. P2 after first sales feedback
+6. ~~Scheduled reminders (15)~~ ✅ v1.9.0  
+7. CSV + Mark as collected (16, 18)  
+8. Delivery alerts + role UI (17, 19)  
+9. P2 after first sales feedback
 
 ---
 
 ## Cursor Prompt — Next Pass (P1 features)
 
 ```
-You are working on the WooCommerce plugin “Twilio Order Communicator” (current version 1.8.2).
+You are working on the WooCommerce plugin “Twilio Order Communicator” (current version 1.9.0).
 
-Read tasks.md. P0 (1–13), P1 #14 (custom licensing), and P1.5 gaps G1–G8 are complete.
-Do not rework status-based auto-notify, admin traits, the Twilio HTTP client, REST webhooks,
+Read tasks.md. P0 (1–13), P1 #14 (custom licensing), P1.5 gaps G1–G8, and P1 #15 (scheduled reminders) are complete.
+Do not rework status-based auto-notify, scheduled reminders, admin traits, the Twilio HTTP client, REST webhooks,
 consent, quiet hours, or the license system unless fixing a clear bug.
 
 Key constraints:
@@ -209,7 +216,7 @@ Key constraints:
 - Preserve HPOS, security (signature validation, nonces, tokenized TwiML), and capability filters.
 - Prefer small, reviewable changes. Bump version and changelog when shipping a feature set.
 
-Continue P1 in this order: 15 scheduled reminders, 16 CSV export, 18 mark as collected,
+Continue P1 in this order: 16 CSV export, 18 mark as collected,
 17 delivery failure alerts, 19 role permissions UI.
 
 For each task:

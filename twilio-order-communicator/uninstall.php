@@ -13,6 +13,7 @@ global $wpdb;
 $toc_hooks = array(
 	'toc_license_validate_cron',
 	'toc_deferred_auto_notify',
+	'toc_scheduled_reminder',
 );
 
 foreach ( $toc_hooks as $toc_hook ) {
@@ -77,6 +78,8 @@ $options = array(
 	'toc_quiet_hours_enabled',
 	'toc_quiet_hours_start',
 	'toc_quiet_hours_end',
+	'toc_scheduled_reminder_enabled',
+	'toc_scheduled_reminder_delay_hours',
 	'toc_onboarding_done',
 	'toc_onboarding_step',
 	'toc_migrated_auto_v160',
