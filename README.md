@@ -24,10 +24,9 @@ Seller docs: [`RELEASE.md`](./RELEASE.md) (build + deploy + keys) · [`license-s
 
 ## Download
 
-- [`twilio-order-communicator-1.8.1.zip`](./twilio-order-communicator-1.8.1.zip) — latest packaged release (G1–G4)
+- [`twilio-order-communicator-1.8.2.zip`](./twilio-order-communicator-1.8.2.zip) — current release (G5–G8)
+- [`twilio-order-communicator-1.8.1.zip`](./twilio-order-communicator-1.8.1.zip) — G1–G4 audit fixes
 - [`twilio-order-communicator-1.8.0.zip`](./twilio-order-communicator-1.8.0.zip) — licensing release
-
-*(1.8.2 is on `main`; rebuild the customer zip per `RELEASE.md` when shipping.)*
 
 ## What's in 1.8.2
 
