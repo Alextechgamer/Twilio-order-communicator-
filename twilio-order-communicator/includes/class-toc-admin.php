@@ -40,6 +40,7 @@ class TOC_Admin {
 		add_action( 'wp_ajax_toc_bulk_reminder', array( $this, 'ajax_bulk' ) );
 		add_action( 'wp_ajax_toc_test_connection', array( $this, 'ajax_test' ) );
 		add_action( 'wp_ajax_toc_license_save_server', array( $this, 'ajax_license_save_server' ) );
+		add_action( 'admin_post_toc_export_csv', array( $this, 'handle_export_csv' ) );
 	}
 
 	public function menu() {

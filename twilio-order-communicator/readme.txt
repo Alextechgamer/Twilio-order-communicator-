@@ -4,7 +4,7 @@ Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
 WC requires at least: 7.0
-Stable tag: 1.9.0
+Stable tag: 1.10.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -26,6 +26,8 @@ Twilio Order Communicator turns every WooCommerce order into a communication hub
 * REST webhook routes (`toc/v1`) with permanent query-string aliases
 * Bulk reminder tool for orders still in Ready for Pickup
 * Optional scheduled pickup reminders after a configurable delay (Action Scheduler)
+* Dashboard CSV export of filtered communications
+* Mark order as collected (suppresses auto-notify / bulk / scheduled reminders)
 * Optional SMS compliance footer + Privacy Policy helper text
 * Filterable capabilities and optional wp-config credential constants
 * Optional first-party license key for premium updates (messaging works without a license)
@@ -79,6 +81,12 @@ No. The plugin includes its own tokenized TwiML endpoint.
 They text START or UNSTOP. Plain "YES" is intentionally not treated as re-subscribe.
 
 == Changelog ==
+
+= 1.10.0 =
+* Feature: Export CSV from the Dashboard (respects current filters; nonce-protected; paginated fetch)
+* Feature: Mark as collected order action (and Unmark) — sets `_toc_collected` meta (HPOS-safe)
+* Collected orders skip auto-notify, cancel scheduled reminders, and are excluded from bulk reminders
+* Collected badge on the order communications meta box; messaging remains ungated by license
 
 = 1.9.0 =
 * Feature: scheduled Ready for Pickup reminders after a configurable delay (default off, 24h)

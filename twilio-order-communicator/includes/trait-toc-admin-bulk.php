@@ -51,7 +51,8 @@ trait TOC_Admin_Bulk {
 				)
 			);
 			echo $consent_required ? '' : esc_html__( ' (consent currently disabled in Settings)', 'twilio-order-communicator' );
-			echo '.';
+			echo '. ';
+			echo esc_html__( 'Orders marked as collected are excluded.', 'twilio-order-communicator' );
 			?>
 		</p>
 

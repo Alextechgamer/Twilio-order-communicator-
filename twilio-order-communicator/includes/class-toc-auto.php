@@ -254,6 +254,23 @@ class TOC_Auto {
 			return;
 		}
 
+		// Collected orders: skip auto-notify (stamp so we do not re-run).
+		if ( class_exists( 'TOC_Order_Meta' ) && TOC_Order_Meta::is_collected( $order ) ) {
+			if ( ! $order->get_meta( $config['meta'] ) ) {
+				$order->add_order_note(
+					sprintf(
+						/* translators: %s: notification label */
+						__( 'Auto notification skipped (%s): order is marked as collected.', 'twilio-order-communicator' ),
+						$config['label']
+					)
+				);
+				$order->update_meta_data( $config['meta'], time() );
+				$order->delete_meta_data( $config['deferred_meta'] );
+				$order->save();
+			}
+			return;
+		}
+
 		// Still on the mapped status? (status may have changed while deferred).
 		$current = $order->get_status();
 		$expected = TOC_Statuses::bare_status( $config['mapped_status'] );

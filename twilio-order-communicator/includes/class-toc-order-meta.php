@@ -5,6 +5,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class TOC_Order_Meta {
 
+	/** Order meta key: Unix timestamp when marked collected (empty = not collected). */
+	const META_COLLECTED = '_toc_collected';
+
 	private static $instance = null;
 
 	public static function instance() {
@@ -19,6 +22,110 @@ class TOC_Order_Meta {
 		add_action( 'wp_ajax_toc_send_sms', array( $this, 'ajax_sms' ) );
 		add_action( 'wp_ajax_toc_send_call', array( $this, 'ajax_call' ) );
 		add_action( 'wp_ajax_toc_get_history', array( $this, 'ajax_history' ) );
+
+		// Classic + HPOS order actions dropdown.
+		add_filter( 'woocommerce_order_actions', array( $this, 'order_actions' ) );
+		add_action( 'woocommerce_order_action_toc_mark_collected', array( $this, 'action_mark_collected' ) );
+		add_action( 'woocommerce_order_action_toc_unmark_collected', array( $this, 'action_unmark_collected' ) );
+	}
+
+	/**
+	 * Whether an order is marked collected (pickup completed).
+	 *
+	 * @param WC_Order|int $order Order object or ID.
+	 * @return bool
+	 */
+	public static function is_collected( $order ) {
+		if ( is_numeric( $order ) ) {
+			$order = wc_get_order( absint( $order ) );
+		}
+		if ( ! $order || ! is_a( $order, 'WC_Order' ) ) {
+			return false;
+		}
+		$val = $order->get_meta( self::META_COLLECTED );
+		return ! empty( $val );
+	}
+
+	/**
+	 * Mark order as collected; cancel pending scheduled reminders.
+	 *
+	 * @param WC_Order $order Order.
+	 * @return bool True if state changed.
+	 */
+	public static function mark_collected( $order ) {
+		if ( ! $order || ! is_a( $order, 'WC_Order' ) ) {
+			return false;
+		}
+		if ( self::is_collected( $order ) ) {
+			return false;
+		}
+		$order->update_meta_data( self::META_COLLECTED, time() );
+		$order->add_order_note( __( 'Order marked as collected (Order Communicator). Auto-notify and pickup reminders are suppressed.', 'twilio-order-communicator' ) );
+		$order->save();
+
+		if ( class_exists( 'TOC_Reminders' ) ) {
+			TOC_Reminders::instance()->cancel_for_order( $order->get_id() );
+		}
+		return true;
+	}
+
+	/**
+	 * Clear collected flag.
+	 *
+	 * @param WC_Order $order Order.
+	 * @return bool True if state changed.
+	 */
+	public static function unmark_collected( $order ) {
+		if ( ! $order || ! is_a( $order, 'WC_Order' ) ) {
+			return false;
+		}
+		if ( ! self::is_collected( $order ) ) {
+			return false;
+		}
+		$order->delete_meta_data( self::META_COLLECTED );
+		$order->add_order_note( __( 'Collected flag cleared (Order Communicator).', 'twilio-order-communicator' ) );
+		$order->save();
+		return true;
+	}
+
+	/**
+	 * @param array $actions Existing order actions.
+	 * @return array
+	 */
+	public function order_actions( $actions ) {
+		if ( ! is_array( $actions ) ) {
+			$actions = array();
+		}
+		// Resolve order for HPOS list/edit screens when available.
+		$order = null;
+		if ( isset( $GLOBALS['theorder'] ) && is_a( $GLOBALS['theorder'], 'WC_Order' ) ) {
+			$order = $GLOBALS['theorder'];
+		} elseif ( isset( $_GET['id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$order = wc_get_order( absint( $_GET['id'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		} elseif ( isset( $_GET['post'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$order = wc_get_order( absint( $_GET['post'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		}
+
+		if ( $order && self::is_collected( $order ) ) {
+			$actions['toc_unmark_collected'] = __( 'Unmark collected (Order Communicator)', 'twilio-order-communicator' );
+		} else {
+			$actions['toc_mark_collected'] = __( 'Mark as collected (Order Communicator)', 'twilio-order-communicator' );
+		}
+		return $actions;
+	}
+
+	/**
+	 * @param WC_Order $order Order.
+	 */
+	public function action_mark_collected( $order ) {
+		self::mark_collected( $order );
+	}
+
+	/**
+	 * @param WC_Order $order Order.
+	 */
+	public function action_unmark_collected( $order ) {
+		self::unmark_collected( $order );
 	}
 
 	public function meta_box() {
@@ -47,6 +154,8 @@ class TOC_Order_Meta {
 		$twilio    = TOC_Twilio::instance();
 		$consented = $twilio->customer_consented_sms( $order_id );
 		$opted_out = $phone && $twilio->phone_is_opted_out( $phone );
+		$collected = self::is_collected( $order );
+		$collected_at = $order->get_meta( self::META_COLLECTED );
 
 		$pickup   = $twilio->merge_tags(
 			TOC_Auto::get_message_template( TOC_Auto::KIND_READY ),
@@ -72,6 +181,19 @@ class TOC_Order_Meta {
 			data-opted-out="<?php echo $opted_out ? '1' : '0'; ?>">
 			<div class="toc-chat-header">
 				<strong><?php echo esc_html__( 'Phone:', 'twilio-order-communicator' ); ?></strong> <?php echo esc_html( $phone ?: __( 'No phone on file', 'twilio-order-communicator' ) ); ?>
+				<?php if ( $collected ) : ?>
+					<?php
+					$ts  = is_numeric( $collected_at ) ? (int) $collected_at : 0;
+					$lbl = $ts
+						? sprintf(
+							/* translators: %s: local datetime */
+							__( 'Collected %s', 'twilio-order-communicator' ),
+							date_i18n( 'M j, g:i a', $ts )
+						)
+						: __( 'Collected', 'twilio-order-communicator' );
+					?>
+					<span class="toc-badge toc-badge-ok" title="<?php echo esc_attr__( 'Pickup complete — auto-notify and scheduled reminders are suppressed', 'twilio-order-communicator' ); ?>"><?php echo esc_html( $lbl ); ?></span>
+				<?php endif; ?>
 				<?php if ( $opted_out ) : ?>
 					<span class="toc-badge toc-badge-no"><?php echo esc_html__( 'SMS STOP / opted out', 'twilio-order-communicator' ); ?></span>
 				<?php elseif ( $consented ) : ?>

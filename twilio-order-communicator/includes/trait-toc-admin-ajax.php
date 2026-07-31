@@ -56,6 +56,19 @@ trait TOC_Admin_Ajax {
 			wp_send_json_error( 'Order not found' );
 		}
 
+		if ( class_exists( 'TOC_Order_Meta' ) && TOC_Order_Meta::is_collected( $order ) ) {
+			wp_send_json_success(
+				array(
+					'order_id' => $order_id,
+					'ok'       => false,
+					'skipped'  => true,
+					'detail'   => 'Order is marked as collected',
+					'call'     => null,
+					'sms'      => null,
+				)
+			);
+		}
+
 		$phone = $order->get_billing_phone();
 		if ( empty( $phone ) ) {
 			wp_send_json_success(
