@@ -19,11 +19,35 @@ class SC_Cart_Order {
 
 	private function __construct() {
 		add_filter( 'woocommerce_add_cart_item_data', array( $this, 'add_cart_item_data' ), 10, 3 );
+		add_filter( 'woocommerce_add_to_cart_validation', array( $this, 'validate_add_to_cart' ), 10, 3 );
 		add_filter( 'woocommerce_get_item_data', array( $this, 'display_item_data' ), 10, 2 );
 		add_action( 'woocommerce_checkout_create_order_line_item', array( $this, 'to_order_item' ), 10, 4 );
 		add_action( 'woocommerce_after_order_itemmeta', array( $this, 'admin_order_preview' ), 10, 3 );
 		add_filter( 'woocommerce_add_cart_item', array( $this, 'set_cart_item_prices' ), 20, 1 );
 		add_filter( 'woocommerce_get_cart_item_from_session', array( $this, 'from_session' ), 20, 2 );
+	}
+
+	/**
+	 * Block add-to-cart when artwork fails validation.
+	 */
+	public function validate_add_to_cart( $passed, $product_id, $quantity ) {
+		if ( empty( $_FILES['sc_artwork']['tmp_name'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			return $passed;
+		}
+		$rules = SC_Customizer::get_validation( $product_id );
+		$config = SC_Customizer::get_config( $product_id );
+		$area = ! empty( $config['areas'][0] ) ? $config['areas'][0] : array();
+		$check = SC_Print_Ready::instance()->validate_source( $_FILES['sc_artwork']['tmp_name'], $rules, $area ); // phpcs:ignore
+		if ( ! $check['ok'] ) {
+			foreach ( $check['errors'] as $err ) {
+				wc_add_notice( $err, 'error' );
+			}
+			return false;
+		}
+		foreach ( $check['warnings'] as $w ) {
+			wc_add_notice( $w, 'notice' );
+		}
+		return $passed;
 	}
 
 	/**
@@ -66,7 +90,32 @@ class SC_Cart_Order {
 			}
 		}
 
-		if ( ! empty( $cart_item_data[ SC_Plugin::CART_OPTIONS ] ) || ! empty( $cart_item_data[ SC_Plugin::CART_PLACEMENT ] ) ) {
+		// Artwork file from customizer (multipart).
+		if ( ! empty( $_FILES['sc_artwork']['tmp_name'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			$rules = SC_Customizer::get_validation( $product_id );
+			$config = SC_Customizer::get_config( $product_id );
+			$area = array();
+			if ( ! empty( $config['areas'][0] ) ) {
+				$area = $config['areas'][0];
+			}
+			$check = SC_Print_Ready::instance()->validate_source( $_FILES['sc_artwork']['tmp_name'], $rules, $area ); // phpcs:ignore
+			if ( ! $check['ok'] ) {
+				// Store errors so add-to-cart can be blocked via filter.
+				$cart_item_data['sc_validation_errors'] = $check['errors'];
+			} else {
+				$att = SC_Print_Ready::instance()->sideload_upload( $_FILES['sc_artwork'] ); // phpcs:ignore
+				if ( ! is_wp_error( $att ) ) {
+					$cart_item_data[ SC_Plugin::CART_ATTACHMENTS ] = array( 'artwork' => (int) $att );
+					if ( ! empty( $check['meta'] ) ) {
+						$cart_item_data['sc_art_meta'] = $check['meta'];
+					}
+				} else {
+					$cart_item_data['sc_validation_errors'] = array( $att->get_error_message() );
+				}
+			}
+		}
+
+		if ( ! empty( $cart_item_data[ SC_Plugin::CART_OPTIONS ] ) || ! empty( $cart_item_data[ SC_Plugin::CART_PLACEMENT ] ) || ! empty( $cart_item_data[ SC_Plugin::CART_ATTACHMENTS ] ) ) {
 			$cart_item_data['unique_key'] = md5( microtime() . wp_rand() );
 		}
 
@@ -146,6 +195,9 @@ class SC_Cart_Order {
 		}
 		if ( isset( $values[ SC_Plugin::CART_PLACEMENT ] ) ) {
 			$cart_item[ SC_Plugin::CART_PLACEMENT ] = $values[ SC_Plugin::CART_PLACEMENT ];
+		}
+		if ( isset( $values[ SC_Plugin::CART_ATTACHMENTS ] ) ) {
+			$cart_item[ SC_Plugin::CART_ATTACHMENTS ] = $values[ SC_Plugin::CART_ATTACHMENTS ];
 		}
 		return $this->set_cart_item_prices( $cart_item );
 	}

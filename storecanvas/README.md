@@ -2,23 +2,27 @@
 
 Self-hosted WooCommerce **product options** + **live mockup placement** + **print-ready exports**.
 
-Version: **0.3.0**
+Version: **0.4.0**
 
-## What’s in 0.3.0
+## What’s in 0.4.0 (Phase C)
 
-- Artwork **constrained** to the active print area
-- **Resize handles** (corners) + scroll-wheel scale
-- **Per-view placements** — place art on Front/Back independently; all saved in `sc_placement`
-- Touch-friendly drag on the canvas
+- **Artwork upload** on add-to-cart (`sc_artwork`) → media library
+- **Validation**: file size, MIME, min pixels, **estimated DPI** vs target print width
+- **Print composite** (GD): base view + placed art → PNG attachment on the order line
+- **Admin downloads**: original artwork + per-view composites on the order screen
+
+## Requirements
+
+- PHP **GD** extension for composite generation
 
 ## Modules
 
 | Module | Status |
 |--------|--------|
-| Product Options (A) | Visual builder + cart pricing (0.2) |
-| Live Customizer (B) | Canvas polish (0.3) |
-| Print-ready (C) | Stub — next |
+| Product Options (A) | 0.2 visual + pricing |
+| Live Customizer (B) | 0.3 canvas polish |
+| Print-ready (C) | **0.4** validation + composite |
 
 ## Install
 
-Copy `storecanvas/` → `wp-content/plugins/`, activate, configure on the product **StoreCanvas** tab.
+Copy `storecanvas/` → `wp-content/plugins/`, activate, configure product **StoreCanvas** tab.

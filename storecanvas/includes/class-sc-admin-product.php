@@ -109,6 +109,17 @@ class SC_Admin_Product {
 						'custom_attributes' => array( 'min' => '100', 'step' => '1' ),
 					)
 				);
+				woocommerce_wp_text_input(
+					array(
+						'id'                => 'sc_val_print_width',
+						'label'             => __( 'Target print width (inches)', 'storecanvas' ),
+						'type'              => 'number',
+						'desc_tip'          => true,
+						'description'       => __( 'Used to estimate DPI of uploaded artwork.', 'storecanvas' ),
+						'value'             => (float) ( $validation['target_print_width_in'] ?? 12 ),
+						'custom_attributes' => array( 'min' => '1', 'step' => '0.5' ),
+					)
+				);
 				?>
 			</div>
 
@@ -192,6 +203,9 @@ class SC_Admin_Product {
 		}
 		if ( isset( $_POST['sc_val_min_px'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$validation['min_source_px'] = max( 100, absint( $_POST['sc_val_min_px'] ) );
+		}
+		if ( isset( $_POST['sc_val_print_width'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			$validation['target_print_width_in'] = max( 1, (float) $_POST['sc_val_print_width'] );
 		}
 		update_post_meta( $post_id, SC_Plugin::META_VALIDATION, $validation );
 

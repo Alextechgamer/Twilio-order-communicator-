@@ -43,6 +43,7 @@ class SC_Plugin {
 			'allowed_mimes'   => array( 'image/png', 'image/jpeg', 'image/svg+xml' ),
 			'min_source_px'   => 500,
 			'safe_margin_pct' => 5,
+			'target_print_width_in' => 12,
 		);
 	}
 
