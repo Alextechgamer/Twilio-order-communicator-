@@ -29,7 +29,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<canvas id="sc-canvas" width="600" height="600" style="max-width:100%;border:1px solid #ddd;background:#fafafa;touch-action:none;"></canvas>
 	</div>
 	<p>
-		<input type="file" id="sc-upload" accept="image/png,image/jpeg,image/svg+xml" />
+		<input type="file" id="sc-upload" name="sc_artwork" accept="image/png,image/jpeg,image/svg+xml" />
 		<button type="button" class="button" id="sc-reset"><?php esc_html_e( 'Reset', 'storecanvas' ); ?></button>
 	</p>
 	<input type="hidden" name="sc_placement" id="sc_placement" value="" />

@@ -20,6 +20,8 @@ class SC_Customizer {
 
 	private function __construct() {
 		add_action( 'woocommerce_before_add_to_cart_button', array( $this, 'render_panel' ), 20 );
+		add_filter( 'post_class', array( $this, 'ensure_multipart_hint' ), 10, 3 );
+		add_action( 'wp_footer', array( $this, 'force_multipart_script' ), 30 );
 	}
 
 	/**
@@ -78,5 +80,26 @@ class SC_Customizer {
 		if ( file_exists( $path ) ) {
 			include $path;
 		}
+	}
+
+	/**
+	 * Footer script: ensure add-to-cart form is multipart for artwork upload.
+	 */
+	public function force_multipart_script() {
+		if ( ! is_product() ) {
+			return;
+		}
+		?>
+		<script>
+		(function(){
+			var f = document.querySelector('form.cart');
+			if (f) { f.setAttribute('enctype','multipart/form-data'); f.setAttribute('encoding','multipart/form-data'); }
+		})();
+		</script>
+		<?php
+	}
+
+	public function ensure_multipart_hint( $classes, $class, $post_id ) {
+		return $classes;
 	}
 }

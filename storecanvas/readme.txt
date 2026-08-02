@@ -3,7 +3,7 @@ Contributors: alextechgamer
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 0.3.0
+Stable tag: 0.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -20,6 +20,13 @@ StoreCanvas is a self-hosted WooCommerce module for:
 Works with any printable product you configure — shirts, hats, mugs, bags, etc. No third-party mockup SaaS.
 
 == Changelog ==
+
+= 0.4.0 =
+* Artwork upload on add-to-cart (sc_artwork) → media library
+* Validation: file size, MIME, min pixels, estimated DPI vs target print width
+* Print composite (GD): base view + placed art → PNG attachment on order line
+* Admin downloads: original artwork + per-view composites on the order screen
+* Requires PHP GD for composite generation
 
 = 0.3.0 =
 * Canvas: constrain artwork to active print area

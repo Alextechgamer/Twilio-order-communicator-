@@ -4,10 +4,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Phase C: print-ready generation + validation against product rules.
- * Scaffold only — methods are stubs until 1.16.0 work.
+ * Phase C (0.4.0): print-ready validation, composite generation, order downloads.
  */
 class SC_Print_Ready {
+
+	const META_PRINT_FILES = 'sc_print_files'; // order item meta: [ view_id => attachment_id ]
 
 	private static $instance = null;
 
@@ -19,74 +20,398 @@ class SC_Print_Ready {
 	}
 
 	private function __construct() {
-		// Future: admin order action "Generate print file", AJAX validators.
+		add_action( 'woocommerce_checkout_create_order_line_item', array( $this, 'maybe_generate_on_order' ), 20, 4 );
+		add_action( 'woocommerce_after_order_itemmeta', array( $this, 'admin_download_links' ), 15, 3 );
+		add_action( 'wp_ajax_sc_generate_print_file', array( $this, 'ajax_generate' ) );
 	}
 
 	/**
-	 * Validate an uploaded source image against product rules.
+	 * Validate source image; includes estimated DPI when target print width is set.
 	 *
 	 * @param string $file_path Absolute path.
 	 * @param array  $rules     Validation rules.
-	 * @param array  $area      Print area (for size-at-print estimates).
-	 * @return array{ok:bool,errors:string[],meta:array}
+	 * @param array  $area      Optional area with w % of full design; uses rules target_print_width_in.
+	 * @return array{ok:bool,errors:string[],warnings:string[],meta:array}
 	 */
 	public function validate_source( $file_path, $rules, $area = array() ) {
-		$errors = array();
-		$meta   = array();
+		$errors   = array();
+		$warnings = array();
+		$meta     = array();
 
-		if ( ! file_exists( $file_path ) ) {
-			return array( 'ok' => false, 'errors' => array( __( 'File not found.', 'storecanvas' ) ), 'meta' => $meta );
+		if ( ! $file_path || ! file_exists( $file_path ) ) {
+			return array(
+				'ok'       => false,
+				'errors'   => array( __( 'File not found.', 'storecanvas' ) ),
+				'warnings' => array(),
+				'meta'     => $meta,
+			);
 		}
 
 		$size_mb = filesize( $file_path ) / ( 1024 * 1024 );
 		$max_mb  = isset( $rules['max_upload_mb'] ) ? (float) $rules['max_upload_mb'] : 10;
 		if ( $size_mb > $max_mb ) {
 			$errors[] = sprintf(
-				/* translators: 1: size 2: max */
 				__( 'File is %.1f MB; max allowed is %.1f MB.', 'storecanvas' ),
 				$size_mb,
 				$max_mb
 			);
 		}
 
-		$ft = wp_check_filetype( $file_path );
-		$mime = $ft['type'] ?? '';
+		$ft      = wp_check_filetype( $file_path );
+		$mime    = $ft['type'] ?? '';
 		$allowed = isset( $rules['allowed_mimes'] ) ? (array) $rules['allowed_mimes'] : array( 'image/png', 'image/jpeg' );
+		// wp_check_filetype may miss tmp uploads — also check getimagesize mime.
+		$dim = @getimagesize( $file_path );
+		if ( is_array( $dim ) && ! empty( $dim['mime'] ) ) {
+			$mime = $dim['mime'];
+		}
 		if ( $mime && ! in_array( $mime, $allowed, true ) ) {
 			$errors[] = __( 'File type is not allowed.', 'storecanvas' );
 		}
 
-		$dim = @getimagesize( $file_path );
 		if ( is_array( $dim ) ) {
 			$meta['width']  = (int) $dim[0];
 			$meta['height'] = (int) $dim[1];
-			$min_px = isset( $rules['min_source_px'] ) ? (int) $rules['min_source_px'] : 500;
-			if ( $meta['width'] < $min_px && $meta['height'] < $min_px ) {
+			$long            = max( $meta['width'], $meta['height'] );
+			$min_px         = isset( $rules['min_source_px'] ) ? (int) $rules['min_source_px'] : 500;
+			if ( $long < $min_px ) {
 				$errors[] = sprintf(
-					/* translators: %d: min pixels */
-					__( 'Image is too small; minimum %d px on the long edge recommended.', 'storecanvas' ),
+					__( 'Image is too small; minimum %d px on the long edge required.', 'storecanvas' ),
 					$min_px
 				);
 			}
+
+			// Estimated DPI: assume art fills the print area width at target_print_width_in.
+			$target_in = isset( $rules['target_print_width_in'] ) ? (float) $rules['target_print_width_in'] : 12.0;
+			$min_dpi   = isset( $rules['min_dpi'] ) ? (float) $rules['min_dpi'] : 150;
+			if ( $target_in > 0 && $meta['width'] > 0 ) {
+				// If area width % is known, effective print inches for art ≈ target_in * (area.w/100).
+				$area_frac = 1.0;
+				if ( ! empty( $area['w'] ) ) {
+					$area_frac = max( 0.05, min( 1.0, (float) $area['w'] / 100 ) );
+				}
+				$print_in         = $target_in * $area_frac;
+				$est_dpi          = $meta['width'] / $print_in;
+				$meta['est_dpi']  = round( $est_dpi, 1 );
+				$meta['print_in'] = round( $print_in, 2 );
+				if ( $est_dpi < $min_dpi ) {
+					$errors[] = sprintf(
+						__( 'Estimated print resolution is ~%1$s DPI (need at least %2$s DPI at %3$s″ width). Upload a larger image.', 'storecanvas' ),
+						(string) $meta['est_dpi'],
+						(string) $min_dpi,
+						(string) $meta['print_in']
+					);
+				} elseif ( $est_dpi < $min_dpi * 1.2 ) {
+					$warnings[] = sprintf(
+						__( 'Estimated DPI is ~%s — acceptable but close to the minimum.', 'storecanvas' ),
+						(string) $meta['est_dpi']
+					);
+				}
+			}
+		} else {
+			$errors[] = __( 'Could not read image dimensions.', 'storecanvas' );
 		}
 
-		// DPI-at-print is Phase C (needs physical print size of area).
 		return array(
-			'ok'     => empty( $errors ),
-			'errors' => $errors,
-			'meta'   => $meta,
+			'ok'       => empty( $errors ),
+			'errors'   => $errors,
+			'warnings' => $warnings,
+			'meta'     => $meta,
 		);
 	}
 
 	/**
-	 * Placeholder for high-res composite generation.
+	 * Sideload an uploaded file into the media library.
 	 *
-	 * @return int|\WP_Error Attachment ID or error.
+	 * @param array $file $_FILES element.
+	 * @return int|\WP_Error Attachment ID.
 	 */
-	public function generate_composite( $product_id, $placement, $source_attachment_id ) {
-		return new WP_Error(
-			'sc_not_implemented',
-			__( 'Print-ready composite generation ships in Phase C.', 'storecanvas' )
+	public function sideload_upload( $file ) {
+		if ( empty( $file['tmp_name'] ) || ! is_uploaded_file( $file['tmp_name'] ) ) {
+			return new WP_Error( 'sc_no_file', __( 'No artwork uploaded.', 'storecanvas' ) );
+		}
+
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		require_once ABSPATH . 'wp-admin/includes/media.php';
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+
+		$overrides = array(
+			'test_form' => false,
+			'mimes'     => array(
+				'jpg|jpeg' => 'image/jpeg',
+				'png'      => 'image/png',
+				'gif'      => 'image/gif',
+				'webp'     => 'image/webp',
+			),
 		);
+
+		$move = wp_handle_upload( $file, $overrides );
+		if ( isset( $move['error'] ) ) {
+			return new WP_Error( 'sc_upload', $move['error'] );
+		}
+
+		$attachment = array(
+			'post_mime_type' => $move['type'],
+			'post_title'     => sanitize_file_name( basename( $move['file'] ) ),
+			'post_content'   => '',
+			'post_status'    => 'inherit',
+		);
+		$att_id = wp_insert_attachment( $attachment, $move['file'] );
+		if ( is_wp_error( $att_id ) || ! $att_id ) {
+			return new WP_Error( 'sc_attach', __( 'Could not create attachment.', 'storecanvas' ) );
+		}
+		$meta = wp_generate_attachment_metadata( $att_id, $move['file'] );
+		wp_update_attachment_metadata( $att_id, $meta );
+		return (int) $att_id;
+	}
+
+	/**
+	 * Generate a composite PNG for one view.
+	 *
+	 * @param int   $product_id Product ID.
+	 * @param array $placement  Placement for this view (x,y,scale,area_id,view_id).
+	 * @param int   $art_id     Artwork attachment ID.
+	 * @param string $view_id   View ID.
+	 * @return int|\WP_Error Attachment ID of composite.
+	 */
+	public function generate_composite( $product_id, $placement, $art_id, $view_id = '' ) {
+		$config = SC_Customizer::get_config( $product_id );
+		$views  = (array) ( $config['views'] ?? array() );
+		$areas  = (array) ( $config['areas'] ?? array() );
+
+		$view = null;
+		foreach ( $views as $v ) {
+			if ( ( $v['id'] ?? '' ) === $view_id || ( ! $view_id && $view === null ) ) {
+				$view = $v;
+				if ( $view_id ) {
+					break;
+				}
+			}
+		}
+		if ( ! $view && $views ) {
+			$view = $views[0];
+			$view_id = $view['id'] ?? '';
+		}
+		if ( ! $view || empty( $view['image_id'] ) ) {
+			return new WP_Error( 'sc_no_view', __( 'No base view image configured.', 'storecanvas' ) );
+		}
+
+		$area = null;
+		foreach ( $areas as $a ) {
+			if ( ( $a['view_id'] ?? '' ) === $view_id ) {
+				$area = $a;
+				break;
+			}
+		}
+		if ( ! $area && $areas ) {
+			$area = $areas[0];
+		}
+		if ( ! $area ) {
+			return new WP_Error( 'sc_no_area', __( 'No print area configured.', 'storecanvas' ) );
+		}
+
+		$base_path = get_attached_file( (int) $view['image_id'] );
+		$art_path  = get_attached_file( (int) $art_id );
+		if ( ! $base_path || ! file_exists( $base_path ) || ! $art_path || ! file_exists( $art_path ) ) {
+			return new WP_Error( 'sc_missing_files', __( 'Base or artwork file missing.', 'storecanvas' ) );
+		}
+
+		if ( ! function_exists( 'imagecreatefrompng' ) ) {
+			return new WP_Error( 'sc_no_gd', __( 'PHP GD is required to generate print files.', 'storecanvas' ) );
+		}
+
+		$base = $this->gd_load( $base_path );
+		$art  = $this->gd_load( $art_path );
+		if ( ! $base || ! $art ) {
+			return new WP_Error( 'sc_gd_load', __( 'Could not load images for composite.', 'storecanvas' ) );
+		}
+
+		$bw = imagesx( $base );
+		$bh = imagesy( $base );
+
+		// Upscale base long edge to at least 3000px for print when smaller.
+		$target_long = 3000;
+		$long        = max( $bw, $bh );
+		if ( $long < $target_long ) {
+			$factor = $target_long / $long;
+			$nw     = (int) round( $bw * $factor );
+			$nh     = (int) round( $bh * $factor );
+			$scaled = imagecreatetruecolor( $nw, $nh );
+			imagealphablending( $scaled, false );
+			imagesavealpha( $scaled, true );
+			imagecopyresampled( $scaled, $base, 0, 0, 0, 0, $nw, $nh, $bw, $bh );
+			imagedestroy( $base );
+			$base = $scaled;
+			$bw   = $nw;
+			$bh   = $nh;
+		}
+
+		imagealphablending( $base, true );
+		imagesavealpha( $base, true );
+
+		$ax = ( (float) $area['x'] / 100 ) * $bw;
+		$ay = ( (float) $area['y'] / 100 ) * $bh;
+		$aw = ( (float) $area['w'] / 100 ) * $bw;
+		$ah = ( (float) $area['h'] / 100 ) * $bh;
+
+		$scale = isset( $placement['scale'] ) ? (float) $placement['scale'] : 1.0;
+		$scale = max( 0.1, min( 3.0, $scale ) );
+		$art_w = $aw * 0.5 * $scale;
+		$art_h = $art_w * ( imagesy( $art ) / max( 1, imagesx( $art ) ) );
+
+		$px = $ax + ( ( (float) ( $placement['x'] ?? 50 ) ) / 100 ) * $aw - $art_w / 2;
+		$py = $ay + ( ( (float) ( $placement['y'] ?? 50 ) ) / 100 ) * $ah - $art_h / 2;
+
+		$art_resized = imagecreatetruecolor( (int) $art_w, (int) $art_h );
+		imagealphablending( $art_resized, false );
+		imagesavealpha( $art_resized, true );
+		$transparent = imagecolorallocatealpha( $art_resized, 0, 0, 0, 127 );
+		imagefilledrectangle( $art_resized, 0, 0, (int) $art_w, (int) $art_h, $transparent );
+		imagealphablending( $art_resized, true );
+		imagecopyresampled( $art_resized, $art, 0, 0, 0, 0, (int) $art_w, (int) $art_h, imagesx( $art ), imagesy( $art ) );
+
+		imagecopy( $base, $art_resized, (int) $px, (int) $py, 0, 0, (int) $art_w, (int) $art_h );
+		imagedestroy( $art_resized );
+		imagedestroy( $art );
+
+		$upload = wp_upload_dir();
+		$fname  = 'sc-print-' . $product_id . '-' . sanitize_file_name( $view_id ) . '-' . wp_generate_password( 6, false ) . '.png';
+		$out    = trailingslashit( $upload['path'] ) . $fname;
+		imagepng( $base, $out, 6 );
+		imagedestroy( $base );
+
+		if ( ! file_exists( $out ) ) {
+			return new WP_Error( 'sc_write', __( 'Could not write print file.', 'storecanvas' ) );
+		}
+
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+		$attachment = array(
+			'post_mime_type' => 'image/png',
+			'post_title'     => sprintf( 'StoreCanvas print – product %d – %s', $product_id, $view_id ),
+			'post_content'   => '',
+			'post_status'    => 'inherit',
+		);
+		$att_id = wp_insert_attachment( $attachment, $out );
+		if ( is_wp_error( $att_id ) ) {
+			return $att_id;
+		}
+		$meta = wp_generate_attachment_metadata( $att_id, $out );
+		wp_update_attachment_metadata( $att_id, $meta );
+		return (int) $att_id;
+	}
+
+	/**
+	 * @param string $path File path.
+	 * @return resource|false
+	 */
+	private function gd_load( $path ) {
+		$info = @getimagesize( $path );
+		if ( ! is_array( $info ) ) {
+			return false;
+		}
+		switch ( $info[2] ) {
+			case IMAGETYPE_JPEG:
+				return imagecreatefromjpeg( $path );
+			case IMAGETYPE_PNG:
+				$im = imagecreatefrompng( $path );
+				if ( $im ) {
+					imagealphablending( $im, true );
+					imagesavealpha( $im, true );
+				}
+				return $im;
+			case IMAGETYPE_GIF:
+				return imagecreatefromgif( $path );
+			case IMAGETYPE_WEBP:
+				if ( function_exists( 'imagecreatefromwebp' ) ) {
+					return imagecreatefromwebp( $path );
+				}
+				return false;
+			default:
+				return false;
+		}
+	}
+
+	/**
+	 * After line item created: generate print files when artwork attachment present.
+	 */
+	public function maybe_generate_on_order( $item, $cart_item_key, $values, $order ) {
+		$art_id = 0;
+		if ( ! empty( $values[ SC_Plugin::CART_ATTACHMENTS ]['artwork'] ) ) {
+			$art_id = (int) $values[ SC_Plugin::CART_ATTACHMENTS ]['artwork'];
+		}
+		if ( ! $art_id ) {
+			return;
+		}
+
+		$product_id = $item->get_product_id();
+		$placement  = isset( $values[ SC_Plugin::CART_PLACEMENT ] ) ? $values[ SC_Plugin::CART_PLACEMENT ] : array();
+		$files      = array();
+
+		$placements = array();
+		if ( ! empty( $placement['placements'] ) && is_array( $placement['placements'] ) ) {
+			$placements = $placement['placements'];
+		} elseif ( ! empty( $placement['view_id'] ) ) {
+			$placements[ $placement['view_id'] ] = $placement;
+		} else {
+			$placements['default'] = $placement;
+		}
+
+		foreach ( $placements as $vid => $pl ) {
+			$att = $this->generate_composite( $product_id, $pl, $art_id, is_string( $vid ) ? $vid : ( $pl['view_id'] ?? '' ) );
+			if ( ! is_wp_error( $att ) && $att ) {
+				$files[ is_string( $vid ) ? $vid : 'view' ] = $att;
+			}
+		}
+
+		if ( $files ) {
+			$item->add_meta_data( self::META_PRINT_FILES, $files, true );
+			$item->add_meta_data( '_sc_artwork_id', $art_id, true );
+		}
+	}
+
+	/**
+	 * Admin order item: download original + print composites.
+	 */
+	public function admin_download_links( $item_id, $item, $product ) {
+		$files  = $item->get_meta( self::META_PRINT_FILES );
+		$art_id = (int) $item->get_meta( '_sc_artwork_id' );
+		if ( ! $files && ! $art_id ) {
+			return;
+		}
+		echo '<div class="sc-print-files" style="margin-top:8px;">';
+		echo '<strong>' . esc_html__( 'Print files', 'storecanvas' ) . '</strong><ul style="margin:4px 0 0 1em;">';
+		if ( $art_id ) {
+			$url = wp_get_attachment_url( $art_id );
+			if ( $url ) {
+				echo '<li><a href="' . esc_url( $url ) . '" target="_blank">' . esc_html__( 'Original artwork', 'storecanvas' ) . '</a></li>';
+			}
+		}
+		if ( is_array( $files ) ) {
+			foreach ( $files as $vid => $fid ) {
+				$url = wp_get_attachment_url( (int) $fid );
+				if ( $url ) {
+					echo '<li><a href="' . esc_url( $url ) . '" target="_blank">' . esc_html( sprintf( __( 'Print composite (%s)', 'storecanvas' ), $vid ) ) . '</a></li>';
+				}
+			}
+		}
+		echo '</ul></div>';
+	}
+
+	public function ajax_generate() {
+		if ( ! current_user_can( 'edit_shop_orders' ) ) {
+			wp_send_json_error( array( 'message' => 'forbidden' ), 403 );
+		}
+		check_ajax_referer( 'sc_admin', 'nonce' );
+		$item_id    = isset( $_POST['item_id'] ) ? absint( $_POST['item_id'] ) : 0;
+		$product_id = isset( $_POST['product_id'] ) ? absint( $_POST['product_id'] ) : 0;
+		$art_id     = isset( $_POST['art_id'] ) ? absint( $_POST['art_id'] ) : 0;
+		if ( ! $product_id || ! $art_id ) {
+			wp_send_json_error( array( 'message' => 'missing params' ) );
+		}
+		$att = $this->generate_composite( $product_id, array( 'x' => 50, 'y' => 50, 'scale' => 1 ), $art_id, '' );
+		if ( is_wp_error( $att ) ) {
+			wp_send_json_error( array( 'message' => $att->get_error_message() ) );
+		}
+		wp_send_json_success( array( 'attachment_id' => $att, 'url' => wp_get_attachment_url( $att ) ) );
 	}
 }
