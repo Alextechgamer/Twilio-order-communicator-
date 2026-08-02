@@ -24,7 +24,8 @@ Seller docs: [`RELEASE.md`](./RELEASE.md) (build + deploy + keys) · [`license-s
 
 ## Download
 
-- [`twilio-order-communicator-1.12.0.zip`](./twilio-order-communicator-1.12.0.zip) — **current packaged** (role permissions UI; includes 1.9–1.11 features)
+- [`twilio-order-communicator-1.13.0.zip`](./twilio-order-communicator-1.13.0.zip) — **current** (Polly voice map; Ready/Shipped customer emails; includes 1.9–1.12 features)
+- [`twilio-order-communicator-1.12.0.zip`](./twilio-order-communicator-1.12.0.zip) — role permissions UI
 - [`twilio-order-communicator-1.9.0.zip`](./twilio-order-communicator-1.9.0.zip) — scheduled reminders
 - [`twilio-order-communicator-1.8.2.zip`](./twilio-order-communicator-1.8.2.zip) — G5–G8 audit fixes
 - [`twilio-order-communicator-1.8.1.zip`](./twilio-order-communicator-1.8.1.zip) — G1–G4 audit fixes

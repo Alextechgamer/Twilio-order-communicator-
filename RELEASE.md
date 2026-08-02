@@ -12,7 +12,7 @@ Run from the repo root. The zip contains **only** the plugin folder — `license
 
 ```bash
 cd /path/to/repo
-VERSION=1.12.0
+VERSION=1.13.0
 rm -f twilio-order-communicator-${VERSION}.zip
 
 zip -r -X twilio-order-communicator-${VERSION}.zip twilio-order-communicator \
@@ -76,11 +76,11 @@ cd /path/to/license-server
 # One key per customer. Prints the key once — store it in your records.
 php bin/create-key.php --email=customer@example.com --sites=1 --expires=lifetime
 
-# Register 1.12.0 so licensed sites can update to it
+# Register 1.13.0 so licensed sites can update to it
 php bin/add-release.php \
-  --version=1.12.0 \
-  --file=/path/to/twilio-order-communicator-1.12.0.zip \
-  --changelog="Role permissions UI; delivery alerts; CSV export; mark as collected; scheduled reminders"
+  --version=1.13.0 \
+  --file=/path/to/twilio-order-communicator-1.13.0.zip \
+  --changelog="Polly voice map; Ready/Shipped customer emails; consent meta help"
 ```
 
 Key options:
@@ -124,7 +124,7 @@ The customer still needs their **own Twilio** Account SID, Auth Token, and From 
 # 2. Add a changelog entry in readme.txt
 # 3. Rebuild the zip (section 1) with the new version in the filename
 # 4. Register it:
-php bin/add-release.php --version=1.12.0 --file=/path/to/twilio-order-communicator-1.12.0.zip --changelog="..."
+php bin/add-release.php --version=1.13.0 --file=/path/to/twilio-order-communicator-1.13.0.zip --changelog="..."
 ```
 
 Licensed sites pick it up on their next update check. The plugin caches the result for 6 hours, so allow for that delay (or have the customer visit **Dashboard → Updates** and click **Check again**).
