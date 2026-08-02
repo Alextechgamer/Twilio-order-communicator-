@@ -1,0 +1,70 @@
+<?php
+/**
+ * Plugin Name:       StoreCanvas
+ * Plugin URI:        https://github.com/Alextechgamer/Twilio-order-communicator-
+ * Description:       WooCommerce product options, live logo/mockup placement, and print-ready exports. Self-hosted personalization for any printable product.
+ * Version:           0.1.0-scaffold
+ * Author:            Alextechgamer
+ * Author URI:        https://github.com/Alextechgamer
+ * Requires at least: 6.0
+ * Requires PHP:      7.4
+ * WC requires at least: 7.0
+ * Text Domain:       storecanvas
+ * Domain Path:       /languages
+ * License:           GPLv2 or later
+ * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+define( 'SC_VERSION', '0.1.0-scaffold' );
+define( 'SC_PLUGIN_FILE', __FILE__ );
+define( 'SC_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+define( 'SC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+define( 'SC_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
+
+require_once SC_PLUGIN_DIR . 'includes/class-sc-plugin.php';
+require_once SC_PLUGIN_DIR . 'includes/class-sc-product-options.php';
+require_once SC_PLUGIN_DIR . 'includes/class-sc-customizer.php';
+require_once SC_PLUGIN_DIR . 'includes/class-sc-print-ready.php';
+require_once SC_PLUGIN_DIR . 'includes/class-sc-cart-order.php';
+require_once SC_PLUGIN_DIR . 'includes/class-sc-admin-product.php';
+
+/**
+ * Bootstrap.
+ */
+function sc_init() {
+	if ( ! class_exists( 'WooCommerce' ) ) {
+		add_action( 'admin_notices', 'sc_woocommerce_missing_notice' );
+		return;
+	}
+	SC_Plugin::instance();
+	SC_Product_Options::instance();
+	SC_Customizer::instance();
+	SC_Print_Ready::instance();
+	SC_Cart_Order::instance();
+	if ( is_admin() ) {
+		SC_Admin_Product::instance();
+	}
+}
+add_action( 'plugins_loaded', 'sc_init' );
+
+/**
+ * HPOS compatibility.
+ */
+add_action( 'before_woocommerce_init', function () {
+	if ( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) ) {
+		\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', SC_PLUGIN_FILE, true );
+	}
+} );
+
+/**
+ * WooCommerce missing notice.
+ */
+function sc_woocommerce_missing_notice() {
+	echo '<div class="notice notice-error"><p>';
+	echo esc_html__( 'StoreCanvas requires WooCommerce to be active.', 'storecanvas' );
+	echo '</p></div>';
+}

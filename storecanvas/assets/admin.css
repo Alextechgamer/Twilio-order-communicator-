@@ -1,0 +1,10 @@
+/* StoreCanvas admin + front scaffold */
+.sc-options { margin: 1em 0; }
+.sc-option-field { margin: 0.5em 0; }
+.sc-option-heading { margin: 1em 0 0.5em; }
+.sc-file-hint { display: block; font-size: 0.85em; color: #666; }
+.sc-customizer { margin: 1em 0; padding: 12px; border: 1px solid #e0e0e0; border-radius: 4px; }
+.sc-customizer-views { margin-bottom: 8px; }
+.sc-customizer-views .button { margin-right: 4px; }
+.sc-order-item-meta { font-size: 12px; }
+#sc_product_data textarea { font-size: 12px; }
