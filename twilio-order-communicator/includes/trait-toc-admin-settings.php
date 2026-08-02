@@ -33,6 +33,10 @@ trait TOC_Admin_Settings {
 			'toc_quiet_hours_start'         => array( $this, 'sanitize_time' ),
 			'toc_quiet_hours_end'           => array( $this, 'sanitize_time' ),
 			'toc_sms_footer_text'           => 'sanitize_textarea_field',
+			'toc_email_ready_subject'       => 'sanitize_text_field',
+			'toc_email_ready_body'          => 'sanitize_textarea_field',
+			'toc_email_shipped_subject'     => 'sanitize_text_field',
+			'toc_email_shipped_body'        => 'sanitize_textarea_field',
 		);
 
 		foreach ( $text_fields as $option => $cb ) {
@@ -73,6 +77,8 @@ trait TOC_Admin_Settings {
 			'toc_sms_footer_enabled'         => 0,
 			'toc_scheduled_reminder_enabled' => 0,
 			'toc_delivery_alert_enabled'     => 0,
+			'toc_email_ready_enabled'        => 0,
+			'toc_email_shipped_enabled'      => 0,
 		);
 
 		foreach ( $checkboxes as $option => $default ) {
@@ -272,7 +278,7 @@ trait TOC_Admin_Settings {
 							}
 							?>
 						</select>
-						<p class="description">Voice used by the built-in TwiML endpoint.</p>
+						<p class="description"><?php echo esc_html__( 'Voice used by the built-in TwiML endpoint. Alice / Man / Woman work on all accounts. Polly voices require Amazon Polly support on your Twilio account; the plugin maps stored values (e.g. polly.joanna) to Twilio’s Polly.Joanna form automatically.', 'twilio-order-communicator' ); ?></p>
 					</td>
 				</tr>
 			</table>
@@ -365,6 +371,50 @@ trait TOC_Admin_Settings {
 				</tr>
 			</table>
 
+			<h2><?php echo esc_html__( 'Customer status emails', 'twilio-order-communicator' ); ?></h2>
+			<p class="description"><?php echo esc_html__( 'Optional email to the customer when an order enters the mapped Ready for Pickup or Shipped status. Independent of voice/SMS auto-notify. Sent once per order (clear the order meta to re-send). Uses wp_mail with your store From address. Quiet hours do not apply. Never gated by license.', 'twilio-order-communicator' ); ?></p>
+			<p class="description"><?php echo esc_html__( 'Merge tags:', 'twilio-order-communicator' ); ?> <code>{order_number}</code> <code>{order_id}</code> <code>{customer_first_name}</code> <code>{customer_last_name}</code> <code>{customer_full_name}</code> <code>{store_name}</code> <code>{phone}</code> <code>{order_total}</code> <code>{billing_email}</code></p>
+
+			<h3><?php echo esc_html__( 'Ready for Pickup email', 'twilio-order-communicator' ); ?></h3>
+			<table class="form-table">
+				<tr>
+					<th><?php echo esc_html__( 'Enable', 'twilio-order-communicator' ); ?></th>
+					<td>
+						<?php $this->checkbox( 'toc_email_ready_enabled', 0 ); ?>
+						<label for="toc_email_ready_enabled"><?php echo esc_html__( 'Email the customer when the order enters Ready for Pickup', 'twilio-order-communicator' ); ?></label>
+						<p class="description"><?php echo esc_html__( 'Meta', 'twilio-order-communicator' ); ?> <code>_toc_emailed_ready_for_pickup_at</code></p>
+					</td>
+				</tr>
+				<tr>
+					<th><label for="toc_email_ready_subject"><?php echo esc_html__( 'Subject', 'twilio-order-communicator' ); ?></label></th>
+					<td><input type="text" id="toc_email_ready_subject" name="toc_email_ready_subject" class="large-text" value="<?php echo esc_attr( get_option( 'toc_email_ready_subject', 'Your order #{order_number} is ready for pickup' ) ); ?>" /></td>
+				</tr>
+				<tr>
+					<th><label for="toc_email_ready_body"><?php echo esc_html__( 'Body', 'twilio-order-communicator' ); ?></label></th>
+					<td><textarea id="toc_email_ready_body" name="toc_email_ready_body" rows="5" class="large-text"><?php echo esc_textarea( get_option( 'toc_email_ready_body', "Hello {customer_first_name},\n\nYour order #{order_number} is ready for pickup at {store_name}.\n\nThank you." ) ); ?></textarea></td>
+				</tr>
+			</table>
+
+			<h3><?php echo esc_html__( 'Shipped email', 'twilio-order-communicator' ); ?></h3>
+			<table class="form-table">
+				<tr>
+					<th><?php echo esc_html__( 'Enable', 'twilio-order-communicator' ); ?></th>
+					<td>
+						<?php $this->checkbox( 'toc_email_shipped_enabled', 0 ); ?>
+						<label for="toc_email_shipped_enabled"><?php echo esc_html__( 'Email the customer when the order enters Shipped', 'twilio-order-communicator' ); ?></label>
+						<p class="description"><?php echo esc_html__( 'Meta', 'twilio-order-communicator' ); ?> <code>_toc_emailed_shipped_at</code></p>
+					</td>
+				</tr>
+				<tr>
+					<th><label for="toc_email_shipped_subject"><?php echo esc_html__( 'Subject', 'twilio-order-communicator' ); ?></label></th>
+					<td><input type="text" id="toc_email_shipped_subject" name="toc_email_shipped_subject" class="large-text" value="<?php echo esc_attr( get_option( 'toc_email_shipped_subject', 'Your order #{order_number} has shipped' ) ); ?>" /></td>
+				</tr>
+				<tr>
+					<th><label for="toc_email_shipped_body"><?php echo esc_html__( 'Body', 'twilio-order-communicator' ); ?></label></th>
+					<td><textarea id="toc_email_shipped_body" name="toc_email_shipped_body" rows="5" class="large-text"><?php echo esc_textarea( get_option( 'toc_email_shipped_body', "Hello {customer_first_name},\n\nYour order #{order_number} has shipped.\n\nThank you for shopping at {store_name}." ) ); ?></textarea></td>
+				</tr>
+			</table>
+
 			<table class="form-table">
 				<tr>
 					<th><?php echo esc_html__( 'Quiet hours', 'twilio-order-communicator' ); ?></th>
@@ -440,7 +490,13 @@ trait TOC_Admin_Settings {
 					<th>Consent meta key</th>
 					<td>
 						<input type="text" name="toc_sms_consent_meta" value="<?php echo esc_attr( get_option( 'toc_sms_consent_meta', '_toc_sms_consent' ) ); ?>" class="regular-text" />
-						<p class="description">Order meta key used by the built-in checkbox and any custom snippet (values like yes / 1 / on / true). Default: <code>_toc_sms_consent</code>.</p>
+						<p class="description">
+							<?php echo esc_html__( 'Enter the order meta key written by your SMS consent checkbox — TOC’s built-in box or a third-party one. Truthy values: yes / 1 / on / true / checked.', 'twilio-order-communicator' ); ?>
+							<?php echo esc_html__( 'Default:', 'twilio-order-communicator' ); ?> <code>_toc_sms_consent</code>.
+							<?php echo esc_html__( 'Examples:', 'twilio-order-communicator' ); ?>
+							<code>_toc_sms_consent</code>, <code>_sms_consent</code>, <code>sms_opt_in</code>, <code>_wc_sms_consent</code>, <code>billing_sms_consent</code>.
+							<?php echo esc_html__( 'If the key is wrong, automatic and bulk SMS may be blocked even when the customer opted in. See Tools & Docs for webhook and consent notes.', 'twilio-order-communicator' ); ?>
+						</p>
 					</td>
 				</tr>
 			</table>

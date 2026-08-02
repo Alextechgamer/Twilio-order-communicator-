@@ -219,9 +219,11 @@ class TOC_Auto {
 		$shipped_bare = TOC_Statuses::bare_status( TOC_Statuses::mapped_shipped_status() );
 
 		if ( $to === $ready_bare ) {
+			$this->maybe_send_status_email( $order_id, self::KIND_READY );
 			$this->process_order( $order_id, self::KIND_READY, false );
 		}
 		if ( $to === $shipped_bare ) {
+			$this->maybe_send_status_email( $order_id, self::KIND_SHIPPED );
 			$this->process_order( $order_id, self::KIND_SHIPPED, false );
 		}
 	}
@@ -440,5 +442,136 @@ class TOC_Auto {
 		if ( ! wp_next_scheduled( $hook, $args ) ) {
 			wp_schedule_single_event( $timestamp, $hook, $args );
 		}
+	}
+
+	/**
+	 * Optional customer email when order enters Ready for Pickup / Shipped.
+	 * Independent of voice/SMS auto-notify toggles. Quiet hours do not apply
+	 * (email is not disruptive like a phone call). Uses wp_mail with store From.
+	 * Once per order via _toc_emailed_* meta. Never gated by license.
+	 *
+	 * @param int    $order_id Order ID.
+	 * @param string $kind     KIND_READY | KIND_SHIPPED.
+	 */
+	public function maybe_send_status_email( $order_id, $kind ) {
+		$order_id = absint( $order_id );
+		if ( ! $order_id || ! in_array( $kind, array( self::KIND_READY, self::KIND_SHIPPED ), true ) ) {
+			return;
+		}
+
+		$cfg = self::email_kind_config( $kind );
+		if ( ! $cfg || ! $cfg['enabled'] ) {
+			return;
+		}
+
+		$order = wc_get_order( $order_id );
+		if ( ! $order ) {
+			return;
+		}
+
+		// Still on the mapped status?
+		$expected = TOC_Statuses::bare_status( $cfg['mapped_status'] );
+		if ( $order->get_status() !== $expected ) {
+			return;
+		}
+
+		if ( $order->get_meta( $cfg['meta'] ) ) {
+			return;
+		}
+
+		$email = sanitize_email( (string) $order->get_billing_email() );
+		if ( $email === '' || ! is_email( $email ) ) {
+			$order->add_order_note(
+				sprintf(
+					/* translators: %s: notification label */
+					__( 'Status email skipped (%s): no billing email on the order.', 'twilio-order-communicator' ),
+					$cfg['label']
+				)
+			);
+			$order->update_meta_data( $cfg['meta'], time() );
+			$order->save();
+			return;
+		}
+
+		$twilio  = TOC_Twilio::instance();
+		$subject = $twilio->merge_tags( $cfg['subject'], $order );
+		$body    = $twilio->merge_tags( $cfg['body'], $order );
+
+		// Plain-text email; store From headers when available.
+		$headers = array( 'Content-Type: text/plain; charset=UTF-8' );
+		$from_name  = wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
+		$from_email = get_option( 'woocommerce_email_from_address', get_option( 'admin_email' ) );
+		if ( is_email( $from_email ) ) {
+			$headers[] = 'From: ' . sprintf( '%s <%s>', $from_name, $from_email );
+		}
+
+		$sent = wp_mail( $email, $subject, $body, $headers );
+
+		if ( $sent ) {
+			$order->add_order_note(
+				sprintf(
+					/* translators: 1: notification label, 2: recipient email */
+					__( 'Status email sent (%1$s) to %2$s.', 'twilio-order-communicator' ),
+					$cfg['label'],
+					$email
+				)
+			);
+		} else {
+			$order->add_order_note(
+				sprintf(
+					/* translators: %s: notification label */
+					__( 'Status email failed (%s): wp_mail returned false.', 'twilio-order-communicator' ),
+					$cfg['label']
+				)
+			);
+		}
+
+		// Stamp either way so retries / status re-saves do not spam.
+		$order->update_meta_data( $cfg['meta'], time() );
+		$order->save();
+	}
+
+	/**
+	 * Email settings for a status kind.
+	 *
+	 * @param string $kind KIND_READY | KIND_SHIPPED.
+	 * @return array|null
+	 */
+	public static function email_kind_config( $kind ) {
+		if ( $kind === self::KIND_READY ) {
+			return array(
+				'kind'          => self::KIND_READY,
+				'label'         => __( 'Ready for Pickup', 'twilio-order-communicator' ),
+				'enabled'       => (int) get_option( 'toc_email_ready_enabled', 0 ) === 1,
+				'meta'          => '_toc_emailed_ready_for_pickup_at',
+				'mapped_status' => TOC_Statuses::mapped_ready_status(),
+				'subject'       => (string) get_option(
+					'toc_email_ready_subject',
+					'Your order #{order_number} is ready for pickup'
+				),
+				'body'          => (string) get_option(
+					'toc_email_ready_body',
+					"Hello {customer_first_name},\n\nYour order #{order_number} is ready for pickup at {store_name}.\n\nThank you."
+				),
+			);
+		}
+		if ( $kind === self::KIND_SHIPPED ) {
+			return array(
+				'kind'          => self::KIND_SHIPPED,
+				'label'         => __( 'Shipped', 'twilio-order-communicator' ),
+				'enabled'       => (int) get_option( 'toc_email_shipped_enabled', 0 ) === 1,
+				'meta'          => '_toc_emailed_shipped_at',
+				'mapped_status' => TOC_Statuses::mapped_shipped_status(),
+				'subject'       => (string) get_option(
+					'toc_email_shipped_subject',
+					'Your order #{order_number} has shipped'
+				),
+				'body'          => (string) get_option(
+					'toc_email_shipped_body',
+					"Hello {customer_first_name},\n\nYour order #{order_number} has shipped.\n\nThank you for shopping at {store_name}."
+				),
+			);
+		}
+		return null;
 	}
 }

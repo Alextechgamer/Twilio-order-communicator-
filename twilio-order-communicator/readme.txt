@@ -4,7 +4,7 @@ Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
 WC requires at least: 7.0
-Stable tag: 1.12.0
+Stable tag: 1.13.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,6 +30,8 @@ Twilio Order Communicator turns every WooCommerce order into a communication hub
 * Mark order as collected (suppresses auto-notify / bulk / scheduled reminders)
 * Optional email alerts when Twilio reports SMS failed or undelivered
 * Role permissions UI for who can manage the plugin vs send SMS/calls
+* Optional customer emails when order enters Ready for Pickup / Shipped
+* Polly voice options mapped correctly for Twilio TwiML
 * Optional SMS compliance footer + Privacy Policy helper text
 * Filterable capabilities and optional wp-config credential constants
 * Optional first-party license key for premium updates (messaging works without a license)
@@ -83,6 +85,13 @@ No. The plugin includes its own tokenized TwiML endpoint.
 They text START or UNSTOP. Plain "YES" is intentionally not treated as re-subscribe.
 
 == Changelog ==
+
+= 1.13.0 =
+* Fix: map Polly voice options (polly.joanna → Polly.Joanna, etc.) in TwiML <Say>
+* Settings: clearer Consent meta key help for third-party SMS consent checkboxes
+* Feature: optional customer emails on Ready for Pickup / Shipped (default off, once per order)
+* Emails use wp_mail + store From; same merge tags as SMS; independent of voice/SMS toggles; quiet hours do not apply
+* Messaging remains ungated by license
 
 = 1.12.0 =
 * Feature: custom capabilities toc_manage / toc_send with Settings role matrix
