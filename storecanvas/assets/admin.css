@@ -8,3 +8,9 @@
 .sc-customizer-views .button { margin-right: 4px; }
 .sc-order-item-meta { font-size: 12px; }
 #sc_product_data textarea { font-size: 12px; }
+
+/* 0.2.0 visual builders */
+.sc-builder .sc-row { margin: 6px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.sc-thumb { display: inline-block; min-width: 36px; padding: 2px 6px; background: #f0f0f1; border-radius: 3px; font-size: 11px; }
+.sc-thumb-empty { color: #999; }
+.sc-field-row label { margin-right: 8px; }
