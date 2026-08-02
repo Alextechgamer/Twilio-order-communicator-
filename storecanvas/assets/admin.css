@@ -14,3 +14,14 @@
 .sc-thumb { display: inline-block; min-width: 36px; padding: 2px 6px; background: #f0f0f1; border-radius: 3px; font-size: 11px; }
 .sc-thumb-empty { color: #999; }
 .sc-field-row label { margin-right: 8px; }
+
+/* 0.3.0 canvas UI */
+.sc-customizer-views .sc-view-btn.active {
+	background: #2271b1;
+	border-color: #2271b1;
+	color: #fff;
+}
+.sc-customizer-stage canvas {
+	cursor: crosshair;
+	user-select: none;
+}
