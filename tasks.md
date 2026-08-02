@@ -1,7 +1,7 @@
 # Twilio Order Communicator — Tasks & Roadmap
 
-**Plugin version baseline:** 1.12.0 (P1 #19 role permissions UI)  
-**Last updated:** 2026-07-31  
+**Plugin version baseline:** 1.13.0 (Polly voice map + Ready/Shipped customer emails)  
+**Last updated:** 2026-08-02  
 **Purpose:** Single source of truth for Cursor AI / developers.
 
 ---
@@ -204,18 +204,27 @@ No PHPUnit suite added (deferred). `phpcs.xml.dist` documents that only `twilio-
 7. ~~CSV + Mark as collected (16, 18)~~ ✅ v1.10.0  
 8. ~~Delivery failure alerts (17)~~ ✅ v1.11.0  
 9. ~~Role permissions UI (19)~~ ✅ v1.12.0  
-10. P2 after first sales feedback
+10. ~~Polly voice map + Ready/Shipped customer emails~~ ✅ v1.13.0  
+11. P2 after first sales feedback
+
+---
+
+### 1.13.0 (2026-08-02) — ✅ DONE
+- [x] Polly TwiML voice mapping (polly.* → Polly.*)
+- [x] Consent meta Settings help text for third-party checkboxes
+- [x] Optional customer emails on Ready for Pickup / Shipped (wp_mail, once-per-order meta)
+- [x] Independent of voice/SMS toggles; quiet hours do not apply; messaging ungated by license
 
 ---
 
 ## Cursor Prompt — Next Pass (P1 features)
 
 ```
-You are working on the WooCommerce plugin “Twilio Order Communicator” (current version 1.12.0).
+You are working on the WooCommerce plugin “Twilio Order Communicator” (current version 1.13.0).
 
-Read tasks.md. P0 and P1 items 14–19 are complete (including role permissions).
+Read tasks.md. P0 and P1 items 14–19 plus 1.13.0 Polly/status emails are complete.
 Do not rework licensing, webhooks, auto-notify, reminders, CSV, mark-as-collected,
-delivery alerts, or role caps unless fixing a clear bug.
+delivery alerts, role caps, or status emails unless fixing a clear bug.
 
 Key constraints:
 - Users always bring their own Twilio Account SID, Auth Token, and From Number.

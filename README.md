@@ -2,7 +2,7 @@
 
 WordPress / WooCommerce plugin for SMS and voice calls via **your own Twilio account**. Order communication is driven by custom statuses (**Ready for Pickup** and **Shipped**), with consent-aware SMS, quiet hours, bulk reminders, and order chat history.
 
-**Current version: 1.12.0**
+**Current version: 1.13.0**
 
 ## Install
 
@@ -24,11 +24,21 @@ Seller docs: [`RELEASE.md`](./RELEASE.md) (build + deploy + keys) · [`license-s
 
 ## Download
 
-- [`twilio-order-communicator-1.12.0.zip`](./twilio-order-communicator-1.12.0.zip) — **current** (role permissions UI; includes 1.9–1.11 features)
+- [`twilio-order-communicator-1.12.0.zip`](./twilio-order-communicator-1.12.0.zip) — **current packaged** (role permissions UI; includes 1.9–1.11 features)
 - [`twilio-order-communicator-1.9.0.zip`](./twilio-order-communicator-1.9.0.zip) — scheduled reminders
 - [`twilio-order-communicator-1.8.2.zip`](./twilio-order-communicator-1.8.2.zip) — G5–G8 audit fixes
 - [`twilio-order-communicator-1.8.1.zip`](./twilio-order-communicator-1.8.1.zip) — G1–G4 audit fixes
 - [`twilio-order-communicator-1.8.0.zip`](./twilio-order-communicator-1.8.0.zip) — licensing release
+
+## What's in 1.13.0
+
+| Feature | Notes |
+|---------|--------|
+| Polly voice map | `polly.joanna` → `Polly.Joanna` (and Matthew/Amy) in TwiML |
+| Consent meta help | Settings copy for third-party checkbox meta keys |
+| Status emails | Optional customer email on Ready/Shipped (default off, once per order) |
+| Email details | wp_mail + store From; same merge tags as SMS; independent of voice/SMS; quiet hours do not apply |
+| License | Messaging remains ungated |
 
 ## What's in 1.12.0
 

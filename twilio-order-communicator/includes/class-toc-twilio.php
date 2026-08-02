@@ -49,11 +49,7 @@ class TOC_Twilio {
 			exit;
 		}
 
-		$voice          = get_option( 'toc_voice', 'alice' );
-		$allowed_voices = array( 'alice', 'man', 'woman', 'polly.joanna', 'polly.matthew', 'polly.amy' );
-		if ( ! in_array( $voice, $allowed_voices, true ) ) {
-			$voice = 'alice';
-		}
+		$voice = self::twiml_voice_attribute( get_option( 'toc_voice', 'alice' ) );
 
 		$safe_message = htmlspecialchars( $message, ENT_XML1 | ENT_QUOTES, 'UTF-8' );
 
@@ -66,6 +62,26 @@ class TOC_Twilio {
 		echo '<Say voice="' . esc_attr( $voice ) . '">' . $safe_message . '</Say>';
 		echo '</Response>';
 		exit;
+	}
+
+	/**
+	 * Map stored voice option to the string Twilio expects in <Say voice="...">.
+	 * Settings keep lowercase polly.* keys; TwiML needs Polly.Joanna etc.
+	 *
+	 * @param string $stored Option value (alice|man|woman|polly.joanna|…).
+	 * @return string
+	 */
+	public static function twiml_voice_attribute( $stored ) {
+		$stored = is_string( $stored ) ? strtolower( trim( $stored ) ) : '';
+		$map    = array(
+			'alice'         => 'alice',
+			'man'           => 'man',
+			'woman'         => 'woman',
+			'polly.joanna'  => 'Polly.Joanna',
+			'polly.matthew' => 'Polly.Matthew',
+			'polly.amy'     => 'Polly.Amy',
+		);
+		return isset( $map[ $stored ] ) ? $map[ $stored ] : 'alice';
 	}
 
 	public function build_twiml_url( $message ) {
