@@ -4,7 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Product edit screen: Options + Customizer sections (shared StoreCanvas tab).
+ * Product edit: visual Options + Customizer builders (0.2.0).
  */
 class SC_Admin_Product {
 
@@ -23,10 +23,6 @@ class SC_Admin_Product {
 		add_action( 'woocommerce_process_product_meta', array( $this, 'save' ), 10, 2 );
 	}
 
-	/**
-	 * @param array $tabs Tabs.
-	 * @return array
-	 */
 	public function add_tab( $tabs ) {
 		$tabs['storecanvas'] = array(
 			'label'    => __( 'StoreCanvas', 'storecanvas' ),
@@ -37,26 +33,25 @@ class SC_Admin_Product {
 		return $tabs;
 	}
 
-	/**
-	 * Product data panel markup (scaffold UI).
-	 */
 	public function panel() {
 		global $post;
 		$product_id = $post ? (int) $post->ID : 0;
 		$options    = SC_Product_Options::get_config( $product_id );
 		$customizer = SC_Customizer::get_config( $product_id );
 		$validation = SC_Customizer::get_validation( $product_id );
+		$field_types = SC_Product_Options::field_types();
+		$price_types = SC_Product_Options::price_types();
 		?>
 		<div id="sc_product_data" class="panel woocommerce_options_panel hidden">
 			<div class="options_group">
 				<p class="form-field">
-					<strong><?php esc_html_e( 'StoreCanvas — Product options & live mockup', 'storecanvas' ); ?></strong><br />
-					<span class="description"><?php esc_html_e( 'Scaffold 0.1.0: data model and admin shell. Full field builder and canvas editor ship in follow-up commits.', 'storecanvas' ); ?></span>
+					<strong><?php esc_html_e( 'StoreCanvas', 'storecanvas' ); ?></strong>
+					<span class="description"> — <?php esc_html_e( 'Product options and live mockup. Version 0.2.0.', 'storecanvas' ); ?></span>
 				</p>
 			</div>
 
-			<div class="options_group">
-				<h4 style="padding-left:12px;"><?php esc_html_e( 'Customizer', 'storecanvas' ); ?></h4>
+			<div class="options_group sc-admin-section">
+				<h4 style="padding-left:12px;"><?php esc_html_e( 'Customizer (live mockup)', 'storecanvas' ); ?></h4>
 				<?php
 				woocommerce_wp_checkbox(
 					array(
@@ -67,20 +62,25 @@ class SC_Admin_Product {
 					)
 				);
 				?>
-				<p class="form-field">
-					<label><?php esc_html_e( 'Views (JSON scaffold)', 'storecanvas' ); ?></label>
-					<textarea class="short" name="sc_customizer_views_json" rows="4" style="width:90%;font-family:monospace;"><?php echo esc_textarea( wp_json_encode( $customizer['views'], JSON_PRETTY_PRINT ) ); ?></textarea>
-					<span class="description"><?php esc_html_e( 'Array of {id,label,image_id}. Visual editor next.', 'storecanvas' ); ?></span>
-				</p>
-				<p class="form-field">
-					<label><?php esc_html_e( 'Print areas (JSON scaffold)', 'storecanvas' ); ?></label>
-					<textarea class="short" name="sc_customizer_areas_json" rows="4" style="width:90%;font-family:monospace;"><?php echo esc_textarea( wp_json_encode( $customizer['areas'], JSON_PRETTY_PRINT ) ); ?></textarea>
-					<span class="description"><?php esc_html_e( 'Array of {id,view_id,label,x,y,w,h} — percentages 0–100.', 'storecanvas' ); ?></span>
-				</p>
+				<div id="sc-views-builder" class="sc-builder" style="padding:0 12px 12px;">
+					<p><strong><?php esc_html_e( 'Views', 'storecanvas' ); ?></strong>
+						<button type="button" class="button" id="sc-add-view"><?php esc_html_e( 'Add view', 'storecanvas' ); ?></button>
+					</p>
+					<div id="sc-views-list"></div>
+				</div>
+				<div id="sc-areas-builder" class="sc-builder" style="padding:0 12px 12px;">
+					<p><strong><?php esc_html_e( 'Print areas', 'storecanvas' ); ?></strong>
+						<button type="button" class="button" id="sc-add-area"><?php esc_html_e( 'Add area', 'storecanvas' ); ?></button>
+					</p>
+					<p class="description"><?php esc_html_e( 'x, y, w, h are percentages (0–100) of the view image.', 'storecanvas' ); ?></p>
+					<div id="sc-areas-list"></div>
+				</div>
+				<input type="hidden" name="sc_customizer_views_json" id="sc_customizer_views_json" value="<?php echo esc_attr( wp_json_encode( $customizer['views'] ) ); ?>" />
+				<input type="hidden" name="sc_customizer_areas_json" id="sc_customizer_areas_json" value="<?php echo esc_attr( wp_json_encode( $customizer['areas'] ) ); ?>" />
 			</div>
 
 			<div class="options_group">
-				<h4 style="padding-left:12px;"><?php esc_html_e( 'Print validation defaults', 'storecanvas' ); ?></h4>
+				<h4 style="padding-left:12px;"><?php esc_html_e( 'Print validation', 'storecanvas' ); ?></h4>
 				<?php
 				woocommerce_wp_text_input(
 					array(
@@ -103,7 +103,7 @@ class SC_Admin_Product {
 				woocommerce_wp_text_input(
 					array(
 						'id'                => 'sc_val_min_px',
-						'label'             => __( 'Min source px (long edge)', 'storecanvas' ),
+						'label'             => __( 'Min source px', 'storecanvas' ),
 						'type'              => 'number',
 						'value'             => (int) ( $validation['min_source_px'] ?? 500 ),
 						'custom_attributes' => array( 'min' => '100', 'step' => '1' ),
@@ -112,24 +112,22 @@ class SC_Admin_Product {
 				?>
 			</div>
 
-			<div class="options_group">
-				<h4 style="padding-left:12px;"><?php esc_html_e( 'Option fields (JSON scaffold)', 'storecanvas' ); ?></h4>
-				<p class="form-field">
-					<label><?php esc_html_e( 'Fields JSON', 'storecanvas' ); ?></label>
-					<textarea class="short" name="sc_options_fields_json" rows="6" style="width:90%;font-family:monospace;"><?php echo esc_textarea( wp_json_encode( $options['fields'], JSON_PRETTY_PRINT ) ); ?></textarea>
-					<span class="description"><?php esc_html_e( 'Array of fields: id, type, label, required, price_type, price, choices[], conditions[]. Visual builder next.', 'storecanvas' ); ?></span>
-				</p>
+			<div class="options_group sc-admin-section">
+				<h4 style="padding-left:12px;"><?php esc_html_e( 'Option fields', 'storecanvas' ); ?></h4>
+				<div id="sc-fields-builder" class="sc-builder" style="padding:0 12px 12px;">
+					<p>
+						<button type="button" class="button button-primary" id="sc-add-field"><?php esc_html_e( 'Add field', 'storecanvas' ); ?></button>
+					</p>
+					<div id="sc-fields-list"></div>
+				</div>
+				<input type="hidden" name="sc_options_fields_json" id="sc_options_fields_json" value="<?php echo esc_attr( wp_json_encode( $options['fields'] ) ); ?>" />
+				<script type="application/json" id="sc-field-types"><?php echo wp_json_encode( $field_types ); ?></script>
+				<script type="application/json" id="sc-price-types"><?php echo wp_json_encode( $price_types ); ?></script>
 			</div>
 		</div>
 		<?php
 	}
 
-	/**
-	 * Save product meta from scaffold form.
-	 *
-	 * @param int     $post_id Post ID.
-	 * @param WP_Post $post    Post.
-	 */
 	public function save( $post_id, $post ) {
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
 			return;
@@ -141,7 +139,16 @@ class SC_Admin_Product {
 		if ( isset( $_POST['sc_customizer_views_json'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$decoded = json_decode( wp_unslash( $_POST['sc_customizer_views_json'] ), true ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 			if ( is_array( $decoded ) ) {
-				$views = $decoded;
+				foreach ( $decoded as $v ) {
+					if ( ! is_array( $v ) ) {
+						continue;
+					}
+					$views[] = array(
+						'id'       => sanitize_key( $v['id'] ?? wp_generate_password( 6, false ) ),
+						'label'    => sanitize_text_field( $v['label'] ?? '' ),
+						'image_id' => absint( $v['image_id'] ?? 0 ),
+					);
+				}
 			}
 		}
 
@@ -149,7 +156,20 @@ class SC_Admin_Product {
 		if ( isset( $_POST['sc_customizer_areas_json'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$decoded = json_decode( wp_unslash( $_POST['sc_customizer_areas_json'] ), true ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 			if ( is_array( $decoded ) ) {
-				$areas = $decoded;
+				foreach ( $decoded as $a ) {
+					if ( ! is_array( $a ) ) {
+						continue;
+					}
+					$areas[] = array(
+						'id'      => sanitize_key( $a['id'] ?? wp_generate_password( 6, false ) ),
+						'view_id' => sanitize_key( $a['view_id'] ?? '' ),
+						'label'   => sanitize_text_field( $a['label'] ?? '' ),
+						'x'       => (float) ( $a['x'] ?? 0 ),
+						'y'       => (float) ( $a['y'] ?? 0 ),
+						'w'       => (float) ( $a['w'] ?? 20 ),
+						'h'       => (float) ( $a['h'] ?? 20 ),
+					);
+				}
 			}
 		}
 
@@ -179,7 +199,20 @@ class SC_Admin_Product {
 		if ( isset( $_POST['sc_options_fields_json'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$decoded = json_decode( wp_unslash( $_POST['sc_options_fields_json'] ), true ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 			if ( is_array( $decoded ) ) {
-				$fields = $decoded;
+				foreach ( $decoded as $f ) {
+					if ( ! is_array( $f ) ) {
+						continue;
+					}
+					$fields[] = array(
+						'id'         => sanitize_key( $f['id'] ?? wp_generate_password( 6, false ) ),
+						'type'       => sanitize_key( $f['type'] ?? 'text' ),
+						'label'      => sanitize_text_field( $f['label'] ?? '' ),
+						'required'   => ! empty( $f['required'] ),
+						'price_type' => sanitize_key( $f['price_type'] ?? 'none' ),
+						'price'      => (float) ( $f['price'] ?? 0 ),
+						'choices'    => isset( $f['choices'] ) && is_array( $f['choices'] ) ? $f['choices'] : array(),
+					);
+				}
 			}
 		}
 		update_post_meta( $post_id, SC_Plugin::META_OPTIONS, array( 'fields' => $fields ) );
