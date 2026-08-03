@@ -31,3 +31,8 @@
 .sc-layers-list .sc-layer-row.active .sc-layer-select { background: #2271b1; color: #fff; border-color: #2271b1; }
 .sc-legend { font-size: 12px; }
 .sc-option-field[data-show-if-field] { transition: opacity .15s; }
+
+/* 0.6.0 visual area editor */
+.sc-visual-stage { user-select: none; }
+#sc-area-canvas { background: #f6f7f7; }
+#sc-visual-view, #sc-visual-area { min-width: 120px; }

@@ -41,12 +41,23 @@ class SC_Admin_Product {
 		$validation = SC_Customizer::get_validation( $product_id );
 		$field_types = SC_Product_Options::field_types();
 		$price_types = SC_Product_Options::price_types();
+		$view_urls = array();
+		foreach ( (array) ( $customizer['views'] ?? array() ) as $v ) {
+			$iid = absint( $v['image_id'] ?? 0 );
+			if ( $iid ) {
+				$url = wp_get_attachment_image_url( $iid, 'full' );
+				if ( $url ) {
+					$view_urls[ (string) $iid ] = $url;
+				}
+			}
+		}
+
 		?>
 		<div id="sc_product_data" class="panel woocommerce_options_panel hidden">
 			<div class="options_group">
 				<p class="form-field">
 					<strong><?php esc_html_e( 'StoreCanvas', 'storecanvas' ); ?></strong>
-					<span class="description"> — <?php esc_html_e( 'Product options and live mockup. Version 0.5.0.', 'storecanvas' ); ?></span>
+					<span class="description"> — <?php esc_html_e( 'Product options and live mockup. Version 0.6.0.', 'storecanvas' ); ?></span>
 				</p>
 			</div>
 
@@ -72,8 +83,23 @@ class SC_Admin_Product {
 					<p><strong><?php esc_html_e( 'Print areas', 'storecanvas' ); ?></strong>
 						<button type="button" class="button" id="sc-add-area"><?php esc_html_e( 'Add area', 'storecanvas' ); ?></button>
 					</p>
-					<p class="description"><?php esc_html_e( 'x, y, w, h are percentages (0–100) of the view image.', 'storecanvas' ); ?></p>
+					<p class="description"><?php esc_html_e( 'x, y, w, h are percentages (0–100) of the view image. Use the visual editor below or edit numbers.', 'storecanvas' ); ?></p>
 					<div id="sc-areas-list"></div>
+				</div>
+				<div id="sc-area-visual-editor" class="sc-builder" style="padding:0 12px 16px;">
+					<p><strong><?php esc_html_e( 'Visual print-area editor', 'storecanvas' ); ?></strong></p>
+					<p class="description"><?php esc_html_e( 'Select a view with a base image, then drag the blue rectangle or its corners. Changes sync to the area fields.', 'storecanvas' ); ?></p>
+					<p>
+						<label><?php esc_html_e( 'View', 'storecanvas' ); ?>
+							<select id="sc-visual-view"></select>
+						</label>
+						<label style="margin-left:8px;"><?php esc_html_e( 'Area', 'storecanvas' ); ?>
+							<select id="sc-visual-area"></select>
+						</label>
+					</p>
+					<div class="sc-visual-stage" style="max-width:520px;border:1px solid #c3c4c7;background:#f0f0f1;position:relative;">
+						<canvas id="sc-area-canvas" width="500" height="500" style="display:block;max-width:100%;cursor:crosshair;"></canvas>
+					</div>
 				</div>
 				<input type="hidden" name="sc_customizer_views_json" id="sc_customizer_views_json" value="<?php echo esc_attr( wp_json_encode( $customizer['views'] ) ); ?>" />
 				<input type="hidden" name="sc_customizer_areas_json" id="sc_customizer_areas_json" value="<?php echo esc_attr( wp_json_encode( $customizer['areas'] ) ); ?>" />
@@ -131,6 +157,42 @@ class SC_Admin_Product {
 						'custom_attributes' => array( 'min' => '0', 'max' => '40', 'step' => '0.5' ),
 					)
 				);
+				woocommerce_wp_text_input(
+					array(
+						'id'                => 'sc_val_bleed',
+						'label'             => __( 'Bleed inset %', 'storecanvas' ),
+						'type'              => 'number',
+						'desc_tip'          => true,
+						'description'       => __( 'Artwork must stay inside this inset of the print area (stricter than safe margin when higher).', 'storecanvas' ),
+						'value'             => (float) ( $validation['bleed_pct'] ?? 3 ),
+						'custom_attributes' => array( 'min' => '0', 'max' => '40', 'step' => '0.5' ),
+					)
+				);
+				woocommerce_wp_text_input(
+					array(
+						'id'                => 'sc_val_min_bleed_px',
+						'label'             => __( 'Min bleed (px, optional)', 'storecanvas' ),
+						'type'              => 'number',
+						'value'             => (int) ( $validation['min_bleed_px'] ?? 0 ),
+						'custom_attributes' => array( 'min' => '0', 'step' => '1' ),
+					)
+				);
+				woocommerce_wp_checkbox(
+					array(
+						'id'          => 'sc_val_require_rgb',
+						'label'       => __( 'Require RGB', 'storecanvas' ),
+						'description' => __( 'Block CMYK/grayscale uploads when color mode is detectable.', 'storecanvas' ),
+						'value'       => ! empty( $validation['require_rgb'] ) ? 'yes' : 'no',
+					)
+				);
+				woocommerce_wp_checkbox(
+					array(
+						'id'          => 'sc_val_strict_bleed',
+						'label'       => __( 'Strict bleed', 'storecanvas' ),
+						'description' => __( 'When on, bleed violations block add-to-cart. When off, soft-warn only.', 'storecanvas' ),
+						'value'       => ! empty( $validation['strict_bleed'] ) ? 'yes' : 'no',
+					)
+				);
 				?>
 			</div>
 
@@ -145,6 +207,7 @@ class SC_Admin_Product {
 				<input type="hidden" name="sc_options_fields_json" id="sc_options_fields_json" value="<?php echo esc_attr( wp_json_encode( $options['fields'] ) ); ?>" />
 				<script type="application/json" id="sc-field-types"><?php echo wp_json_encode( $field_types ); ?></script>
 				<script type="application/json" id="sc-price-types"><?php echo wp_json_encode( $price_types ); ?></script>
+				<script type="application/json" id="sc-view-image-urls"><?php echo wp_json_encode( $view_urls ); ?></script>
 			</div>
 		</div>
 		<?php
@@ -221,6 +284,14 @@ class SC_Admin_Product {
 		if ( isset( $_POST['sc_val_safe_margin'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$validation['safe_margin_pct'] = max( 0, min( 40, (float) $_POST['sc_val_safe_margin'] ) );
 		}
+		if ( isset( $_POST['sc_val_bleed'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			$validation['bleed_pct'] = max( 0, min( 40, (float) $_POST['sc_val_bleed'] ) );
+		}
+		if ( isset( $_POST['sc_val_min_bleed_px'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			$validation['min_bleed_px'] = max( 0, absint( $_POST['sc_val_min_bleed_px'] ) );
+		}
+		$validation['require_rgb']  = isset( $_POST['sc_val_require_rgb'] ) && 'yes' === $_POST['sc_val_require_rgb']; // phpcs:ignore
+		$validation['strict_bleed'] = isset( $_POST['sc_val_strict_bleed'] ) && 'yes' === $_POST['sc_val_strict_bleed']; // phpcs:ignore
 		update_post_meta( $post_id, SC_Plugin::META_VALIDATION, $validation );
 
 		$fields = array();

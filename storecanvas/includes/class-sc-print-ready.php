@@ -112,8 +112,154 @@ class SC_Print_Ready {
 			$errors[] = __( 'Could not read image dimensions.', 'storecanvas' );
 		}
 
+		// Color mode (RGB) check when detectable.
+		$color = $this->detect_color_mode( $file_path, $dim ?? null );
+		if ( $color ) {
+			$meta['color_mode'] = $color;
+		}
+		$require_rgb = ! empty( $rules['require_rgb'] );
+		if ( $require_rgb && $color && ! in_array( $color, array( 'rgb', 'rgba', 'truecolor', 'unknown' ), true ) ) {
+			$msg = sprintf(
+				__( 'Artwork color mode is %s; RGB is required for print.', 'storecanvas' ),
+				strtoupper( $color )
+			);
+			if ( in_array( $color, array( 'cmyk', 'gray', 'grayscale', 'indexed' ), true ) ) {
+				$errors[] = $msg;
+			}
+		}
+
+		// Optional placement bleed check (when placement + area provided).
+		if ( ! empty( $rules['_placement'] ) && is_array( $rules['_placement'] ) ) {
+			$bleed = $this->check_placement_bleed( $rules['_placement'], $area, $rules );
+			$meta  = array_merge( $meta, $bleed['meta'] );
+			if ( $bleed['errors'] ) {
+				if ( ! empty( $rules['strict_bleed'] ) ) {
+					$errors = array_merge( $errors, $bleed['errors'] );
+				} else {
+					$warnings = array_merge( $warnings, $bleed['errors'] );
+				}
+			}
+			if ( $bleed['warnings'] ) {
+				$warnings = array_merge( $warnings, $bleed['warnings'] );
+			}
+		}
+
 		return array(
 			'ok'       => empty( $errors ),
+			'errors'   => $errors,
+			'warnings' => $warnings,
+			'meta'     => $meta,
+		);
+	}
+
+	/**
+	 * Detect color mode for a raster file when possible.
+	 *
+	 * @param string     $path File path.
+	 * @param array|null $dim  getimagesize result.
+	 * @return string|null rgb|rgba|cmyk|gray|indexed|unknown|null
+	 */
+	public function detect_color_mode( $path, $dim = null ) {
+		if ( ! is_array( $dim ) ) {
+			$dim = @getimagesize( $path );
+		}
+		if ( ! is_array( $dim ) ) {
+			return null;
+		}
+		// channels: 3=RGB, 4=CMYK or RGBA depending on type, 1=gray.
+		if ( ! empty( $dim['channels'] ) ) {
+			$ch = (int) $dim['channels'];
+			if ( 1 === $ch ) {
+				return 'gray';
+			}
+			if ( 4 === $ch && ! empty( $dim[2] ) && IMAGETYPE_JPEG === $dim[2] ) {
+				return 'cmyk';
+			}
+			if ( 4 === $ch ) {
+				return 'rgba';
+			}
+			if ( 3 === $ch ) {
+				return 'rgb';
+			}
+		}
+		if ( function_exists( 'exif_read_data' ) && ! empty( $dim[2] ) && IMAGETYPE_JPEG === $dim[2] ) {
+			$exif = @exif_read_data( $path );
+			if ( is_array( $exif ) && isset( $exif['ColorSpace'] ) ) {
+				// 1 = sRGB
+				if ( 1 === (int) $exif['ColorSpace'] ) {
+					return 'rgb';
+				}
+			}
+			if ( is_array( $exif ) && ! empty( $exif['ComponentsConfiguration'] ) ) {
+				return 'rgb';
+			}
+		}
+		// PNG color type via GD if available.
+		if ( ! empty( $dim[2] ) && IMAGETYPE_PNG === $dim[2] && function_exists( 'imagecreatefrompng' ) ) {
+			$im = @imagecreatefrompng( $path );
+			if ( $im ) {
+				$tc = imageistruecolor( $im );
+				imagedestroy( $im );
+				return $tc ? 'truecolor' : 'indexed';
+			}
+		}
+		return 'unknown';
+	}
+
+	/**
+	 * Check whether placement keeps artwork inside bleed inset of the print area.
+	 * Placement x,y are 0–100 relative to area; scale 1 = 50% of area width.
+	 *
+	 * @param array $placement Placement.
+	 * @param array $area      Area with w/h %.
+	 * @param array $rules     Validation rules.
+	 * @return array{errors:string[],warnings:string[],meta:array}
+	 */
+	public function check_placement_bleed( $placement, $area, $rules ) {
+		$errors   = array();
+		$warnings = array();
+		$meta     = array();
+		$bleed    = isset( $rules['bleed_pct'] ) ? (float) $rules['bleed_pct'] : 3.0;
+		$safe     = isset( $rules['safe_margin_pct'] ) ? (float) $rules['safe_margin_pct'] : 5.0;
+		// Effective inset = max(bleed, optional min expressed as % of area).
+		$inset = max( 0.0, $bleed );
+		$min_px = isset( $rules['min_bleed_px'] ) ? (float) $rules['min_bleed_px'] : 0.0;
+		// Without pixel area size, treat min_bleed_px as soft note only.
+		$meta['bleed_pct'] = $inset;
+		$meta['safe_margin_pct'] = $safe;
+
+		$scale = isset( $placement['scale'] ) ? (float) $placement['scale'] : 1.0;
+		$scale = max( 0.1, min( 3.0, $scale ) );
+		// Art width as % of area = 50 * scale; height unknown without image ratio — assume square worst-case.
+		$art_w_pct = 50.0 * $scale;
+		$art_h_pct = $art_w_pct;
+		if ( ! empty( $placement['_art_ratio'] ) ) {
+			$art_h_pct = $art_w_pct * (float) $placement['_art_ratio'];
+		}
+		$cx = isset( $placement['x'] ) ? (float) $placement['x'] : 50.0;
+		$cy = isset( $placement['y'] ) ? (float) $placement['y'] : 50.0;
+		$left   = $cx - $art_w_pct / 2;
+		$right  = $cx + $art_w_pct / 2;
+		$top    = $cy - $art_h_pct / 2;
+		$bottom = $cy + $art_h_pct / 2;
+		$meta['art_bounds_pct'] = array( $left, $top, $right, $bottom );
+
+		// Must stay within [inset, 100-inset].
+		if ( $left < $inset || $top < $inset || $right > ( 100 - $inset ) || $bottom > ( 100 - $inset ) ) {
+			$errors[] = sprintf(
+				__( 'Artwork extends outside the %s%% bleed inset of the print area. Move or scale down.', 'storecanvas' ),
+				(string) $inset
+			);
+		} elseif ( $left < $safe || $top < $safe || $right > ( 100 - $safe ) || $bottom > ( 100 - $safe ) ) {
+			$warnings[] = sprintf(
+				__( 'Artwork is outside the %s%% safe margin (still within bleed).', 'storecanvas' ),
+				(string) $safe
+			);
+		}
+		if ( $min_px > 0 ) {
+			$meta['min_bleed_px'] = $min_px;
+		}
+		return array(
 			'errors'   => $errors,
 			'warnings' => $warnings,
 			'meta'     => $meta,

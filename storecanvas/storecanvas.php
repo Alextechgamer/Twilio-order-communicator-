@@ -3,7 +3,7 @@
  * Plugin Name:       StoreCanvas
  * Plugin URI:        https://github.com/Alextechgamer/Twilio-order-communicator-
  * Description:       WooCommerce product options, live logo/mockup placement, and print-ready exports. Self-hosted personalization for any printable product.
- * Version:           0.5.0
+ * Version:           0.6.0
  * Author:            Alextechgamer
  * Author URI:        https://github.com/Alextechgamer
  * Requires at least: 6.0
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SC_VERSION', '0.5.0' );
+define( 'SC_VERSION', '0.6.0' );
 define( 'SC_PLUGIN_FILE', __FILE__ );
 define( 'SC_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -34,6 +34,8 @@ require_once SC_PLUGIN_DIR . 'includes/class-sc-admin-product.php';
 require_once SC_PLUGIN_DIR . 'includes/class-sc-journey.php';
 require_once SC_PLUGIN_DIR . 'includes/class-sc-designs.php';
 require_once SC_PLUGIN_DIR . 'includes/class-sc-print-sheet.php';
+require_once SC_PLUGIN_DIR . 'includes/class-sc-bulk-download.php';
+require_once SC_PLUGIN_DIR . 'includes/class-sc-proof-email.php';
 
 function sc_init() {
 	if ( ! class_exists( 'WooCommerce' ) ) {
@@ -48,6 +50,8 @@ function sc_init() {
 	SC_Journey::instance();
 	SC_Designs::instance();
 	SC_Print_Sheet::instance();
+	SC_Bulk_Download::instance();
+	SC_Proof_Email::instance();
 	if ( is_admin() ) {
 		SC_Admin_Product::instance();
 	}

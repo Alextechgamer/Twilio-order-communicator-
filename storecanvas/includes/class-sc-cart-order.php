@@ -37,6 +37,21 @@ class SC_Cart_Order {
 		$rules = SC_Customizer::get_validation( $product_id );
 		$config = SC_Customizer::get_config( $product_id );
 		$area = ! empty( $config['areas'][0] ) ? $config['areas'][0] : array();
+		if ( ! empty( $_POST['sc_placement'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			$pl = json_decode( wp_unslash( $_POST['sc_placement'] ), true ); // phpcs:ignore
+			if ( is_array( $pl ) ) {
+				$rules['_placement'] = $pl;
+				// Prefer area matching placement view/area_id.
+				if ( ! empty( $pl['area_id'] ) ) {
+					foreach ( (array) ( $config['areas'] ?? array() ) as $a ) {
+						if ( ( $a['id'] ?? '' ) === $pl['area_id'] ) {
+							$area = $a;
+							break;
+						}
+					}
+				}
+			}
+		}
 		$check = SC_Print_Ready::instance()->validate_source( $_FILES['sc_artwork']['tmp_name'], $rules, $area ); // phpcs:ignore
 		if ( ! $check['ok'] ) {
 			foreach ( $check['errors'] as $err ) {
@@ -105,6 +120,9 @@ class SC_Cart_Order {
 			$area = array();
 			if ( ! empty( $config['areas'][0] ) ) {
 				$area = $config['areas'][0];
+			}
+			if ( ! empty( $cart_item_data[ SC_Plugin::CART_PLACEMENT ] ) && is_array( $cart_item_data[ SC_Plugin::CART_PLACEMENT ] ) ) {
+				$rules['_placement'] = $cart_item_data[ SC_Plugin::CART_PLACEMENT ];
 			}
 			$check = SC_Print_Ready::instance()->validate_source( $_FILES['sc_artwork']['tmp_name'], $rules, $area ); // phpcs:ignore
 			if ( ! $check['ok'] ) {

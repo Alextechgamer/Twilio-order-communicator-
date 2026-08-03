@@ -34,12 +34,16 @@ class SC_Plugin {
 
 	public static function default_validation() {
 		return array(
-			'min_dpi'         => 150,
-			'max_upload_mb'   => 10,
-			'allowed_mimes'   => array( 'image/png', 'image/jpeg', 'image/svg+xml' ),
-			'min_source_px'   => 500,
-			'safe_margin_pct' => 5,
+			'min_dpi'               => 150,
+			'max_upload_mb'         => 10,
+			'allowed_mimes'         => array( 'image/png', 'image/jpeg', 'image/svg+xml' ),
+			'min_source_px'         => 500,
+			'safe_margin_pct'       => 5,
 			'target_print_width_in' => 12,
+			'bleed_pct'             => 3,
+			'min_bleed_px'          => 0,
+			'require_rgb'           => true,
+			'strict_bleed'          => false,
 		);
 	}
 
