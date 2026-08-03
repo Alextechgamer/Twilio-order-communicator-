@@ -5,6 +5,22 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Core plugin helpers and constants for meta keys.
+ *
+ * Product meta:
+ * - META_OPTIONS     (_sc_options)     — option field definitions
+ * - META_CUSTOMIZER  (_sc_customizer)  — views, areas, enabled flag
+ * - META_VALIDATION  (_sc_validation)  — DPI/bleed/RGB rules
+ * - META_CLIPART     (_sc_clipart_ids) — product clip-art allow-list (empty = all)
+ *
+ * Cart / order item keys (also used as order item meta where applicable):
+ * - CART_OPTIONS     (sc_options)
+ * - CART_PLACEMENT   (sc_placement)
+ * - CART_ATTACHMENTS (sc_attachments)
+ * - CART_LAYERS      (sc_layers)
+ * - sc_price_extra, sc_print_files, _sc_artwork_id (see SC_Print_Ready / SC_Cart_Order)
+ *
+ * Public AJAX (nopriv + nonce): library items, guest design save/load/email, journey log.
+ * Admin AJAX / admin-post: print generate, bulk ZIP, print sheet (capability-checked).
  */
 class SC_Plugin {
 
