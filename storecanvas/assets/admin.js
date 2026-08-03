@@ -175,6 +175,8 @@
 					})
 					.join(', ');
 			}
+			var showIfField = (f.show_if && f.show_if.field) || f.show_if_field || '';
+			var showIfValue = (f.show_if && f.show_if.value != null) ? f.show_if.value : (f.show_if_value || '');
 			var $row = $(
 				'<div class="sc-row sc-field-row" style="margin-bottom:8px;padding:8px;border:1px solid #ddd;background:#fff;">' +
 					'<input type="hidden" class="sc-field-id" value="' +
@@ -197,7 +199,13 @@
 					'" step="0.01" style="width:80px" /> ' +
 					'<label class="sc-choices-wrap">Choices <input type="text" class="sc-field-choices" placeholder="A, B, C" value="' +
 					esc(choicesStr) +
-					'" style="width:200px" /></label> ' +
+					'" style="width:200px" /></label><br/>' +
+					'<label>Show if field <input type="text" class="sc-field-show-if-field" placeholder="other_field_id" value="' +
+					esc(showIfField) +
+					'" style="width:120px" /></label> ' +
+					'<label>equals <input type="text" class="sc-field-show-if-value" placeholder="value" value="' +
+					esc(showIfValue) +
+					'" style="width:100px" /></label> ' +
 					'<button type="button" class="button sc-remove-field">Remove</button>' +
 					'</div>'
 			);
@@ -218,7 +226,9 @@
 					return { value: s, label: s };
 				});
 			}
-			fields.push({
+			var showIfField = ($r.find('.sc-field-show-if-field').val() || '').trim();
+			var showIfValue = $r.find('.sc-field-show-if-value').val() || '';
+			var row = {
 				id: $r.find('.sc-field-id').val() || uid(),
 				type: type,
 				label: $r.find('.sc-field-label').val() || '',
@@ -226,7 +236,11 @@
 				price_type: $r.find('.sc-field-price-type').val() || 'none',
 				price: parseFloat($r.find('.sc-field-price').val()) || 0,
 				choices: choices,
-			});
+			};
+			if (showIfField) {
+				row.show_if = { field: showIfField, value: showIfValue };
+			}
+			fields.push(row);
 		});
 		$('#sc_options_fields_json').val(JSON.stringify(fields));
 	}
@@ -320,6 +334,7 @@
 				price_type: 'none',
 				price: 0,
 				choices: [],
+				show_if: null,
 			});
 			$('#sc_options_fields_json').val(JSON.stringify(fields));
 			renderFields();

@@ -90,6 +90,14 @@ class SC_Cart_Order {
 			}
 		}
 
+		if ( ! empty( $_POST['sc_layers_json'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			$raw     = wp_unslash( $_POST['sc_layers_json'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+			$decoded = json_decode( $raw, true );
+			if ( is_array( $decoded ) ) {
+				$cart_item_data[ SC_Plugin::CART_LAYERS ] = $decoded;
+			}
+		}
+
 		// Artwork file from customizer (multipart).
 		if ( ! empty( $_FILES['sc_artwork']['tmp_name'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$rules = SC_Customizer::get_validation( $product_id );
@@ -115,7 +123,7 @@ class SC_Cart_Order {
 			}
 		}
 
-		if ( ! empty( $cart_item_data[ SC_Plugin::CART_OPTIONS ] ) || ! empty( $cart_item_data[ SC_Plugin::CART_PLACEMENT ] ) || ! empty( $cart_item_data[ SC_Plugin::CART_ATTACHMENTS ] ) ) {
+		if ( ! empty( $cart_item_data[ SC_Plugin::CART_OPTIONS ] ) || ! empty( $cart_item_data[ SC_Plugin::CART_PLACEMENT ] ) || ! empty( $cart_item_data[ SC_Plugin::CART_ATTACHMENTS ] ) || ! empty( $cart_item_data[ SC_Plugin::CART_LAYERS ] ) ) {
 			$cart_item_data['unique_key'] = md5( microtime() . wp_rand() );
 		}
 
@@ -199,6 +207,9 @@ class SC_Cart_Order {
 		if ( isset( $values[ SC_Plugin::CART_ATTACHMENTS ] ) ) {
 			$cart_item[ SC_Plugin::CART_ATTACHMENTS ] = $values[ SC_Plugin::CART_ATTACHMENTS ];
 		}
+		if ( isset( $values[ SC_Plugin::CART_LAYERS ] ) ) {
+			$cart_item[ SC_Plugin::CART_LAYERS ] = $values[ SC_Plugin::CART_LAYERS ];
+		}
 		return $this->set_cart_item_prices( $cart_item );
 	}
 
@@ -227,6 +238,12 @@ class SC_Cart_Order {
 				'value' => __( 'Yes', 'storecanvas' ),
 			);
 		}
+		if ( ! empty( $cart_item[ SC_Plugin::CART_LAYERS ] ) && is_array( $cart_item[ SC_Plugin::CART_LAYERS ] ) ) {
+			$item_data[] = array(
+				'key'   => __( 'Art layers', 'storecanvas' ),
+				'value' => (string) count( $cart_item[ SC_Plugin::CART_LAYERS ] ),
+			);
+		}
 		if ( ! empty( $cart_item['sc_price_extra'] ) && (float) $cart_item['sc_price_extra'] > 0 ) {
 			$item_data[] = array(
 				'key'   => __( 'Options total', 'storecanvas' ),
@@ -246,6 +263,9 @@ class SC_Cart_Order {
 		if ( ! empty( $values[ SC_Plugin::CART_ATTACHMENTS ] ) ) {
 			$item->add_meta_data( SC_Plugin::CART_ATTACHMENTS, $values[ SC_Plugin::CART_ATTACHMENTS ], true );
 		}
+		if ( ! empty( $values[ SC_Plugin::CART_LAYERS ] ) ) {
+			$item->add_meta_data( SC_Plugin::CART_LAYERS, $values[ SC_Plugin::CART_LAYERS ], true );
+		}
 		if ( ! empty( $values['sc_price_extra'] ) ) {
 			$item->add_meta_data( 'sc_price_extra', (float) $values['sc_price_extra'], true );
 		}
@@ -254,8 +274,9 @@ class SC_Cart_Order {
 	public function admin_order_preview( $item_id, $item, $product ) {
 		$options   = $item->get_meta( SC_Plugin::CART_OPTIONS );
 		$placement = $item->get_meta( SC_Plugin::CART_PLACEMENT );
+		$layers    = $item->get_meta( SC_Plugin::CART_LAYERS );
 		$extra     = $item->get_meta( 'sc_price_extra' );
-		if ( ! $options && ! $placement && ! $extra ) {
+		if ( ! $options && ! $placement && ! $layers && ! $extra ) {
 			return;
 		}
 		echo '<div class="sc-order-item-meta" style="margin-top:8px;padding:8px;background:#f6f7f7;border:1px solid #c3c4c7;">';
@@ -269,6 +290,9 @@ class SC_Cart_Order {
 		}
 		if ( $placement ) {
 			echo '<p style="margin:4px 0 0;">' . esc_html__( 'Placement data saved.', 'storecanvas' ) . '</p>';
+		}
+		if ( is_array( $layers ) && $layers ) {
+			echo '<p style="margin:4px 0 0;">' . esc_html( sprintf( __( 'Art layers: %d', 'storecanvas' ), count( $layers ) ) ) . '</p>';
 		}
 		if ( $extra ) {
 			echo '<p style="margin:4px 0 0;">' . esc_html__( 'Options extra:', 'storecanvas' ) . ' ' . wp_kses_post( wc_price( (float) $extra ) ) . '</p>';
