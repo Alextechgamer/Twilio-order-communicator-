@@ -46,6 +46,23 @@ class SC_Product_Options {
 		);
 	}
 
+	public static function pricing_config_for_product( $product_id ) {
+		$config = self::get_config( $product_id );
+		$out    = array();
+		foreach ( (array) ( $config['fields'] ?? array() ) as $field ) {
+			if ( empty( $field['id'] ) || 'heading' === ( $field['type'] ?? '' ) ) {
+				continue;
+			}
+			$out[] = array(
+				'id'         => $field['id'],
+				'type'       => $field['type'] ?? 'text',
+				'price_type' => $field['price_type'] ?? 'none',
+				'price'      => (float) ( $field['price'] ?? 0 ),
+			);
+		}
+		return $out;
+	}
+
 	public static function get_config( $product_id ) {
 		$raw = get_post_meta( $product_id, SC_Plugin::META_OPTIONS, true );
 		if ( ! is_array( $raw ) ) {
@@ -67,7 +84,20 @@ class SC_Product_Options {
 			return;
 		}
 
-		echo '<div class="sc-options" data-product-id="' . esc_attr( $product->get_id() ) . '">';
+		$pricing_fields = array();
+		foreach ( $config['fields'] as $field ) {
+			if ( empty( $field['id'] ) || 'heading' === ( $field['type'] ?? '' ) ) {
+				continue;
+			}
+			$pricing_fields[] = array(
+				'id'         => $field['id'],
+				'type'       => $field['type'] ?? 'text',
+				'price_type' => $field['price_type'] ?? 'none',
+				'price'      => (float) ( $field['price'] ?? 0 ),
+				'show_if'    => $field['show_if'] ?? null,
+			);
+		}
+		echo '<div class="sc-options" data-product-id="' . esc_attr( (string) $product->get_id() ) . '" data-sc-pricing="' . esc_attr( wp_json_encode( $pricing_fields ) ) . '">';
 		foreach ( $config['fields'] as $field ) {
 			$this->render_field( $field );
 		}
@@ -113,7 +143,9 @@ class SC_Product_Options {
 
 		$show_if_field = isset( $field['show_if']['field'] ) ? $field['show_if']['field'] : ( $field['show_if_field'] ?? '' );
 		$show_if_value = isset( $field['show_if']['value'] ) ? $field['show_if']['value'] : ( $field['show_if_value'] ?? '' );
-		$attrs = ' class="sc-option-field sc-option-' . esc_attr( $type ) . '" data-field-id="' . esc_attr( $id ) . '"';
+		$price_type = isset( $field['price_type'] ) ? $field['price_type'] : 'none';
+		$price_amt  = isset( $field['price'] ) ? (float) $field['price'] : 0;
+		$attrs = ' class="sc-option-field sc-option-' . esc_attr( $type ) . '" data-field-id="' . esc_attr( $id ) . '" data-price-type="' . esc_attr( $price_type ) . '" data-price="' . esc_attr( (string) $price_amt ) . '"';
 		if ( $show_if_field ) {
 			$attrs .= ' data-show-if-field="' . esc_attr( $show_if_field ) . '" data-show-if-value="' . esc_attr( $show_if_value ) . '"';
 		}
