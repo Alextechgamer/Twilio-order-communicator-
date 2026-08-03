@@ -3,7 +3,7 @@
  * Plugin Name:       StoreCanvas
  * Plugin URI:        https://github.com/Alextechgamer/Twilio-order-communicator-
  * Description:       WooCommerce product options, live logo/mockup placement, and print-ready exports. Self-hosted personalization for any printable product.
- * Version:           0.7.0
+ * Version:           0.8.0
  * Author:            Alextechgamer
  * Author URI:        https://github.com/Alextechgamer
  * Requires at least: 6.0
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SC_VERSION', '0.7.0' );
+define( 'SC_VERSION', '0.8.0' );
 define( 'SC_PLUGIN_FILE', __FILE__ );
 define( 'SC_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -37,6 +37,8 @@ require_once SC_PLUGIN_DIR . 'includes/class-sc-print-sheet.php';
 require_once SC_PLUGIN_DIR . 'includes/class-sc-bulk-download.php';
 require_once SC_PLUGIN_DIR . 'includes/class-sc-proof-email.php';
 require_once SC_PLUGIN_DIR . 'includes/class-sc-clipart.php';
+require_once SC_PLUGIN_DIR . 'includes/class-sc-orders-list.php';
+require_once SC_PLUGIN_DIR . 'includes/class-sc-blocks.php';
 
 function sc_init() {
 	if ( ! class_exists( 'WooCommerce' ) ) {
@@ -54,8 +56,10 @@ function sc_init() {
 	SC_Bulk_Download::instance();
 	SC_Proof_Email::instance();
 	SC_Clipart::instance();
+	SC_Blocks::instance();
 	if ( is_admin() ) {
 		SC_Admin_Product::instance();
+		SC_Orders_List::instance();
 	}
 }
 add_action( 'plugins_loaded', 'sc_init' );
@@ -63,6 +67,7 @@ add_action( 'plugins_loaded', 'sc_init' );
 add_action( 'before_woocommerce_init', function () {
 	if ( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) ) {
 		\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', SC_PLUGIN_FILE, true );
+		\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'cart_checkout_blocks', SC_PLUGIN_FILE, true );
 	}
 } );
 

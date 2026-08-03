@@ -66,12 +66,52 @@ class SC_Plugin {
 		if ( ! is_product() ) {
 			return;
 		}
+		global $product;
+		$product_id = 0;
+		if ( $product instanceof WC_Product ) {
+			$product_id = $product->get_id();
+		} elseif ( get_the_ID() ) {
+			$product_id = (int) get_the_ID();
+		}
+
 		wp_enqueue_style(
 			'sc-front',
 			SC_PLUGIN_URL . 'assets/admin.css',
 			array(),
 			SC_VERSION
 		);
+
+		// Live price: independent of customizer (options-only products still get updates).
+		$pricing_fields = $product_id ? SC_Product_Options::pricing_config_for_product( $product_id ) : array();
+		if ( $pricing_fields ) {
+			$wc_product = $product_id ? wc_get_product( $product_id ) : null;
+			$base       = $wc_product ? (float) $wc_product->get_price() : 0.0;
+			wp_enqueue_script(
+				'sc-live-price',
+				SC_PLUGIN_URL . 'assets/live-price.js',
+				array(),
+				SC_VERSION,
+				true
+			);
+			wp_localize_script(
+				'sc-live-price',
+				'scLivePrice',
+				array(
+					'productId'  => $product_id,
+					'basePrice'  => $base,
+					'fields'     => $pricing_fields,
+					'symbol'     => get_woocommerce_currency_symbol(),
+					'currencyPos'=> get_option( 'woocommerce_currency_pos', 'left' ),
+					'decimals'   => wc_get_price_decimals(),
+					'i18n'       => array(
+						'base'   => __( 'Base', 'storecanvas' ),
+						'extras' => __( 'options', 'storecanvas' ),
+						'line'   => __( 'line', 'storecanvas' ),
+					),
+				)
+			);
+		}
+
 		wp_enqueue_script(
 			'sc-customizer',
 			SC_PLUGIN_URL . 'assets/customizer.js',
