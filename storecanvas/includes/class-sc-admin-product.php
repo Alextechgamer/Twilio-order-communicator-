@@ -41,6 +41,11 @@ class SC_Admin_Product {
 		$validation = SC_Customizer::get_validation( $product_id );
 		$field_types = SC_Product_Options::field_types();
 		$price_types = SC_Product_Options::price_types();
+		$clipart_all = class_exists( 'SC_Clipart' ) ? SC_Clipart::all_published() : array();
+		$clipart_sel = get_post_meta( $product_id, SC_Plugin::META_CLIPART, true );
+		if ( ! is_array( $clipart_sel ) ) {
+			$clipart_sel = array();
+		}
 		$view_urls = array();
 		foreach ( (array) ( $customizer['views'] ?? array() ) as $v ) {
 			$iid = absint( $v['image_id'] ?? 0 );
@@ -57,7 +62,7 @@ class SC_Admin_Product {
 			<div class="options_group">
 				<p class="form-field">
 					<strong><?php esc_html_e( 'StoreCanvas', 'storecanvas' ); ?></strong>
-					<span class="description"> — <?php esc_html_e( 'Product options and live mockup. Version 0.6.0.', 'storecanvas' ); ?></span>
+					<span class="description"> — <?php esc_html_e( 'Product options and live mockup. Version 0.7.0.', 'storecanvas' ); ?></span>
 				</p>
 			</div>
 
@@ -197,6 +202,25 @@ class SC_Admin_Product {
 			</div>
 
 			<div class="options_group sc-admin-section">
+				<h4 style="padding-left:12px;"><?php esc_html_e( 'Clip-art library', 'storecanvas' ); ?></h4>
+				<p class="form-field" style="padding-left:12px;">
+					<span class="description"><?php esc_html_e( 'Leave empty to allow all published library items. Select items to restrict this product.', 'storecanvas' ); ?></span>
+				</p>
+				<p class="form-field" style="padding-left:12px;max-height:180px;overflow:auto;">
+					<?php if ( empty( $clipart_all ) ) : ?>
+						<em><?php esc_html_e( 'No clip-art yet. Add items under WooCommerce → StoreCanvas library.', 'storecanvas' ); ?></em>
+					<?php else : ?>
+						<?php foreach ( $clipart_all as $ci ) : ?>
+							<label style="display:block;margin:2px 0;">
+								<input type="checkbox" name="sc_clipart_ids[]" value="<?php echo esc_attr( (string) $ci['id'] ); ?>" <?php checked( in_array( (int) $ci['id'], array_map( 'intval', $clipart_sel ), true ) ); ?> />
+								<?php echo esc_html( $ci['title'] ); ?>
+							</label>
+						<?php endforeach; ?>
+					<?php endif; ?>
+				</p>
+			</div>
+
+			<div class="options_group sc-admin-section">
 				<h4 style="padding-left:12px;"><?php esc_html_e( 'Option fields', 'storecanvas' ); ?></h4>
 				<div id="sc-fields-builder" class="sc-builder" style="padding:0 12px 12px;">
 					<p>
@@ -329,5 +353,13 @@ class SC_Admin_Product {
 			}
 		}
 		update_post_meta( $post_id, SC_Plugin::META_OPTIONS, array( 'fields' => $fields ) );
+
+		$clip_ids = array();
+		if ( isset( $_POST['sc_clipart_ids'] ) && is_array( $_POST['sc_clipart_ids'] ) ) { // phpcs:ignore
+			foreach ( $_POST['sc_clipart_ids'] as $cid ) { // phpcs:ignore
+				$clip_ids[] = absint( $cid );
+			}
+		}
+		update_post_meta( $post_id, SC_Plugin::META_CLIPART, $clip_ids );
 	}
 }

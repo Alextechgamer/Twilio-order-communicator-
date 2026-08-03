@@ -11,6 +11,7 @@ class SC_Plugin {
 	const META_OPTIONS     = '_sc_options';
 	const META_CUSTOMIZER  = '_sc_customizer';
 	const META_VALIDATION  = '_sc_validation';
+	const META_CLIPART     = '_sc_clipart_ids'; // product: array of clipart post IDs, empty = all
 
 	/** Cart/order item keys */
 	const CART_OPTIONS     = 'sc_options';
@@ -92,12 +93,29 @@ class SC_Plugin {
 				),
 			)
 		);
+		$design_token = '';
+		if ( ! empty( $_GET['sc_design'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$design_token = sanitize_text_field( wp_unslash( $_GET['sc_design'] ) ); // phpcs:ignore
+		} elseif ( ! empty( $_COOKIE[ SC_Designs::COOKIE ] ) ) {
+			$design_token = sanitize_text_field( wp_unslash( $_COOKIE[ SC_Designs::COOKIE ] ) );
+		}
 		wp_localize_script(
 			'sc-customizer',
 			'scDesigns',
 			array(
+				'ajax'     => admin_url( 'admin-ajax.php' ),
+				'nonce'    => wp_create_nonce( 'sc_designs' ),
+				'loggedIn' => is_user_logged_in(),
+				'guestTTL' => SC_Designs::TTL_DAYS,
+				'token'    => $design_token,
+			)
+		);
+		wp_localize_script(
+			'sc-customizer',
+			'scLibrary',
+			array(
 				'ajax'  => admin_url( 'admin-ajax.php' ),
-				'nonce' => wp_create_nonce( 'sc_designs' ),
+				'nonce' => wp_create_nonce( 'sc_library' ),
 			)
 		);
 	}

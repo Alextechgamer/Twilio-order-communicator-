@@ -2,26 +2,18 @@
 
 Self-hosted WooCommerce **product options** + **live mockup placement** + **print-ready exports**.
 
-Version: **0.6.0**
+Version: **0.7.0**
 
-## What's in 0.6.0 (production path)
+## What's in 0.7.0
 
-1. **Visual print-area editor** — product admin overlay to drag/resize areas on the view image
-2. **Bleed + color-mode checks** — bleed_pct, require_rgb, strict_bleed on upload/cart
-3. **Bulk ZIP download** — all order print files + manifest
-4. **Customer proof email** — optional, default off, once-per-order
-
-## Also included (0.2–0.5)
-
-- Visual product options + pricing
-- Live canvas customizer (constrain, resize, rotate, multi-layer, safe margins)
-- Print composites (GD), print sheet, journey log, saved designs
+1. **Text layers** — add text on the canvas; place/scale/rotate like image layers; GD composite with bundled TTF
+2. **Clip-art library** — self-hosted media library CPT; product allow-list; front thumbnails add layers
+3. **Guest save design** — save without login via signed token/transient (≥14 days); email me a link; logged-in CPT unchanged
 
 ## Requirements
 
 - WordPress 6.0+, WooCommerce 7.0+, PHP 7.4+
-- **PHP GD** for composites
-- **ZipArchive** recommended for bulk download
+- PHP GD (+ FreeType recommended for text quality)
 
 ## Install
 

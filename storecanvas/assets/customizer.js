@@ -32,10 +32,10 @@
 	}
 
 	/**
-	 * Layer model:
-	 * { id, label, image: Image|null, fileName, placementByView: { [viewId]: { area_id, x, y, scale, rotation } } }
-	 * sc_placement: active view + active layer placement (back-compat)
-	 * sc_layers_json: serializable layer placements (no Image blobs)
+	 * Layer model (0.7.0):
+	 * { id, type: 'image'|'text'|'clipart', label, content?, fontSize?, fill?, fontFamily?,
+	 *   image?, fileName?, clipart_id?, srcUrl?,
+	 *   placementByView: { [viewId]: { area_id, x, y, scale, rotation } } }
 	 */
 	function initCustomizer($root) {
 		var canvas = $root.find('canvas').get(0) || document.getElementById('sc-canvas');
@@ -53,7 +53,7 @@
 		var activeArea = null;
 		var layers = [];
 		var activeLayerId = null;
-		var mode = null; // 'drag' | 'resize' | 'rotate'
+		var mode = null;
 		var resizeCorner = null;
 		var lastX = 0;
 		var lastY = 0;
@@ -61,6 +61,8 @@
 		var rotateStartRot = 0;
 		var HANDLE = 10;
 		var ROTATE_OFFSET = 28;
+		var guestToken =
+			typeof scDesigns !== 'undefined' && scDesigns && scDesigns.token ? scDesigns.token : '';
 
 		function defaultPlacement(viewId) {
 			return {
@@ -74,22 +76,16 @@
 		}
 
 		function getActiveLayer() {
-			if (!activeLayerId) {
-				return null;
-			}
+			if (!activeLayerId) return null;
 			for (var i = 0; i < layers.length; i++) {
-				if (layers[i].id === activeLayerId) {
-					return layers[i];
-				}
+				if (layers[i].id === activeLayerId) return layers[i];
 			}
 			return null;
 		}
 
 		function getPlacement(layer) {
 			layer = layer || getActiveLayer();
-			if (!layer || !currentView) {
-				return defaultPlacement(currentView);
-			}
+			if (!layer || !currentView) return defaultPlacement(currentView);
 			if (!layer.placementByView[currentView]) {
 				layer.placementByView[currentView] = defaultPlacement(currentView);
 			}
@@ -103,9 +99,7 @@
 		}
 
 		function areaPixelRect(area) {
-			if (!layout || !area) {
-				return null;
-			}
+			if (!layout || !area) return null;
 			return {
 				x: layout.ox + (area.x / 100) * layout.w,
 				y: layout.oy + (area.y / 100) * layout.h,
@@ -119,10 +113,30 @@
 			return list.length ? list[0] : null;
 		}
 
+		function isText(layer) {
+			return layer && layer.type === 'text';
+		}
+
+		function hasDrawable(layer) {
+			return layer && (isText(layer) || layer.image);
+		}
+
+		function measureText(layer, p) {
+			var content = layer.content || 'Text';
+			var size = (layer.fontSize || 28) * (p.scale || 1);
+			ctx.save();
+			ctx.font = size + 'px ' + (layer.fontFamily || 'Arial, Helvetica, sans-serif');
+			var w = ctx.measureText(content).width;
+			ctx.restore();
+			return { w: Math.max(12, w), h: Math.max(12, size * 1.25) };
+		}
+
 		function artSize(layer, p, areaRect) {
-			if (!layer || !layer.image || !areaRect) {
-				return { w: 0, h: 0 };
+			if (!layer || !areaRect) return { w: 0, h: 0 };
+			if (isText(layer)) {
+				return measureText(layer, p);
 			}
+			if (!layer.image) return { w: 0, h: 0 };
 			var maxW = areaRect.w * 0.5 * (p.scale || 1);
 			var ratio = layer.image.height / layer.image.width;
 			return { w: maxW, h: maxW * ratio };
@@ -136,24 +150,16 @@
 		}
 
 		function constrainPlacement(layer, p, areaRect) {
-			if (!areaRect || !layer || !layer.image) {
-				return p;
-			}
+			if (!areaRect || !hasDrawable(layer)) return p;
 			var size = artSize(layer, p, areaRect);
 			var minX = (size.w / 2 / areaRect.w) * 100;
 			var maxX = 100 - minX;
 			var minY = (size.h / 2 / areaRect.h) * 100;
 			var maxY = 100 - minY;
-			if (minX > maxX) {
-				p.x = 50;
-			} else {
-				p.x = Math.max(minX, Math.min(maxX, p.x));
-			}
-			if (minY > maxY) {
-				p.y = 50;
-			} else {
-				p.y = Math.max(minY, Math.min(maxY, p.y));
-			}
+			if (minX > maxX) p.x = 50;
+			else p.x = Math.max(minX, Math.min(maxX, p.x));
+			if (minY > maxY) p.y = 50;
+			else p.y = Math.max(minY, Math.min(maxY, p.y));
 			p.scale = Math.max(0.2, Math.min(2.5, p.scale || 1));
 			p.rotation = ((p.rotation || 0) % 360 + 360) % 360;
 			return p;
@@ -180,9 +186,7 @@
 				var n = names[i];
 				var pt = pts[n];
 				var pad = n === 'rotate' ? HANDLE + 2 : HANDLE;
-				if (Math.abs(mx - pt.x) <= pad && Math.abs(my - pt.y) <= pad) {
-					return n;
-				}
+				if (Math.abs(mx - pt.x) <= pad && Math.abs(my - pt.y) <= pad) return n;
 			}
 			return null;
 		}
@@ -190,7 +194,6 @@
 		function hitArt(mx, my, layer, p, areaRect) {
 			var size = artSize(layer, p, areaRect);
 			var c = artCenter(p, areaRect);
-			// Approximate without inverse-rotation for hit test (good enough for UX).
 			return (
 				mx >= c.cx - size.w / 2 &&
 				mx <= c.cx + size.w / 2 &&
@@ -213,13 +216,25 @@
 						rotation: pl.rotation || 0,
 					};
 				});
-				return {
+				var row = {
 					id: L.id,
+					type: L.type || 'image',
+					name: L.label || 'Layer ' + (idx + 1),
 					label: L.label || 'Layer ' + (idx + 1),
 					fileName: L.fileName || '',
 					order: idx,
 					placements: placements,
+					placementByView: placements,
 				};
+				if (L.type === 'text') {
+					row.content = L.content || '';
+					row.fontSize = L.fontSize || 28;
+					row.fill = L.fill || '#111111';
+					row.fontFamily = L.fontFamily || 'Arial, Helvetica, sans-serif';
+				}
+				if (L.clipart_id) row.clipart_id = L.clipart_id;
+				if (L.srcUrl) row.srcUrl = L.srcUrl;
+				return row;
 			});
 		}
 
@@ -229,14 +244,12 @@
 			var payload = {
 				current_view: currentView,
 				active_layer: activeLayerId,
-				// Back-compat single placement for cart (active view / active layer).
 				view_id: currentView,
 				area_id: p.area_id,
 				x: p.x,
 				y: p.y,
 				scale: p.scale,
 				rotation: p.rotation || 0,
-				// Multi-view map for active layer only (0.3/0.4 consumers).
 				placements: active
 					? (function () {
 							var out = {};
@@ -252,14 +265,21 @@
 			$root.find('#sc_layers_json, input[name="sc_layers_json"]').val(JSON.stringify(serializeLayers()));
 		}
 
+		function truncate(s, n) {
+			s = String(s || '');
+			return s.length > n ? s.slice(0, n - 1) + '…' : s;
+		}
+
 		function renderLayerList() {
 			var $list = $root.find('#sc-layers-list');
-			if (!$list.length) {
-				return;
-			}
+			if (!$list.length) return;
 			$list.empty();
 			layers.forEach(function (L, idx) {
 				var active = L.id === activeLayerId ? ' active' : '';
+				var label =
+					L.type === 'text'
+						? 'T: ' + truncate(L.content || 'Text', 24)
+						: L.label || 'Layer ' + (idx + 1);
 				var $row = $(
 					'<div class="sc-layer-row' +
 						active +
@@ -267,7 +287,7 @@
 						L.id +
 						'">' +
 						'<button type="button" class="button sc-layer-select">' +
-						esc(L.label || 'Layer ' + (idx + 1)) +
+						esc(label) +
 						'</button> ' +
 						'<button type="button" class="button sc-layer-up" title="Up">↑</button>' +
 						'<button type="button" class="button sc-layer-down" title="Down">↓</button>' +
@@ -276,6 +296,7 @@
 				);
 				$list.append($row);
 			});
+			syncTextEditor();
 		}
 
 		function esc(s) {
@@ -286,10 +307,22 @@
 				.replace(/"/g, '"');
 		}
 
-		function drawLayerArt(layer, selected) {
-			if (!layer.image || !activeArea) {
+		function syncTextEditor() {
+			var $ed = $root.find('#sc-text-editor');
+			var L = getActiveLayer();
+			if (!L || L.type !== 'text') {
+				$ed.hide();
 				return;
 			}
+			$ed.show();
+			$root.find('#sc-text-content').val(L.content || '');
+			$root.find('#sc-text-size').val(L.fontSize || 28);
+			$root.find('#sc-text-fill').val(L.fill || '#111111');
+			$root.find('#sc-text-font').val(L.fontFamily || 'Arial, Helvetica, sans-serif');
+		}
+
+		function drawLayerArt(layer, selected) {
+			if (!hasDrawable(layer) || !activeArea) return;
 			var p = getPlacement(layer);
 			p = constrainPlacement(layer, p, activeArea);
 			layer.placementByView[currentView] = p;
@@ -298,11 +331,19 @@
 			ctx.save();
 			ctx.translate(c.cx, c.cy);
 			ctx.rotate(((p.rotation || 0) * Math.PI) / 180);
-			ctx.drawImage(layer.image, -size.w / 2, -size.h / 2, size.w, size.h);
+			if (isText(layer)) {
+				var fs = (layer.fontSize || 28) * (p.scale || 1);
+				ctx.font = fs + 'px ' + (layer.fontFamily || 'Arial, Helvetica, sans-serif');
+				ctx.fillStyle = layer.fill || '#111111';
+				ctx.textAlign = 'center';
+				ctx.textBaseline = 'middle';
+				ctx.fillText(layer.content || 'Text', 0, 0);
+			} else {
+				ctx.drawImage(layer.image, -size.w / 2, -size.h / 2, size.w, size.h);
+			}
 			ctx.restore();
 
 			if (selected) {
-				// Selection box (axis-aligned around center; simple UX)
 				ctx.save();
 				ctx.strokeStyle = 'rgba(255,140,0,0.9)';
 				ctx.setLineDash([]);
@@ -316,7 +357,6 @@
 					ctx.fillRect(pt.x - HANDLE / 2, pt.y - HANDLE / 2, HANDLE, HANDLE);
 					ctx.strokeRect(pt.x - HANDLE / 2, pt.y - HANDLE / 2, HANDLE, HANDLE);
 				});
-				// Blue rotate handle + stem
 				ctx.beginPath();
 				ctx.strokeStyle = '#2271b1';
 				ctx.moveTo(c.cx, c.cy - size.h / 2);
@@ -349,23 +389,16 @@
 
 				areasForView(currentView).forEach(function (area, idx) {
 					var r = areaPixelRect(area);
-					if (!r) {
-						return;
-					}
-					// Print area (blue)
+					if (!r) return;
 					ctx.save();
 					ctx.strokeStyle = idx === 0 ? 'rgba(0,120,255,0.95)' : 'rgba(0,120,255,0.45)';
 					ctx.lineWidth = idx === 0 ? 2 : 1;
 					ctx.setLineDash([6, 4]);
 					ctx.strokeRect(r.x, r.y, r.w, r.h);
 					ctx.restore();
-
-					// Safe margin green guide
 					if (idx === 0) {
 						var marginPct = parseFloat(validation.safe_margin_pct);
-						if (isNaN(marginPct) || marginPct < 0) {
-							marginPct = 5;
-						}
+						if (isNaN(marginPct) || marginPct < 0) marginPct = 5;
 						var mx = (marginPct / 100) * r.w;
 						var my = (marginPct / 100) * r.h;
 						if (mx * 2 < r.w && my * 2 < r.h) {
@@ -379,15 +412,12 @@
 						activeArea = r;
 						layers.forEach(function (L) {
 							var pl = getPlacement(L);
-							if (!pl.area_id) {
-								pl.area_id = area.id;
-							}
+							if (!pl.area_id) pl.area_id = area.id;
 						});
 					}
 				});
 			}
 
-			// Draw layers bottom → top
 			layers.forEach(function (L) {
 				drawLayerArt(L, L.id === activeLayerId);
 			});
@@ -429,23 +459,20 @@
 				if (!layer.placementByView[v.id]) {
 					var pl = defaultPlacement(v.id);
 					var a = primaryArea(v.id);
-					if (a) {
-						pl.area_id = a.id;
-					}
+					if (a) pl.area_id = a.id;
 					layer.placementByView[v.id] = pl;
 				}
 			});
 		}
 
 		function addLayerFromFile(file, makeActive) {
-			if (!file) {
-				return;
-			}
+			if (!file) return;
 			var url = URL.createObjectURL(file);
 			var img = new Image();
 			img.onload = function () {
 				var layer = {
 					id: uid('l'),
+					type: 'image',
 					label: file.name ? file.name.replace(/\.[^.]+$/, '') : 'Layer ' + (layers.length + 1),
 					fileName: file.name || '',
 					image: img,
@@ -453,20 +480,61 @@
 				};
 				seedPlacements(layer);
 				layers.push(layer);
-				if (makeActive !== false) {
-					activeLayerId = layer.id;
-				}
+				if (makeActive !== false) activeLayerId = layer.id;
 				journeyLog('layer_add', layer.label, productId);
 				draw();
 			};
 			img.src = url;
 		}
 
+		function addLayerFromUrl(url, opts) {
+			opts = opts || {};
+			var img = new Image();
+			img.crossOrigin = 'anonymous';
+			img.onload = function () {
+				var layer = {
+					id: uid('c'),
+					type: opts.type || 'clipart',
+					label: opts.label || 'Clip-art',
+					fileName: '',
+					image: img,
+					srcUrl: url,
+					clipart_id: opts.clipart_id || 0,
+					placementByView: {},
+				};
+				seedPlacements(layer);
+				layers.push(layer);
+				activeLayerId = layer.id;
+				journeyLog('library_add', layer.label, productId);
+				draw();
+			};
+			img.onerror = function () {
+				alert('Could not load library image.');
+			};
+			img.src = url;
+		}
+
+		function addTextLayer() {
+			var layer = {
+				id: uid('t'),
+				type: 'text',
+				label: 'Text',
+				content: 'Your text',
+				fontSize: 28,
+				fill: '#111111',
+				fontFamily: 'Arial, Helvetica, sans-serif',
+				placementByView: {},
+			};
+			seedPlacements(layer);
+			layers.push(layer);
+			activeLayerId = layer.id;
+			journeyLog('text_add', layer.content, productId);
+			draw();
+		}
+
 		function rotateActive(delta) {
 			var layer = getActiveLayer();
-			if (!layer || !activeArea) {
-				return;
-			}
+			if (!layer || !activeArea) return;
 			var p = getPlacement(layer);
 			p.rotation = (p.rotation || 0) + delta;
 			layer.placementByView[currentView] = constrainPlacement(layer, p, activeArea);
@@ -481,23 +549,20 @@
 
 		$root.find('#sc-upload, input[name="sc_artwork"]').on('change', function (e) {
 			var file = e.target.files && e.target.files[0];
-			if (!file) {
-				return;
-			}
-			// First upload: replace empty stack or add first layer; keep file in sc_artwork for cart.
+			if (!file) return;
 			if (!layers.length) {
 				addLayerFromFile(file, true);
 			} else {
-				// Replace active layer image, or add if none active.
 				var url = URL.createObjectURL(file);
 				var img = new Image();
 				img.onload = function () {
 					var layer = getActiveLayer();
-					if (!layer) {
+					if (!layer || layer.type === 'text') {
 						addLayerFromFile(file, true);
 						return;
 					}
 					layer.image = img;
+					layer.type = 'image';
 					layer.fileName = file.name || layer.fileName;
 					layer.label = file.name ? file.name.replace(/\.[^.]+$/, '') : layer.label;
 					seedPlacements(layer);
@@ -510,17 +575,78 @@
 		});
 
 		$root.find('#sc-add-layer').on('click', function () {
-			// Trigger file pick for a new layer (does not replace sc_artwork primary).
 			var input = document.createElement('input');
 			input.type = 'file';
 			input.accept = 'image/png,image/jpeg,image/svg+xml,image/webp';
 			input.onchange = function () {
 				var f = input.files && input.files[0];
-				if (f) {
-					addLayerFromFile(f, true);
-				}
+				if (f) addLayerFromFile(f, true);
 			};
 			input.click();
+		});
+
+		$root.find('#sc-add-text').on('click', function () {
+			addTextLayer();
+		});
+
+		$root.find('#sc-toggle-library').on('click', function () {
+			var $panel = $root.find('#sc-library-panel');
+			if ($panel.is(':visible')) {
+				$panel.hide();
+				return;
+			}
+			$panel.show();
+			loadLibrary();
+		});
+
+		function loadLibrary() {
+			var $box = $root.find('#sc-library-thumbs').empty().text('Loading…');
+			if (typeof scLibrary === 'undefined' || !scLibrary || !scLibrary.ajax) {
+				$box.text('Library unavailable.');
+				return;
+			}
+			$.get(scLibrary.ajax, {
+				action: 'sc_library_items',
+				nonce: scLibrary.nonce,
+				product_id: productId,
+			}).done(function (res) {
+				$box.empty();
+				if (!res || !res.success || !res.data.items || !res.data.items.length) {
+					$box.text('No clip-art available.');
+					return;
+				}
+				res.data.items.forEach(function (item) {
+					var $a = $(
+						'<button type="button" class="sc-lib-item" title="' +
+							esc(item.title) +
+							'" style="border:1px solid #ccc;padding:2px;background:#fff;cursor:pointer;">' +
+							'<img src="' +
+							esc(item.thumb || item.url) +
+							'" alt="" style="width:64px;height:64px;object-fit:contain;display:block;" />' +
+							'</button>'
+					);
+					$a.on('click', function () {
+						addLayerFromUrl(item.url, {
+							type: 'clipart',
+							label: item.title || 'Clip-art',
+							clipart_id: item.id,
+						});
+					});
+					$box.append($a);
+				});
+			});
+		}
+
+		// Text editor bindings
+		$root.on('input change', '#sc-text-content, #sc-text-size, #sc-text-fill, #sc-text-font', function () {
+			var L = getActiveLayer();
+			if (!L || L.type !== 'text') return;
+			L.content = $root.find('#sc-text-content').val() || '';
+			L.fontSize = parseFloat($root.find('#sc-text-size').val()) || 28;
+			L.fill = $root.find('#sc-text-fill').val() || '#111111';
+			L.fontFamily = $root.find('#sc-text-font').val() || 'Arial, Helvetica, sans-serif';
+			L.label = truncate(L.content, 24) || 'Text';
+			draw();
 		});
 
 		$root.find('#sc-rotate-left').on('click', function () {
@@ -563,7 +689,6 @@
 				var tmp = layers[i - 1];
 				layers[i - 1] = layers[i];
 				layers[i] = tmp;
-				journeyLog('layer_reorder', 'up:' + id, productId);
 				draw();
 			}
 		});
@@ -576,7 +701,6 @@
 				var tmp = layers[i + 1];
 				layers[i + 1] = layers[i];
 				layers[i] = tmp;
-				journeyLog('layer_reorder', 'down:' + id, productId);
 				draw();
 			}
 		});
@@ -599,26 +723,18 @@
 		}
 
 		$(canvas).on('mousedown touchstart', function (e) {
-			if (!activeArea || !layers.length) {
-				return;
-			}
+			if (!activeArea || !layers.length) return;
 			e.preventDefault();
 			var pos = canvasPos(e);
-
-			// Hit-test top → bottom for selection
 			var hitLayer = null;
 			for (var i = layers.length - 1; i >= 0; i--) {
 				var L = layers[i];
-				if (!L.image) {
-					continue;
-				}
+				if (!hasDrawable(L)) continue;
 				var p = getPlacement(L);
 				var h = hitHandle(pos.x, pos.y, L, p, activeArea);
 				if (h || hitArt(pos.x, pos.y, L, p, activeArea)) {
 					hitLayer = L;
-					if (L.id !== activeLayerId) {
-						activeLayerId = L.id;
-					}
+					if (L.id !== activeLayerId) activeLayerId = L.id;
 					if (h === 'rotate') {
 						mode = 'rotate';
 						resizeCorner = null;
@@ -635,30 +751,21 @@
 					break;
 				}
 			}
-			if (!hitLayer) {
-				mode = null;
-			}
+			if (!hitLayer) mode = null;
 			lastX = pos.x;
 			lastY = pos.y;
 			draw();
 		});
 
 		$(window).on('mouseup touchend', function () {
-			if (mode) {
-				journeyLog(mode === 'rotate' ? 'rotate' : mode, 'end', productId);
-			}
 			mode = null;
 			resizeCorner = null;
 		});
 
 		$(canvas).on('mousemove touchmove', function (e) {
-			if (!mode || !activeArea) {
-				return;
-			}
+			if (!mode || !activeArea) return;
 			var layer = getActiveLayer();
-			if (!layer || !layer.image) {
-				return;
-			}
+			if (!layer || !hasDrawable(layer)) return;
 			e.preventDefault();
 			var pos = canvasPos(e);
 			var p = getPlacement(layer);
@@ -672,22 +779,10 @@
 				p.y += (dy / activeArea.h) * 100;
 			} else if (mode === 'resize') {
 				var delta = (dx + dy) * 0.005;
-				if (resizeCorner === 'nw' || resizeCorner === 'sw') {
-					delta = (-dx + dy) * 0.005;
-				}
-				if (resizeCorner === 'nw' || resizeCorner === 'ne') {
-					// keep corner-ish feel
-					delta = (Math.abs(dx) > Math.abs(dy) ? dx : -dy) * 0.005;
-					if (resizeCorner === 'nw') {
-						delta = (-dx - dy) * 0.005;
-					} else if (resizeCorner === 'ne') {
-						delta = (dx - dy) * 0.005;
-					} else if (resizeCorner === 'sw') {
-						delta = (-dx + dy) * 0.005;
-					} else {
-						delta = (dx + dy) * 0.005;
-					}
-				}
+				if (resizeCorner === 'nw') delta = (-dx - dy) * 0.005;
+				else if (resizeCorner === 'ne') delta = (dx - dy) * 0.005;
+				else if (resizeCorner === 'sw') delta = (-dx + dy) * 0.005;
+				else delta = (dx + dy) * 0.005;
 				p.scale = (p.scale || 1) + delta;
 			} else if (mode === 'rotate') {
 				var c = artCenter(p, activeArea);
@@ -701,9 +796,7 @@
 
 		$(canvas).on('wheel', function (e) {
 			var layer = getActiveLayer();
-			if (!layer || !layer.image || !activeArea) {
-				return;
-			}
+			if (!layer || !hasDrawable(layer) || !activeArea) return;
 			e.preventDefault();
 			var p = getPlacement(layer);
 			var delta = e.originalEvent.deltaY > 0 ? -0.08 : 0.08;
@@ -712,7 +805,7 @@
 			draw();
 		});
 
-		// ---- Saved designs (optional) ----
+		// ---- Saved designs ----
 		function designPayload() {
 			return {
 				current_view: currentView,
@@ -722,13 +815,20 @@
 			};
 		}
 
-		$(document).on('click', '#sc-save-design', function () {
-			if (typeof scDesigns === 'undefined' || !scDesigns || !scDesigns.ajax) {
-				return;
+		function showGuestHint(msg) {
+			var $h = $('#sc-guest-design-hint');
+			if ($h.length) {
+				$h.show().text(msg);
 			}
-			var title = window.prompt('Name this design', 'My design');
-			if (title === null) {
-				return;
+		}
+
+		$(document).on('click', '#sc-save-design', function () {
+			if (typeof scDesigns === 'undefined' || !scDesigns || !scDesigns.ajax) return;
+			var title = 'My design';
+			if (scDesigns.loggedIn) {
+				var t = window.prompt('Name this design', 'My design');
+				if (t === null) return;
+				title = t;
 			}
 			$.post(scDesigns.ajax, {
 				action: 'sc_save_design',
@@ -739,7 +839,16 @@
 			}).done(function (res) {
 				if (res && res.success) {
 					journeyLog('design_save', title, productId);
-					alert('Design saved.');
+					if (res.data && res.data.mode === 'guest') {
+						guestToken = res.data.token || guestToken;
+						showGuestHint(
+							(res.data.message || 'Design saved.') +
+								(guestToken ? ' Token: ' + guestToken.slice(0, 8) + '…' : '')
+						);
+						alert(res.data.message || 'Design saved on this device.');
+					} else {
+						alert('Design saved.');
+					}
 				} else {
 					alert((res && res.data && res.data.message) || 'Could not save design.');
 				}
@@ -747,9 +856,7 @@
 		});
 
 		$(document).on('click', '#sc-load-designs', function () {
-			if (typeof scDesigns === 'undefined' || !scDesigns || !scDesigns.ajax) {
-				return;
-			}
+			if (typeof scDesigns === 'undefined' || !scDesigns || !scDesigns.ajax) return;
 			var $box = $('#sc-designs-list').empty().text('Loading…');
 			$.post(scDesigns.ajax, {
 				action: 'sc_list_designs',
@@ -769,9 +876,7 @@
 							nonce: scDesigns.nonce,
 							id: item.id,
 						}).done(function (r2) {
-							if (!r2 || !r2.success || !r2.data.payload) {
-								return;
-							}
+							if (!r2 || !r2.success || !r2.data.payload) return;
 							applyDesignPayload(r2.data.payload);
 							journeyLog('design_load', String(item.id), productId);
 						});
@@ -781,43 +886,158 @@
 			});
 		});
 
-		function applyDesignPayload(payload) {
-			if (!payload || typeof payload !== 'object') {
+		function loadGuestDesign(token) {
+			if (typeof scDesigns === 'undefined' || !scDesigns || !scDesigns.ajax) return;
+			$.post(scDesigns.ajax, {
+				action: 'sc_load_design',
+				nonce: scDesigns.nonce,
+				token: token || guestToken || '',
+				product_id: productId,
+			}).done(function (res) {
+				if (!res || !res.success || !res.data.payload) {
+					alert((res && res.data && res.data.message) || 'No saved design found.');
+					return;
+				}
+				if (res.data.token) guestToken = res.data.token;
+				applyDesignPayload(res.data.payload);
+				showGuestHint('Design reloaded.');
+				journeyLog('design_load_guest', guestToken.slice(0, 8), productId);
+			});
+		}
+
+		$(document).on('click', '#sc-reload-guest-design', function () {
+			loadGuestDesign(guestToken);
+		});
+
+		$(document).on('click', '#sc-email-guest-design', function () {
+			if (typeof scDesigns === 'undefined' || !scDesigns || !scDesigns.ajax) return;
+			if (!guestToken) {
+				alert('Save a design first.');
 				return;
 			}
-			// Restore layer transforms; images must be re-uploaded by customer (no server art blobs).
+			var email = window.prompt('Email address for your design link', '');
+			if (!email) return;
+			$.post(scDesigns.ajax, {
+				action: 'sc_email_design_link',
+				nonce: scDesigns.nonce,
+				email: email,
+				product_id: productId,
+				token: guestToken,
+			}).done(function (res) {
+				if (res && res.success) {
+					alert(res.data.message || 'Link emailed.');
+				} else {
+					alert((res && res.data && res.data.message) || 'Could not send email.');
+				}
+			});
+		});
+
+		function applyDesignPayload(payload) {
+			if (!payload || typeof payload !== 'object') return;
+
 			if (Array.isArray(payload.layers) && payload.layers.length) {
-				// Map saved placements onto existing layers by order when images present.
-				payload.layers.forEach(function (saved, idx) {
-					if (layers[idx]) {
-						var L = layers[idx];
-						var places = saved.placements || {};
+				// Rebuild layers; image layers need re-upload except clipart with srcUrl/clipart_id.
+				var pending = 0;
+				var next = [];
+
+				function finish() {
+					layers = next;
+					if (layers.length) {
+						activeLayerId = payload.active_layer || layers[layers.length - 1].id;
+					}
+					if (payload.current_view) loadView(payload.current_view);
+					else draw();
+				}
+
+				payload.layers.forEach(function (saved) {
+					if ((saved.type || 'image') === 'text') {
+						var tl = {
+							id: saved.id || uid('t'),
+							type: 'text',
+							label: saved.name || saved.label || truncate(saved.content, 24) || 'Text',
+							content: saved.content || 'Text',
+							fontSize: saved.fontSize || 28,
+							fill: saved.fill || '#111111',
+							fontFamily: saved.fontFamily || 'Arial, Helvetica, sans-serif',
+							placementByView: {},
+						};
+						var places = saved.placements || saved.placementByView || {};
 						Object.keys(places).forEach(function (vid) {
-							L.placementByView[vid] = $.extend(defaultPlacement(vid), places[vid]);
+							tl.placementByView[vid] = $.extend(defaultPlacement(vid), places[vid]);
 						});
-						if (saved.label) {
-							L.label = saved.label;
-						}
+						seedPlacements(tl);
+						next.push(tl);
+					} else if (saved.srcUrl || saved.clipart_id) {
+						pending++;
+						var img = new Image();
+						img.crossOrigin = 'anonymous';
+						(function (sv) {
+							img.onload = function () {
+								var L = {
+									id: sv.id || uid('c'),
+									type: sv.type || 'clipart',
+									label: sv.name || sv.label || 'Clip-art',
+									image: img,
+									srcUrl: sv.srcUrl || img.src,
+									clipart_id: sv.clipart_id || 0,
+									placementByView: {},
+								};
+								var places2 = sv.placements || sv.placementByView || {};
+								Object.keys(places2).forEach(function (vid) {
+									L.placementByView[vid] = $.extend(defaultPlacement(vid), places2[vid]);
+								});
+								seedPlacements(L);
+								next.push(L);
+								pending--;
+								if (pending === 0) finish();
+							};
+							img.onerror = function () {
+								pending--;
+								if (pending === 0) finish();
+							};
+							if (sv.srcUrl) {
+								img.src = sv.srcUrl;
+							} else if (typeof scLibrary !== 'undefined' && scLibrary.ajax && sv.clipart_id) {
+								// resolve via library list
+								$.get(scLibrary.ajax, {
+									action: 'sc_library_items',
+									nonce: scLibrary.nonce,
+									product_id: productId,
+								}).done(function (res) {
+									var found = null;
+									if (res && res.success && res.data.items) {
+										res.data.items.forEach(function (it) {
+											if (it.id === sv.clipart_id) found = it;
+										});
+									}
+									if (found) img.src = found.url;
+									else {
+										pending--;
+										if (pending === 0) finish();
+									}
+								});
+							} else {
+								pending--;
+								if (pending === 0) finish();
+							}
+						})(saved);
+					} else {
+						// Image without server URL: keep placement slots empty — user re-uploads.
+						// Try map onto existing image layers by index later — skip for clean restore.
 					}
 				});
+				if (pending === 0) finish();
 			} else if (payload.placement && layers[0]) {
 				var pl = payload.placement;
 				if (pl.placements) {
 					Object.keys(pl.placements).forEach(function (vid) {
 						layers[0].placementByView[vid] = $.extend(defaultPlacement(vid), pl.placements[vid]);
 					});
-				} else if (pl.view_id) {
-					layers[0].placementByView[pl.view_id] = $.extend(defaultPlacement(pl.view_id), pl);
 				}
-			}
-			if (payload.current_view) {
-				loadView(payload.current_view);
-			} else {
 				draw();
 			}
 		}
 
-		// Expose for designs / external hooks
 		$root.data('scCustomizerApi', {
 			getPayload: designPayload,
 			applyPayload: applyDesignPayload,
@@ -826,10 +1046,14 @@
 
 		journeyLog('customizer_init', 'views=' + views.length, productId);
 
-		if (currentView) {
-			loadView(currentView);
-		} else {
-			draw();
+		if (currentView) loadView(currentView);
+		else draw();
+
+		// Auto-load guest design from ?sc_design=
+		if (guestToken) {
+			setTimeout(function () {
+				loadGuestDesign(guestToken);
+			}, 400);
 		}
 	}
 

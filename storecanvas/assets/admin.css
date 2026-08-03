@@ -36,3 +36,8 @@
 .sc-visual-stage { user-select: none; }
 #sc-area-canvas { background: #f6f7f7; }
 #sc-visual-view, #sc-visual-area { min-width: 120px; }
+
+/* 0.7.0 text + library */
+.sc-layer-row.active .sc-layer-select { box-shadow: 0 0 0 1px #2271b1; }
+.sc-library-thumbs .sc-lib-item:hover { border-color: #2271b1 !important; }
+.sc-text-editor label { display: inline-block; margin-right: 6px; }
