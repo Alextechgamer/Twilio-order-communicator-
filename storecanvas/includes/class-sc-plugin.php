@@ -16,6 +16,7 @@ class SC_Plugin {
 	const CART_OPTIONS     = 'sc_options';
 	const CART_PLACEMENT   = 'sc_placement';
 	const CART_ATTACHMENTS = 'sc_attachments';
+	const CART_LAYERS      = 'sc_layers';
 
 	private static $instance = null;
 
@@ -31,11 +32,6 @@ class SC_Plugin {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin' ) );
 	}
 
-	/**
-	 * Default validation rules for print-ready checks (Phase C expands enforcement).
-	 *
-	 * @return array
-	 */
 	public static function default_validation() {
 		return array(
 			'min_dpi'         => 150,
@@ -47,27 +43,17 @@ class SC_Plugin {
 		);
 	}
 
-	/**
-	 * Empty customizer config shape.
-	 *
-	 * @return array
-	 */
 	public static function empty_customizer() {
 		return array(
 			'enabled' => 0,
-			'views'   => array(), // [ { id, label, image_id } ]
-			'areas'   => array(), // [ { id, view_id, label, x, y, w, h, lock_rotation } ] coords 0–100 %
+			'views'   => array(),
+			'areas'   => array(),
 		);
 	}
 
-	/**
-	 * Empty options config shape.
-	 *
-	 * @return array
-	 */
 	public static function empty_options() {
 		return array(
-			'fields' => array(), // [ { id, type, label, required, price_type, price, choices, conditions } ]
+			'fields' => array(),
 		);
 	}
 
@@ -100,6 +86,14 @@ class SC_Plugin {
 					'reset'    => __( 'Reset', 'storecanvas' ),
 					'noArea'   => __( 'No print area configured.', 'storecanvas' ),
 				),
+			)
+		);
+		wp_localize_script(
+			'sc-customizer',
+			'scDesigns',
+			array(
+				'ajax'  => admin_url( 'admin-ajax.php' ),
+				'nonce' => wp_create_nonce( 'sc_designs' ),
 			)
 		);
 	}

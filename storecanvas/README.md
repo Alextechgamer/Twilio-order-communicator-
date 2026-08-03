@@ -2,27 +2,23 @@
 
 Self-hosted WooCommerce **product options** + **live mockup placement** + **print-ready exports**.
 
-Version: **0.4.0**
+Version: **0.5.0**
 
-## What’s in 0.4.0 (Phase C)
+## What's in 0.5.0
 
-- **Artwork upload** on add-to-cart (`sc_artwork`) → media library
-- **Validation**: file size, MIME, min pixels, **estimated DPI** vs target print width
-- **Print composite** (GD): base view + placed art → PNG attachment on the order line
-- **Admin downloads**: original artwork + per-view composites on the order screen
+1. **Rotation UI** — buttons + blue rotate handle on canvas
+2. **Option conditionals** — Show if field equals value in product admin
+3. **Multi-layer art** — add/reorder/remove layers; per-layer placement
+4. **Print sheet** — order admin StoreCanvas print sheet (browser Print to PDF)
+5. **Customer journey debug** — WooCommerce SC Journey event log
+6. **Safe-margin guides** — green inset using product safe_margin_pct
+7. **Saved designs** — logged-in customers can save/load designs
 
 ## Requirements
 
-- PHP **GD** extension for composite generation
-
-## Modules
-
-| Module | Status |
-|--------|--------|
-| Product Options (A) | 0.2 visual + pricing |
-| Live Customizer (B) | 0.3 canvas polish |
-| Print-ready (C) | **0.4** validation + composite |
+- WordPress 6.0+, WooCommerce 7.0+, PHP 7.4+
+- **PHP GD** for print composites
 
 ## Install
 
-Copy `storecanvas/` → `wp-content/plugins/`, activate, configure product **StoreCanvas** tab.
+Copy `storecanvas/` to `wp-content/plugins/`, activate, configure product StoreCanvas tab.

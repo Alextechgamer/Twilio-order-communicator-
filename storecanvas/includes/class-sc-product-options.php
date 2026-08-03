@@ -5,7 +5,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Phase A: product option fields (types, pricing, conditionals).
- * Scaffold: data model + product-page render shell + cart capture hooks via SC_Cart_Order.
  */
 class SC_Product_Options {
 
@@ -22,11 +21,6 @@ class SC_Product_Options {
 		add_action( 'woocommerce_before_add_to_cart_button', array( $this, 'render_fields' ), 15 );
 	}
 
-	/**
-	 * Supported field types (A foundation; more can be added without schema break).
-	 *
-	 * @return string[]
-	 */
 	public static function field_types() {
 		return array(
 			'select'     => __( 'Dropdown', 'storecanvas' ),
@@ -42,11 +36,6 @@ class SC_Product_Options {
 		);
 	}
 
-	/**
-	 * Price types.
-	 *
-	 * @return string[]
-	 */
 	public static function price_types() {
 		return array(
 			'none'       => __( 'Free', 'storecanvas' ),
@@ -57,10 +46,6 @@ class SC_Product_Options {
 		);
 	}
 
-	/**
-	 * @param int $product_id Product ID.
-	 * @return array
-	 */
 	public static function get_config( $product_id ) {
 		$raw = get_post_meta( $product_id, SC_Plugin::META_OPTIONS, true );
 		if ( ! is_array( $raw ) ) {
@@ -72,9 +57,6 @@ class SC_Product_Options {
 		return $raw;
 	}
 
-	/**
-	 * Render option fields on the single product page.
-	 */
 	public function render_fields() {
 		global $product;
 		if ( ! $product instanceof WC_Product ) {
@@ -90,11 +72,33 @@ class SC_Product_Options {
 			$this->render_field( $field );
 		}
 		echo '</div>';
+		?>
+		<script>
+		(function(){
+			function apply(){
+				var root=document.querySelector('.sc-options');
+				if(!root) return;
+				root.querySelectorAll('.sc-option-field[data-show-if-field]').forEach(function(el){
+					var fid=el.getAttribute('data-show-if-field');
+					var want=el.getAttribute('data-show-if-value')||'';
+					var src=root.querySelector('[name="sc_option['+fid+']"], [name="sc_option['+fid+'][]"]');
+					var val='';
+					if(src){
+						if(src.type==='checkbox'){ val=src.checked?'1':''; }
+						else { val=src.value||''; }
+					}
+					el.style.display = (!want || val===want) ? '' : 'none';
+					var inputs=el.querySelectorAll('input,select,textarea');
+					inputs.forEach(function(i){ if(el.style.display==='none'){ i.removeAttribute('required'); } });
+				});
+			}
+			document.addEventListener('change', function(e){ if(e.target.closest&&e.target.closest('.sc-options')) apply(); });
+			apply();
+		})();
+		</script>
+		<?php
 	}
 
-	/**
-	 * @param array $field Field config.
-	 */
 	private function render_field( $field ) {
 		$type  = isset( $field['type'] ) ? $field['type'] : 'text';
 		$id    = isset( $field['id'] ) ? $field['id'] : '';
@@ -107,7 +111,13 @@ class SC_Product_Options {
 			return;
 		}
 
-		echo '<p class="sc-option-field sc-option-' . esc_attr( $type ) . '" data-field-id="' . esc_attr( $id ) . '">';
+		$show_if_field = isset( $field['show_if']['field'] ) ? $field['show_if']['field'] : ( $field['show_if_field'] ?? '' );
+		$show_if_value = isset( $field['show_if']['value'] ) ? $field['show_if']['value'] : ( $field['show_if_value'] ?? '' );
+		$attrs = ' class="sc-option-field sc-option-' . esc_attr( $type ) . '" data-field-id="' . esc_attr( $id ) . '"';
+		if ( $show_if_field ) {
+			$attrs .= ' data-show-if-field="' . esc_attr( $show_if_field ) . '" data-show-if-value="' . esc_attr( $show_if_value ) . '"';
+		}
+		echo '<p' . $attrs . '>';
 		echo '<label for="sc_option_' . esc_attr( $id ) . '">' . esc_html( $label );
 		if ( $req ) {
 			echo ' <abbr class="required" title="required">*</abbr>';

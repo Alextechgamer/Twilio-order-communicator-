@@ -46,7 +46,7 @@ class SC_Admin_Product {
 			<div class="options_group">
 				<p class="form-field">
 					<strong><?php esc_html_e( 'StoreCanvas', 'storecanvas' ); ?></strong>
-					<span class="description"> — <?php esc_html_e( 'Product options and live mockup. Version 0.2.0.', 'storecanvas' ); ?></span>
+					<span class="description"> — <?php esc_html_e( 'Product options and live mockup. Version 0.5.0.', 'storecanvas' ); ?></span>
 				</p>
 			</div>
 
@@ -118,6 +118,17 @@ class SC_Admin_Product {
 						'description'       => __( 'Used to estimate DPI of uploaded artwork.', 'storecanvas' ),
 						'value'             => (float) ( $validation['target_print_width_in'] ?? 12 ),
 						'custom_attributes' => array( 'min' => '1', 'step' => '0.5' ),
+					)
+				);
+				woocommerce_wp_text_input(
+					array(
+						'id'                => 'sc_val_safe_margin',
+						'label'             => __( 'Safe margin %', 'storecanvas' ),
+						'type'              => 'number',
+						'desc_tip'          => true,
+						'description'       => __( 'Green guide inset inside the print area on the canvas.', 'storecanvas' ),
+						'value'             => (float) ( $validation['safe_margin_pct'] ?? 5 ),
+						'custom_attributes' => array( 'min' => '0', 'max' => '40', 'step' => '0.5' ),
 					)
 				);
 				?>
@@ -207,6 +218,9 @@ class SC_Admin_Product {
 		if ( isset( $_POST['sc_val_print_width'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$validation['target_print_width_in'] = max( 1, (float) $_POST['sc_val_print_width'] );
 		}
+		if ( isset( $_POST['sc_val_safe_margin'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			$validation['safe_margin_pct'] = max( 0, min( 40, (float) $_POST['sc_val_safe_margin'] ) );
+		}
 		update_post_meta( $post_id, SC_Plugin::META_VALIDATION, $validation );
 
 		$fields = array();
@@ -217,7 +231,17 @@ class SC_Admin_Product {
 					if ( ! is_array( $f ) ) {
 						continue;
 					}
-					$fields[] = array(
+					$show_if = array();
+					if ( ! empty( $f['show_if'] ) && is_array( $f['show_if'] ) ) {
+						$sf = sanitize_key( $f['show_if']['field'] ?? '' );
+						if ( $sf ) {
+							$show_if = array(
+								'field' => $sf,
+								'value' => sanitize_text_field( $f['show_if']['value'] ?? '' ),
+							);
+						}
+					}
+					$field_row = array(
 						'id'         => sanitize_key( $f['id'] ?? wp_generate_password( 6, false ) ),
 						'type'       => sanitize_key( $f['type'] ?? 'text' ),
 						'label'      => sanitize_text_field( $f['label'] ?? '' ),
@@ -226,6 +250,10 @@ class SC_Admin_Product {
 						'price'      => (float) ( $f['price'] ?? 0 ),
 						'choices'    => isset( $f['choices'] ) && is_array( $f['choices'] ) ? $f['choices'] : array(),
 					);
+					if ( $show_if ) {
+						$field_row['show_if'] = $show_if;
+					}
+					$fields[] = $field_row;
 				}
 			}
 		}
