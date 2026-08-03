@@ -253,6 +253,20 @@
 			.replace(/>/g, '&gt;');
 	}
 
+	function viewImageUrls() {
+		try {
+			return JSON.parse($('#sc-view-image-urls').text() || '{}');
+		} catch (e) {
+			return {};
+		}
+	}
+
+	function setViewImageUrl(id, url) {
+		var map = viewImageUrls();
+		map[String(id)] = url;
+		$('#sc-view-image-urls').text(JSON.stringify(map));
+	}
+
 	function openMedia($row) {
 		var frame = wp.media({
 			title: scAdmin.i18n.selectImg || 'Select image',
@@ -263,10 +277,299 @@
 			var att = frame.state().get('selection').first().toJSON();
 			$row.find('.sc-view-image-id').val(att.id);
 			$row.find('.sc-thumb').removeClass('sc-thumb-empty').text('#' + att.id).attr('data-id', att.id);
+			if (att.url) {
+				setViewImageUrl(att.id, att.url);
+			}
 			syncViews();
 			renderAreas();
+			refreshVisualEditor();
 		});
 		frame.open();
+	}
+
+	/* ---- Visual print-area editor (0.6.0) ---- */
+	var visual = {
+		img: null,
+		layout: null,
+		mode: null,
+		handle: null,
+		lastX: 0,
+		lastY: 0,
+		HANDLE: 8,
+	};
+
+	function fillVisualViewSelect() {
+		var views = parseJSON('#sc_customizer_views_json', []);
+		var $sel = $('#sc-visual-view').empty();
+		views.forEach(function (v) {
+			$sel.append(
+				$('<option/>')
+					.val(v.id)
+					.text((v.label || v.id) + (v.image_id ? '' : ' (no image)'))
+					.prop('disabled', !v.image_id)
+			);
+		});
+		fillVisualAreaSelect();
+	}
+
+	function fillVisualAreaSelect() {
+		var viewId = $('#sc-visual-view').val();
+		var areas = parseJSON('#sc_customizer_areas_json', []);
+		var $sel = $('#sc-visual-area').empty();
+		var list = areas.filter(function (a) {
+			return a.view_id === viewId;
+		});
+		if (!list.length) {
+			$sel.append($('<option/>').val('').text('— none —'));
+		} else {
+			list.forEach(function (a, i) {
+				$sel.append(
+					$('<option/>')
+						.val(a.id)
+						.text((a.label || a.id) + (i === 0 ? ' (primary)' : ''))
+				);
+			});
+		}
+		loadVisualImage();
+	}
+
+	function getSelectedArea() {
+		var areaId = $('#sc-visual-area').val();
+		var areas = parseJSON('#sc_customizer_areas_json', []);
+		for (var i = 0; i < areas.length; i++) {
+			if (areas[i].id === areaId) {
+				return { area: areas[i], index: i };
+			}
+		}
+		return null;
+	}
+
+	function updateAreaInJson(patch) {
+		var sel = getSelectedArea();
+		if (!sel) return;
+		var areas = parseJSON('#sc_customizer_areas_json', []);
+		areas[sel.index] = Object.assign({}, areas[sel.index], patch);
+		$('#sc_customizer_areas_json').val(JSON.stringify(areas));
+		// Sync numeric row if present
+		$('#sc-areas-list .sc-area-row').each(function () {
+			var $r = $(this);
+			if ($r.find('.sc-area-id').val() === sel.area.id) {
+				if (patch.x != null) $r.find('.sc-area-x').val(round1(patch.x));
+				if (patch.y != null) $r.find('.sc-area-y').val(round1(patch.y));
+				if (patch.w != null) $r.find('.sc-area-w').val(round1(patch.w));
+				if (patch.h != null) $r.find('.sc-area-h').val(round1(patch.h));
+			}
+		});
+	}
+
+	function round1(n) {
+		return Math.round(n * 10) / 10;
+	}
+
+	function loadVisualImage() {
+		var canvas = document.getElementById('sc-area-canvas');
+		if (!canvas) return;
+		var ctx = canvas.getContext('2d');
+		var views = parseJSON('#sc_customizer_views_json', []);
+		var viewId = $('#sc-visual-view').val();
+		var view = views.find(function (v) {
+			return v.id === viewId;
+		});
+		visual.img = null;
+		visual.layout = null;
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		ctx.fillStyle = '#e8e8e8';
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+		if (!view || !view.image_id) {
+			ctx.fillStyle = '#666';
+			ctx.fillText('Select a view with an image', 16, 28);
+			return;
+		}
+		var urls = viewImageUrls();
+		var url = urls[String(view.image_id)];
+		if (!url) {
+			ctx.fillStyle = '#666';
+			ctx.fillText('Image URL unavailable (re-select image)', 16, 28);
+			drawVisualArea();
+			return;
+		}
+		var img = new Image();
+		img.crossOrigin = 'anonymous';
+		img.onload = function () {
+			visual.img = img;
+			drawVisualArea();
+		};
+		img.onerror = function () {
+			ctx.fillStyle = '#666';
+			ctx.fillText('Could not load view image', 16, 28);
+		};
+		img.src = url;
+	}
+
+	function areaPixelRect(area, layout) {
+		return {
+			x: layout.ox + (area.x / 100) * layout.w,
+			y: layout.oy + (area.y / 100) * layout.h,
+			w: (area.w / 100) * layout.w,
+			h: (area.h / 100) * layout.h,
+		};
+	}
+
+	function drawVisualArea() {
+		var canvas = document.getElementById('sc-area-canvas');
+		if (!canvas) return;
+		var ctx = canvas.getContext('2d');
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		ctx.fillStyle = '#f0f0f1';
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+		if (visual.img) {
+			var scale = Math.min(canvas.width / visual.img.width, canvas.height / visual.img.height);
+			var w = visual.img.width * scale;
+			var h = visual.img.height * scale;
+			var ox = (canvas.width - w) / 2;
+			var oy = (canvas.height - h) / 2;
+			visual.layout = { ox: ox, oy: oy, w: w, h: h };
+			ctx.drawImage(visual.img, ox, oy, w, h);
+		} else {
+			visual.layout = { ox: 20, oy: 20, w: canvas.width - 40, h: canvas.height - 40 };
+			ctx.strokeStyle = '#ccc';
+			ctx.strokeRect(visual.layout.ox, visual.layout.oy, visual.layout.w, visual.layout.h);
+		}
+
+		var sel = getSelectedArea();
+		if (!sel || !visual.layout) return;
+		var r = areaPixelRect(sel.area, visual.layout);
+		ctx.save();
+		ctx.fillStyle = 'rgba(34,113,177,0.15)';
+		ctx.strokeStyle = 'rgba(34,113,177,0.95)';
+		ctx.lineWidth = 2;
+		ctx.setLineDash([6, 3]);
+		ctx.fillRect(r.x, r.y, r.w, r.h);
+		ctx.strokeRect(r.x, r.y, r.w, r.h);
+		ctx.setLineDash([]);
+		var handles = {
+			nw: { x: r.x, y: r.y },
+			ne: { x: r.x + r.w, y: r.y },
+			sw: { x: r.x, y: r.y + r.h },
+			se: { x: r.x + r.w, y: r.y + r.h },
+		};
+		Object.keys(handles).forEach(function (k) {
+			var pt = handles[k];
+			ctx.fillStyle = '#fff';
+			ctx.strokeStyle = '#2271b1';
+			ctx.fillRect(pt.x - visual.HANDLE / 2, pt.y - visual.HANDLE / 2, visual.HANDLE, visual.HANDLE);
+			ctx.strokeRect(pt.x - visual.HANDLE / 2, pt.y - visual.HANDLE / 2, visual.HANDLE, visual.HANDLE);
+		});
+		ctx.restore();
+	}
+
+	function canvasPos(e, canvas) {
+		var rect = canvas.getBoundingClientRect();
+		var scaleX = canvas.width / rect.width;
+		var scaleY = canvas.height / rect.height;
+		return {
+			x: (e.clientX - rect.left) * scaleX,
+			y: (e.clientY - rect.top) * scaleY,
+		};
+	}
+
+	function hitVisual(mx, my) {
+		var sel = getSelectedArea();
+		if (!sel || !visual.layout) return null;
+		var r = areaPixelRect(sel.area, visual.layout);
+		var hs = {
+			nw: { x: r.x, y: r.y },
+			ne: { x: r.x + r.w, y: r.y },
+			sw: { x: r.x, y: r.y + r.h },
+			se: { x: r.x + r.w, y: r.y + r.h },
+		};
+		var names = ['nw', 'ne', 'sw', 'se'];
+		for (var i = 0; i < names.length; i++) {
+			var pt = hs[names[i]];
+			if (Math.abs(mx - pt.x) <= visual.HANDLE && Math.abs(my - pt.y) <= visual.HANDLE) {
+				return names[i];
+			}
+		}
+		if (mx >= r.x && mx <= r.x + r.w && my >= r.y && my <= r.y + r.h) {
+			return 'move';
+		}
+		return null;
+	}
+
+	function bindVisualCanvas() {
+		var canvas = document.getElementById('sc-area-canvas');
+		if (!canvas || canvas._scBound) return;
+		canvas._scBound = true;
+		$(canvas).on('mousedown', function (e) {
+			var pos = canvasPos(e, canvas);
+			var h = hitVisual(pos.x, pos.y);
+			if (!h) return;
+			e.preventDefault();
+			visual.mode = h === 'move' ? 'move' : 'resize';
+			visual.handle = h;
+			visual.lastX = pos.x;
+			visual.lastY = pos.y;
+		});
+		$(window).on('mouseup.scVisual', function () {
+			visual.mode = null;
+			visual.handle = null;
+		});
+		$(canvas).on('mousemove', function (e) {
+			if (!visual.mode || !visual.layout) return;
+			var sel = getSelectedArea();
+			if (!sel) return;
+			var pos = canvasPos(e, canvas);
+			var dx = pos.x - visual.lastX;
+			var dy = pos.y - visual.lastY;
+			visual.lastX = pos.x;
+			visual.lastY = pos.y;
+			var a = Object.assign({}, sel.area);
+			var lx = visual.layout.w / 100;
+			var ly = visual.layout.h / 100;
+			var dpx = dx / lx;
+			var dpy = dy / ly;
+			if (visual.mode === 'move') {
+				a.x = Math.max(0, Math.min(100 - a.w, a.x + dpx));
+				a.y = Math.max(0, Math.min(100 - a.h, a.y + dpy));
+			} else {
+				var h = visual.handle;
+				if (h === 'se') {
+					a.w = Math.max(2, Math.min(100 - a.x, a.w + dpx));
+					a.h = Math.max(2, Math.min(100 - a.y, a.h + dpy));
+				} else if (h === 'ne') {
+					var nh = Math.max(2, a.h - dpy);
+					var ny = a.y + (a.h - nh);
+					a.w = Math.max(2, Math.min(100 - a.x, a.w + dpx));
+					a.y = Math.max(0, ny);
+					a.h = Math.min(100 - a.y, nh);
+				} else if (h === 'sw') {
+					var nw = Math.max(2, a.w - dpx);
+					var nx = a.x + (a.w - nw);
+					a.h = Math.max(2, Math.min(100 - a.y, a.h + dpy));
+					a.x = Math.max(0, nx);
+					a.w = Math.min(100 - a.x, nw);
+				} else if (h === 'nw') {
+					var nw2 = Math.max(2, a.w - dpx);
+					var nh2 = Math.max(2, a.h - dpy);
+					var nx2 = a.x + (a.w - nw2);
+					var ny2 = a.y + (a.h - nh2);
+					a.x = Math.max(0, nx2);
+					a.y = Math.max(0, ny2);
+					a.w = Math.min(100 - a.x, nw2);
+					a.h = Math.min(100 - a.y, nh2);
+				}
+			}
+			updateAreaInJson({ x: round1(a.x), y: round1(a.y), w: round1(a.w), h: round1(a.h) });
+			// re-read and draw
+			drawVisualArea();
+		});
+	}
+
+	function refreshVisualEditor() {
+		if (!$('#sc-area-canvas').length) return;
+		fillVisualViewSelect();
+		bindVisualCanvas();
 	}
 
 	$(function () {
@@ -277,6 +580,7 @@
 		renderViews();
 		renderAreas();
 		renderFields();
+		refreshVisualEditor();
 
 		$('#sc-add-view').on('click', function () {
 			syncViews();
@@ -285,6 +589,7 @@
 			$('#sc_customizer_views_json').val(JSON.stringify(views));
 			renderViews();
 			renderAreas();
+			refreshVisualEditor();
 		});
 
 		$('#sc-views-list')
@@ -292,6 +597,7 @@
 				$(this).closest('.sc-view-row').remove();
 				syncViews();
 				renderAreas();
+				refreshVisualEditor();
 			})
 			.on('click', '.sc-pick-image', function () {
 				openMedia($(this).closest('.sc-view-row'));
@@ -314,14 +620,22 @@
 			});
 			$('#sc_customizer_areas_json').val(JSON.stringify(areas));
 			renderAreas();
+			refreshVisualEditor();
 		});
 
 		$('#sc-areas-list')
 			.on('click', '.sc-remove-area', function () {
 				$(this).closest('.sc-area-row').remove();
 				syncAreas();
+				refreshVisualEditor();
 			})
-			.on('change', 'input,select', syncAreas);
+			.on('change', 'input,select', function () {
+				syncAreas();
+				drawVisualArea();
+			});
+
+		$('#sc-visual-view').on('change', fillVisualAreaSelect);
+		$('#sc-visual-area').on('change', drawVisualArea);
 
 		$('#sc-add-field').on('click', function () {
 			syncFields();
