@@ -3,7 +3,7 @@ Contributors: alextechgamer
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 0.6.0
+Stable tag: 0.7.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -14,6 +14,12 @@ WooCommerce product options, live logo/mockup placement, and print-ready exports
 StoreCanvas is a self-hosted WooCommerce module for product options, live mockup placement, and print-ready validation/exports.
 
 == Changelog ==
+
+= 0.7.0 =
+* Text layers on canvas (content, font size, fill, family)
+* Clip-art / design library (CPT + product allow-list)
+* Guest save design (token/transient, optional email link)
+* Text rasterization in print composites (bundled TTF or GD fallback)
 
 = 0.6.0 =
 * Visual print-area editor on product admin (drag/resize overlay, % coords)

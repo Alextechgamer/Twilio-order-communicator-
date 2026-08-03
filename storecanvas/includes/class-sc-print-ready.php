@@ -320,7 +320,7 @@ class SC_Print_Ready {
 	 * @param string $view_id   View ID.
 	 * @return int|\WP_Error Attachment ID of composite.
 	 */
-	public function generate_composite( $product_id, $placement, $art_id, $view_id = '' ) {
+	public function generate_composite( $product_id, $placement, $art_id, $view_id = '', $layers = array() ) {
 		$config = SC_Customizer::get_config( $product_id );
 		$views  = (array) ( $config['views'] ?? array() );
 		$areas  = (array) ( $config['areas'] ?? array() );
@@ -420,6 +420,12 @@ class SC_Print_Ready {
 		imagedestroy( $art_resized );
 		imagedestroy( $art );
 
+		// Extra library image layers + text layers (0.7.0).
+		if ( $layers ) {
+			$this->gd_draw_image_layers( $base, $layers, $view_id, $area, $bw, $bh, (int) $art_id );
+			$this->gd_draw_text_layers( $base, $layers, $view_id, $area, $bw, $bh );
+		}
+
 		$upload = wp_upload_dir();
 		$fname  = 'sc-print-' . $product_id . '-' . sanitize_file_name( $view_id ) . '-' . wp_generate_password( 6, false ) . '.png';
 		$out    = trailingslashit( $upload['path'] ) . $fname;
@@ -444,6 +450,211 @@ class SC_Print_Ready {
 		$meta = wp_generate_attachment_metadata( $att_id, $out );
 		wp_update_attachment_metadata( $att_id, $meta );
 		return (int) $att_id;
+	}
+
+
+	/**
+	 * Path to bundled TTF for text composites, or empty.
+	 *
+	 * @return string
+	 */
+	public static function font_path() {
+		$candidates = array(
+			SC_PLUGIN_DIR . 'assets/fonts/sc-sans.ttf',
+			SC_PLUGIN_DIR . 'assets/fonts/DejaVuSans.ttf',
+			'/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+		);
+		foreach ( $candidates as $c ) {
+			if ( $c && file_exists( $c ) ) {
+				return $c;
+			}
+		}
+		return '';
+	}
+
+	/**
+	 * Draw text layers onto a GD base image for one view.
+	 *
+	 * @param resource|\GdImage $base    Base image.
+	 * @param array             $layers  Layer list from CART_LAYERS.
+	 * @param string            $view_id View id.
+	 * @param array             $area    Area x,y,w,h %.
+	 * @param int               $bw      Base width.
+	 * @param int               $bh      Base height.
+	 */
+	public function gd_draw_text_layers( $base, $layers, $view_id, $area, $bw, $bh ) {
+		if ( ! is_array( $layers ) || ! $area ) {
+			return;
+		}
+		$ax = ( (float) $area['x'] / 100 ) * $bw;
+		$ay = ( (float) $area['y'] / 100 ) * $bh;
+		$aw = ( (float) $area['w'] / 100 ) * $bw;
+		$ah = ( (float) $area['h'] / 100 ) * $bh;
+		$font = self::font_path();
+		$use_ttf = $font && function_exists( 'imagettftext' );
+
+		foreach ( $layers as $layer ) {
+			if ( ! is_array( $layer ) ) {
+				continue;
+			}
+			$type = $layer['type'] ?? 'image';
+			if ( 'text' !== $type ) {
+				continue;
+			}
+			$content = isset( $layer['content'] ) ? (string) $layer['content'] : '';
+			if ( '' === $content ) {
+				continue;
+			}
+			$pl = array();
+			if ( ! empty( $layer['placements'][ $view_id ] ) && is_array( $layer['placements'][ $view_id ] ) ) {
+				$pl = $layer['placements'][ $view_id ];
+			} elseif ( ! empty( $layer['placementByView'][ $view_id ] ) && is_array( $layer['placementByView'][ $view_id ] ) ) {
+				$pl = $layer['placementByView'][ $view_id ];
+			} else {
+				$pl = array( 'x' => 50, 'y' => 50, 'scale' => 1, 'rotation' => 0 );
+			}
+			$scale    = isset( $pl['scale'] ) ? max( 0.2, min( 3.0, (float) $pl['scale'] ) ) : 1.0;
+			$rotation = isset( $pl['rotation'] ) ? (float) $pl['rotation'] : 0.0;
+			$cx       = $ax + ( ( (float) ( $pl['x'] ?? 50 ) ) / 100 ) * $aw;
+			$cy       = $ay + ( ( (float) ( $pl['y'] ?? 50 ) ) / 100 ) * $ah;
+			$font_size_ui = isset( $layer['fontSize'] ) ? (float) $layer['fontSize'] : 28.0;
+			// Map UI font size (canvas-ish) to print px: scale with area width.
+			$pt = max( 10, (int) round( $font_size_ui * $scale * ( $aw / 400 ) ) );
+			$fill = isset( $layer['fill'] ) ? (string) $layer['fill'] : '#111111';
+			$rgb  = $this->parse_hex_color( $fill );
+			$color = imagecolorallocate( $base, $rgb[0], $rgb[1], $rgb[2] );
+
+			if ( $use_ttf ) {
+				// imagettftext angle is counter-clockwise degrees.
+				$angle = -$rotation;
+				$bbox  = imagettfbbox( $pt, $angle, $font, $content );
+				if ( is_array( $bbox ) ) {
+					$minx = min( $bbox[0], $bbox[2], $bbox[4], $bbox[6] );
+					$maxx = max( $bbox[0], $bbox[2], $bbox[4], $bbox[6] );
+					$miny = min( $bbox[1], $bbox[3], $bbox[5], $bbox[7] );
+					$maxy = max( $bbox[1], $bbox[3], $bbox[5], $bbox[7] );
+					$tw = $maxx - $minx;
+					$th = $maxy - $miny;
+					$tx = (int) round( $cx - $tw / 2 - $minx );
+					$ty = (int) round( $cy + $th / 2 - $maxy );
+				} else {
+					$tx = (int) $cx;
+					$ty = (int) $cy;
+				}
+				@imagettftext( $base, $pt, $angle, $tx, $ty, $color, $font, $content );
+			} else {
+				// GD built-in font fallback (no rotation, approximate size).
+				$font_id = 5;
+				$tw = imagefontwidth( $font_id ) * strlen( $content );
+				$th = imagefontheight( $font_id );
+				imagestring( $base, $font_id, (int) ( $cx - $tw / 2 ), (int) ( $cy - $th / 2 ), $content, $color );
+			}
+		}
+	}
+
+	/**
+	 * @param string $hex Color.
+	 * @return array{0:int,1:int,2:int}
+	 */
+	private function parse_hex_color( $hex ) {
+		$hex = ltrim( (string) $hex, '#' );
+		if ( 3 === strlen( $hex ) ) {
+			$hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+		}
+		if ( 6 !== strlen( $hex ) ) {
+			return array( 17, 17, 17 );
+		}
+		return array(
+			hexdec( substr( $hex, 0, 2 ) ),
+			hexdec( substr( $hex, 2, 2 ) ),
+			hexdec( substr( $hex, 4, 2 ) ),
+		);
+	}
+
+	/**
+	 * Draw image layers from library/upload meta onto base (attachment id or skip).
+	 * Primary artwork is already drawn via $art_id; extra image layers use clipartUrl path if server-side file known.
+	 * For 0.7.0, library layers store clipart_id; resolve attachment from clipart post.
+	 *
+	 * @param resource|\GdImage $base Base.
+	 * @param array             $layers Layers.
+	 * @param string            $view_id View.
+	 * @param array             $area Area.
+	 * @param int               $bw Width.
+	 * @param int               $bh Height.
+	 * @param int               $skip_art_id Skip primary art already drawn.
+	 */
+	public function gd_draw_image_layers( $base, $layers, $view_id, $area, $bw, $bh, $skip_art_id = 0 ) {
+		if ( ! is_array( $layers ) || ! $area ) {
+			return;
+		}
+		$ax = ( (float) $area['x'] / 100 ) * $bw;
+		$ay = ( (float) $area['y'] / 100 ) * $bh;
+		$aw = ( (float) $area['w'] / 100 ) * $bw;
+		$ah = ( (float) $area['h'] / 100 ) * $bh;
+
+		foreach ( $layers as $layer ) {
+			if ( ! is_array( $layer ) ) {
+				continue;
+			}
+			$type = $layer['type'] ?? 'image';
+			if ( 'image' !== $type && 'clipart' !== $type ) {
+				continue;
+			}
+			$art_id = 0;
+			if ( ! empty( $layer['attachment_id'] ) ) {
+				$art_id = (int) $layer['attachment_id'];
+			} elseif ( ! empty( $layer['clipart_id'] ) && class_exists( 'SC_Clipart' ) ) {
+				$cid = (int) $layer['clipart_id'];
+				$art_id = (int) get_post_meta( $cid, '_sc_clipart_attachment', true );
+				if ( ! $art_id ) {
+					$art_id = (int) get_post_thumbnail_id( $cid );
+				}
+			}
+			if ( ! $art_id || $art_id === (int) $skip_art_id ) {
+				// Primary upload already drawn; skip duplicate. Library-only without id skipped if no file.
+				if ( empty( $layer['clipart_id'] ) && empty( $layer['attachment_id'] ) ) {
+					continue;
+				}
+				if ( ! $art_id ) {
+					continue;
+				}
+				if ( $art_id === (int) $skip_art_id ) {
+					continue;
+				}
+			}
+			$path = get_attached_file( $art_id );
+			if ( ! $path || ! file_exists( $path ) ) {
+				continue;
+			}
+			$art = $this->gd_load( $path );
+			if ( ! $art ) {
+				continue;
+			}
+			$pl = array();
+			if ( ! empty( $layer['placements'][ $view_id ] ) ) {
+				$pl = $layer['placements'][ $view_id ];
+			} elseif ( ! empty( $layer['placementByView'][ $view_id ] ) ) {
+				$pl = $layer['placementByView'][ $view_id ];
+			} else {
+				$pl = array( 'x' => 50, 'y' => 50, 'scale' => 1 );
+			}
+			$scale = isset( $pl['scale'] ) ? max( 0.1, min( 3.0, (float) $pl['scale'] ) ) : 1.0;
+			$art_w = $aw * 0.5 * $scale;
+			$art_h = $art_w * ( imagesy( $art ) / max( 1, imagesx( $art ) ) );
+			$px = $ax + ( ( (float) ( $pl['x'] ?? 50 ) ) / 100 ) * $aw - $art_w / 2;
+			$py = $ay + ( ( (float) ( $pl['y'] ?? 50 ) ) / 100 ) * $ah - $art_h / 2;
+			$art_resized = imagecreatetruecolor( max( 1, (int) $art_w ), max( 1, (int) $art_h ) );
+			imagealphablending( $art_resized, false );
+			imagesavealpha( $art_resized, true );
+			$transparent = imagecolorallocatealpha( $art_resized, 0, 0, 0, 127 );
+			imagefilledrectangle( $art_resized, 0, 0, (int) $art_w, (int) $art_h, $transparent );
+			imagealphablending( $art_resized, true );
+			imagecopyresampled( $art_resized, $art, 0, 0, 0, 0, (int) $art_w, (int) $art_h, imagesx( $art ), imagesy( $art ) );
+			imagecopy( $base, $art_resized, (int) $px, (int) $py, 0, 0, (int) $art_w, (int) $art_h );
+			imagedestroy( $art_resized );
+			imagedestroy( $art );
+		}
 	}
 
 	/**
@@ -485,7 +696,18 @@ class SC_Print_Ready {
 		if ( ! empty( $values[ SC_Plugin::CART_ATTACHMENTS ]['artwork'] ) ) {
 			$art_id = (int) $values[ SC_Plugin::CART_ATTACHMENTS ]['artwork'];
 		}
-		if ( ! $art_id ) {
+		$layers = array();
+		if ( ! empty( $values[ SC_Plugin::CART_LAYERS ] ) && is_array( $values[ SC_Plugin::CART_LAYERS ] ) ) {
+			$layers = $values[ SC_Plugin::CART_LAYERS ];
+		}
+		$has_text = false;
+		foreach ( $layers as $L ) {
+			if ( is_array( $L ) && ( $L['type'] ?? '' ) === 'text' && ! empty( $L['content'] ) ) {
+				$has_text = true;
+				break;
+			}
+		}
+		if ( ! $art_id && ! $has_text && ! $layers ) {
 			return;
 		}
 
@@ -503,16 +725,121 @@ class SC_Print_Ready {
 		}
 
 		foreach ( $placements as $vid => $pl ) {
-			$att = $this->generate_composite( $product_id, $pl, $art_id, is_string( $vid ) ? $vid : ( $pl['view_id'] ?? '' ) );
+			$vid_s = is_string( $vid ) ? $vid : ( $pl['view_id'] ?? '' );
+			if ( $art_id ) {
+				$att = $this->generate_composite( $product_id, $pl, $art_id, $vid_s, $layers );
+			} else {
+				$att = $this->generate_composite_layers_only( $product_id, $pl, $vid_s, $layers );
+			}
 			if ( ! is_wp_error( $att ) && $att ) {
-				$files[ is_string( $vid ) ? $vid : 'view' ] = $att;
+				$files[ $vid_s ? $vid_s : 'view' ] = $att;
 			}
 		}
 
 		if ( $files ) {
 			$item->add_meta_data( self::META_PRINT_FILES, $files, true );
-			$item->add_meta_data( '_sc_artwork_id', $art_id, true );
+			if ( $art_id ) {
+				$item->add_meta_data( '_sc_artwork_id', $art_id, true );
+			}
 		}
+	}
+
+	/**
+	 * Composite when there is no primary artwork attachment (text/clipart only).
+	 *
+	 * @param int    $product_id Product.
+	 * @param array  $placement Placement.
+	 * @param string $view_id View.
+	 * @param array  $layers Layers.
+	 * @return int|\WP_Error
+	 */
+	public function generate_composite_layers_only( $product_id, $placement, $view_id, $layers ) {
+		$config = SC_Customizer::get_config( $product_id );
+		$views  = (array) ( $config['views'] ?? array() );
+		$areas  = (array) ( $config['areas'] ?? array() );
+		$view = null;
+		foreach ( $views as $v ) {
+			if ( ( $v['id'] ?? '' ) === $view_id || ( ! $view_id && $view === null ) ) {
+				$view = $v;
+				if ( $view_id ) {
+					break;
+				}
+			}
+		}
+		if ( ! $view && $views ) {
+			$view = $views[0];
+			$view_id = $view['id'] ?? '';
+		}
+		if ( ! $view || empty( $view['image_id'] ) ) {
+			return new WP_Error( 'sc_no_view', __( 'No base view image configured.', 'storecanvas' ) );
+		}
+		$area = null;
+		foreach ( $areas as $a ) {
+			if ( ( $a['view_id'] ?? '' ) === $view_id ) {
+				$area = $a;
+				break;
+			}
+		}
+		if ( ! $area && $areas ) {
+			$area = $areas[0];
+		}
+		if ( ! $area ) {
+			return new WP_Error( 'sc_no_area', __( 'No print area configured.', 'storecanvas' ) );
+		}
+		$base_path = get_attached_file( (int) $view['image_id'] );
+		if ( ! $base_path || ! file_exists( $base_path ) ) {
+			return new WP_Error( 'sc_missing_files', __( 'Base file missing.', 'storecanvas' ) );
+		}
+		if ( ! function_exists( 'imagecreatefrompng' ) ) {
+			return new WP_Error( 'sc_no_gd', __( 'PHP GD is required to generate print files.', 'storecanvas' ) );
+		}
+		$base = $this->gd_load( $base_path );
+		if ( ! $base ) {
+			return new WP_Error( 'sc_gd_load', __( 'Could not load base image.', 'storecanvas' ) );
+		}
+		$bw = imagesx( $base );
+		$bh = imagesy( $base );
+		$target_long = 3000;
+		$long = max( $bw, $bh );
+		if ( $long < $target_long ) {
+			$factor = $target_long / $long;
+			$nw = (int) round( $bw * $factor );
+			$nh = (int) round( $bh * $factor );
+			$scaled = imagecreatetruecolor( $nw, $nh );
+			imagealphablending( $scaled, false );
+			imagesavealpha( $scaled, true );
+			imagecopyresampled( $scaled, $base, 0, 0, 0, 0, $nw, $nh, $bw, $bh );
+			imagedestroy( $base );
+			$base = $scaled;
+			$bw = $nw;
+			$bh = $nh;
+		}
+		imagealphablending( $base, true );
+		imagesavealpha( $base, true );
+		$this->gd_draw_image_layers( $base, $layers, $view_id, $area, $bw, $bh, 0 );
+		$this->gd_draw_text_layers( $base, $layers, $view_id, $area, $bw, $bh );
+		$upload = wp_upload_dir();
+		$fname  = 'sc-print-' . $product_id . '-' . sanitize_file_name( $view_id ) . '-' . wp_generate_password( 6, false ) . '.png';
+		$out    = trailingslashit( $upload['path'] ) . $fname;
+		imagepng( $base, $out, 6 );
+		imagedestroy( $base );
+		if ( ! file_exists( $out ) ) {
+			return new WP_Error( 'sc_write', __( 'Could not write print file.', 'storecanvas' ) );
+		}
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+		$attachment = array(
+			'post_mime_type' => 'image/png',
+			'post_title'     => sprintf( 'StoreCanvas print – product %d – %s', $product_id, $view_id ),
+			'post_content'   => '',
+			'post_status'    => 'inherit',
+		);
+		$att_id = wp_insert_attachment( $attachment, $out );
+		if ( is_wp_error( $att_id ) ) {
+			return $att_id;
+		}
+		$meta = wp_generate_attachment_metadata( $att_id, $out );
+		wp_update_attachment_metadata( $att_id, $meta );
+		return (int) $att_id;
 	}
 
 	/**
