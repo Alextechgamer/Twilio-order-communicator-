@@ -711,6 +711,17 @@ class SC_Print_Ready {
 			return;
 		}
 
+		if ( ! function_exists( 'imagecreatefrompng' ) ) {
+			if ( $order instanceof WC_Order ) {
+				$order->add_order_note(
+					__( 'StoreCanvas: print composites skipped (PHP GD not available).', 'storecanvas' ),
+					false,
+					true
+				);
+			}
+			return;
+		}
+
 		$product_id = $item->get_product_id();
 		$placement  = isset( $values[ SC_Plugin::CART_PLACEMENT ] ) ? $values[ SC_Plugin::CART_PLACEMENT ] : array();
 		$files      = array();

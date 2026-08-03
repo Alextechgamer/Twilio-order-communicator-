@@ -5,6 +5,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Saved designs — logged-in CPT + guest token/transient (0.7.0).
+ *
+ * AJAX: sc_save_design / sc_load_design / sc_email_design_link are nopriv + nonce
+ * (guest path). sc_list_designs is logged-in only.
  */
 class SC_Designs {
 
