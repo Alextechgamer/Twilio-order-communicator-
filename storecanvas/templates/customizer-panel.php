@@ -1,6 +1,6 @@
 <?php
 /**
- * Front-end customizer panel (0.3.0).
+ * Front-end customizer panel (0.5.0).
  *
  * @var WC_Product $product
  * @var array      $views
@@ -28,12 +28,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<div class="sc-customizer-stage">
 		<canvas id="sc-canvas" width="600" height="600" style="max-width:100%;border:1px solid #ddd;background:#fafafa;touch-action:none;"></canvas>
 	</div>
+	<p class="sc-legend description">
+		<span style="color:#0078ff;">■</span> <?php esc_html_e( 'Print area', 'storecanvas' ); ?>
+		&nbsp; <span style="color:#00b450;">■</span> <?php esc_html_e( 'Safe margin', 'storecanvas' ); ?>
+	</p>
 	<p>
-		<input type="file" id="sc-upload" name="sc_artwork" accept="image/png,image/jpeg,image/svg+xml" />
+		<input type="file" id="sc-upload" name="sc_artwork" accept="image/png,image/jpeg,image/svg+xml,image/webp" />
+		<button type="button" class="button" id="sc-add-layer"><?php esc_html_e( 'Add layer', 'storecanvas' ); ?></button>
+		<button type="button" class="button" id="sc-rotate-left" title="Rotate -15°">⟲</button>
+		<button type="button" class="button" id="sc-rotate-right" title="Rotate +15°">⟳</button>
 		<button type="button" class="button" id="sc-reset"><?php esc_html_e( 'Reset', 'storecanvas' ); ?></button>
 	</p>
+	<div id="sc-layers-list" class="sc-layers-list"></div>
 	<input type="hidden" name="sc_placement" id="sc_placement" value="" />
+	<input type="hidden" name="sc_layers_json" id="sc_layers_json" value="" />
 	<p class="description">
-		<?php esc_html_e( 'Upload artwork, drag inside the blue print area, use corner handles or scroll wheel to resize. Switch views to place art on each side.', 'storecanvas' ); ?>
+		<?php esc_html_e( 'Upload artwork, drag inside the blue area (stay in the green safe margin when possible). Corner handles resize; blue handle rotates. Add layer for multi-logo designs. Switch views for front/back.', 'storecanvas' ); ?>
 	</p>
 </div>
