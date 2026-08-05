@@ -26,11 +26,10 @@ class OB_Catalog {
 	}
 
 	public function bulk_actions( $actions ) {
-		$actions['ob_price_pct_up']   = __( 'Orderbay: price +10%', 'orderbay' );
-		$actions['ob_price_pct_down'] = __( 'Orderbay: price −10%', 'orderbay' );
-		$actions['ob_price_fixed']    = __( 'Orderbay: set regular price…', 'orderbay' );
-		$actions['ob_set_stock']      = __( 'Orderbay: set stock qty…', 'orderbay' );
-		$actions['ob_assign_cat']     = __( 'Orderbay: assign category…', 'orderbay' );
+		$actions['ob_price_pct']    = __( 'Orderbay: adjust price by %…', 'orderbay' );
+		$actions['ob_price_fixed']  = __( 'Orderbay: set regular price…', 'orderbay' );
+		$actions['ob_set_stock']    = __( 'Orderbay: set stock qty…', 'orderbay' );
+		$actions['ob_assign_cat']   = __( 'Orderbay: assign category…', 'orderbay' );
 		return $actions;
 	}
 
@@ -42,11 +41,12 @@ class OB_Catalog {
 		$count    = 0;
 
 		switch ( $action ) {
-			case 'ob_price_pct_up':
-				$count = $this->adjust_prices( $post_ids, 10 );
-				break;
-			case 'ob_price_pct_down':
-				$count = $this->adjust_prices( $post_ids, -10 );
+			case 'ob_price_pct':
+				$pct = isset( $_REQUEST['ob_price_pct'] ) ? (float) wp_unslash( $_REQUEST['ob_price_pct'] ) : 0; // phpcs:ignore
+				if ( 0.0 === $pct ) {
+					return add_query_arg( 'ob_cat_msg', rawurlencode( __( 'Percent was 0 — no products changed.', 'orderbay' ) ), $redirect );
+				}
+				$count = $this->adjust_prices( $post_ids, $pct );
 				break;
 			case 'ob_price_fixed':
 				$price = isset( $_REQUEST['ob_fixed_price'] ) ? wc_format_decimal( wp_unslash( $_REQUEST['ob_fixed_price'] ) ) : ''; // phpcs:ignore
@@ -158,12 +158,28 @@ class OB_Catalog {
 	 * @return int|\WP_Error
 	 */
 	public function duplicate_product( $product ) {
-		$cls = get_class( $product );
-		if ( ! class_exists( $cls ) ) {
+		$type = $product->get_type();
+		// Prefer simple/variable/external/grouped via WC factory; fall back to simple.
+		$clone = null;
+		if ( function_exists( 'wc_get_product_object' ) ) {
+			try {
+				$clone = wc_get_product_object( $type );
+			} catch ( Exception $e ) {
+				$clone = null;
+			}
+		}
+		if ( ! $clone ) {
 			$cls = 'WC_Product_Simple';
+			if ( class_exists( get_class( $product ) ) && is_subclass_of( get_class( $product ), 'WC_Product' ) ) {
+				$cls = get_class( $product );
+			}
+			try {
+				$clone = new $cls();
+			} catch ( Exception $e ) {
+				return new WP_Error( 'ob_dup_type', __( 'Unsupported product type for duplicate.', 'orderbay' ) );
+			}
 		}
 		/** @var WC_Product $clone */
-		$clone = new $cls();
 		$clone->set_name( $product->get_name() . ' ' . __( '(Copy)', 'orderbay' ) );
 		$clone->set_status( 'draft' );
 		$clone->set_catalog_visibility( $product->get_catalog_visibility() );
@@ -206,9 +222,9 @@ class OB_Catalog {
 	}
 
 	public function bulk_notices() {
-		if ( ! empty( $_GET['ob_cat_done'] ) ) { // phpcs:ignore
+		if ( isset( $_GET['ob_cat_done'] ) ) { // phpcs:ignore
 			$n = absint( $_GET['ob_cat_done'] ); // phpcs:ignore
-			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( sprintf( __( 'Orderbay updated %d product(s).', 'orderbay' ), $n ) ) . '</p></div>';
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( sprintf( __( 'Orderbay: applied bulk change to %d product(s).', 'orderbay' ), $n ) ) . '</p></div>';
 		}
 		if ( ! empty( $_GET['ob_cat_msg'] ) ) { // phpcs:ignore
 			echo '<div class="notice notice-warning is-dismissible"><p>' . esc_html( sanitize_text_field( wp_unslash( $_GET['ob_cat_msg'] ) ) ) . '</p></div>'; // phpcs:ignore

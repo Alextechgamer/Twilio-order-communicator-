@@ -1,33 +1,40 @@
-# Orderbay 0.1.0
+# Orderbay 0.2.0
 
-Self-hosted **WooCommerce ops toolkit** — documents, order operations, email rules, catalog helpers, and an ops dashboard.
+Self-hosted **WooCommerce ops toolkit** — documents, order operations, email rules, catalog helpers, dashboard.
 
-Independent of:
+Independent of Twilio Order Communicator (SMS/voice) and StoreCanvas (personalization). Soft SC dependency only for dashboard “custom art” count.
 
-- **Twilio Order Communicator** (SMS/voice)
-- **StoreCanvas** (product personalization) — soft dependency only for dashboard “custom art” count
+## What’s new in 0.2.0
+
+- **Bulk print** invoices / packing slips (page-break HTML; browser → PDF)
+- **Paper size** Letter/A4 CSS; polished templates (logo, totals, notes)
+- **Email rules UI** — add/edit/delete, merge tags, once-per-rule meta guard
+- **Low stock** daily throttle per product
+- **Order ops** — attention badge, bulk add tag
+- **Catalog** — percent or fixed bulk price with result count; safer duplicate
+- **Dashboard** — getting-started blurb when unconfigured
 
 ## Modules
 
 | | Module | Capability |
 |---|--------|------------|
-| A | Documents | Invoice + packing slip HTML print sheets; logo/from/footer settings |
-| B | Order ops | Tags, needs attention, list columns/filters, bulk status/notes/attention |
-| C | Notifications | Status → email rules (wp_mail); low-stock threshold alerts |
-| D | Catalog | Bulk price/stock/category; duplicate product (skips StoreCanvas meta) |
-| E | Dashboard | Today / processing / attention counts; optional SC art count |
+| A | Documents | HTML print sheets; bulk print; Open PDF print view |
+| B | Order ops | Tags, attention, bulk status/notes/tags |
+| C | Notifications | Status email rules + low stock (`wp_mail`) |
+| D | Catalog | Bulk price/stock/category; duplicate product |
+| E | Dashboard | Counts + links; optional SC art count |
 
-## Requirements
+## PDF path
 
-WordPress 6.0+, WooCommerce 7.0+, PHP 7.4+.
+No Dompdf/TCPDF. Primary path: **Open print view → browser Print → Save as PDF**.
 
 ## Install
 
-Copy `orderbay/` → `wp-content/plugins/orderbay/` and activate.
+`orderbay/` → `wp-content/plugins/orderbay/` → activate.
 
 ## Uninstall
 
-Removes `ob_*` options and low-stock transients only. Order/product meta is kept.
+Removes `ob_*` options + low-stock transients. Keeps order/product meta.
 
 ## License
 
