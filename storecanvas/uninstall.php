@@ -9,6 +9,7 @@
  *
  * Removes:
  * - Plugin options (sc_proof_email_*, sc_journey_enabled)
+ * - Does not remove order meta (_sc_printed_at, sc_preview_id, etc.) or media
  * - Guest design transients (sc_gdesign_*)
  * - Optional journey debug table (plugin-owned; not shop orders)
  *

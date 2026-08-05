@@ -3,7 +3,7 @@
  * Plugin Name:       StoreCanvas
  * Plugin URI:        https://github.com/Alextechgamer/Twilio-order-communicator-
  * Description:       Self-hosted WooCommerce personalization: product options, live mockup placement, print-ready exports, clip-art library, and guest design save.
- * Version:           1.0.0
+ * Version:           1.1.0
  * Author:            Alextechgamer
  * Author URI:        https://github.com/Alextechgamer
  * Requires at least: 6.0
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SC_VERSION', '1.0.0' );
+define( 'SC_VERSION', '1.1.0' );
 define( 'SC_PLUGIN_FILE', __FILE__ );
 define( 'SC_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -39,6 +39,7 @@ require_once SC_PLUGIN_DIR . 'includes/class-sc-proof-email.php';
 require_once SC_PLUGIN_DIR . 'includes/class-sc-clipart.php';
 require_once SC_PLUGIN_DIR . 'includes/class-sc-orders-list.php';
 require_once SC_PLUGIN_DIR . 'includes/class-sc-blocks.php';
+require_once SC_PLUGIN_DIR . 'includes/class-sc-queue.php';
 
 /**
  * Bootstrap when WooCommerce is available.
@@ -63,6 +64,7 @@ function sc_init() {
 	if ( is_admin() ) {
 		SC_Admin_Product::instance();
 		SC_Orders_List::instance();
+		SC_Queue::instance();
 		add_action( 'admin_notices', 'sc_gd_missing_notice' );
 	}
 }

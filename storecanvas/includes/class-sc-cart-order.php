@@ -294,11 +294,24 @@ class SC_Cart_Order {
 		$placement = $item->get_meta( SC_Plugin::CART_PLACEMENT );
 		$layers    = $item->get_meta( SC_Plugin::CART_LAYERS );
 		$extra     = $item->get_meta( 'sc_price_extra' );
-		if ( ! $options && ! $placement && ! $layers && ! $extra ) {
+		$preview   = (int) $item->get_meta( 'sc_preview_id' );
+		if ( ! $preview ) {
+			$prints = $item->get_meta( SC_Print_Ready::META_PRINT_FILES );
+			if ( is_array( $prints ) && $prints ) {
+				$preview = (int) reset( $prints );
+			}
+		}
+		if ( ! $options && ! $placement && ! $layers && ! $extra && ! $preview ) {
 			return;
 		}
 		echo '<div class="sc-order-item-meta" style="margin-top:8px;padding:8px;background:#f6f7f7;border:1px solid #c3c4c7;">';
 		echo '<strong>' . esc_html__( 'StoreCanvas', 'storecanvas' ) . '</strong>';
+		if ( $preview ) {
+			$url = wp_get_attachment_image_url( $preview, 'thumbnail' );
+			if ( $url ) {
+				echo '<p style="margin:6px 0 0;"><img src="' . esc_url( $url ) . '" alt="" style="max-width:120px;height:auto;border:1px solid #ddd;" /></p>';
+			}
+		}
 		if ( is_array( $options ) ) {
 			echo '<ul style="margin:4px 0 0 1em;">';
 			foreach ( $options as $k => $v ) {

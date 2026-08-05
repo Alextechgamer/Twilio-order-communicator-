@@ -46,6 +46,12 @@ class SC_Admin_Product {
 		if ( ! is_array( $clipart_sel ) ) {
 			$clipart_sel = array();
 		}
+		$view_count  = count( (array) ( $customizer['views'] ?? array() ) );
+		$area_count  = count( (array) ( $customizer['areas'] ?? array() ) );
+		$field_count = count( (array) ( $options['fields'] ?? array() ) );
+		$enabled     = ! empty( $customizer['enabled'] );
+		$val_on      = isset( $validation['min_dpi'] );
+
 		$view_urls = array();
 		foreach ( (array) ( $customizer['views'] ?? array() ) as $v ) {
 			$iid = absint( $v['image_id'] ?? 0 );
@@ -62,8 +68,35 @@ class SC_Admin_Product {
 			<div class="options_group">
 				<p class="form-field">
 					<strong><?php esc_html_e( 'StoreCanvas', 'storecanvas' ); ?></strong>
-					<span class="description"> — <?php esc_html_e( 'Product options and live mockup. Version 0.7.0.', 'storecanvas' ); ?></span>
+					<span class="description"> — <?php esc_html_e( 'Product options and live mockup. Version 1.1.0.', 'storecanvas' ); ?></span>
 				</p>
+				<p class="form-field sc-status-line" style="padding-left:12px;">
+					<code><?php
+					echo esc_html(
+						sprintf(
+							/* translators: 1: field count 2: view count 3: area count 4: on/off */
+							__( 'Status: Options: %1$d fields · Views: %2$d · Areas: %3$d · Validation: %4$s', 'storecanvas' ),
+							(int) $field_count,
+							(int) $view_count,
+							(int) $area_count,
+							$val_on ? __( 'on', 'storecanvas' ) : __( 'off', 'storecanvas' )
+						)
+					);
+					?></code>
+				</p>
+				<?php if ( $enabled && ( $view_count < 1 || $area_count < 1 ) ) : ?>
+					<div class="notice notice-warning inline sc-empty-setup" style="margin:8px 12px;">
+						<p>
+							<strong><?php esc_html_e( 'Almost ready', 'storecanvas' ); ?></strong> —
+							<?php if ( $view_count < 1 ) : ?>
+								<?php esc_html_e( 'Add at least one view with a base image.', 'storecanvas' ); ?>
+							<?php endif; ?>
+							<?php if ( $area_count < 1 ) : ?>
+								<?php esc_html_e( 'Add a print area so customers can place artwork.', 'storecanvas' ); ?>
+							<?php endif; ?>
+						</p>
+					</div>
+				<?php endif; ?>
 			</div>
 
 			<div class="options_group sc-admin-section">

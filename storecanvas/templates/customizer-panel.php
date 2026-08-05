@@ -1,6 +1,6 @@
 <?php
 /**
- * Front-end customizer panel (0.7.0).
+ * Front-end customizer panel (1.1.0).
  *
  * @var WC_Product $product
  * @var array      $views
@@ -73,6 +73,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<option value="system-ui, -apple-system, sans-serif">System UI</option>
 				</select>
 			</label>
+		</p>
+		<p>
+			<label><?php esc_html_e( 'Stroke', 'storecanvas' ); ?>
+				<input type="color" id="sc-text-stroke-color" value="#000000" />
+			</label>
+			<label style="margin-left:8px;"><?php esc_html_e( 'Width', 'storecanvas' ); ?>
+				<input type="number" id="sc-text-stroke-width" min="0" max="20" step="0.5" value="0" style="width:60px;" />
+			</label>
+			<span class="description"><?php esc_html_e( '0 = no stroke', 'storecanvas' ); ?></span>
 		</p>
 	</div>
 	<div id="sc-layers-list" class="sc-layers-list"></div>

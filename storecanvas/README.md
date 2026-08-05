@@ -1,83 +1,79 @@
-# StoreCanvas 1.0.0
+# StoreCanvas 1.1.0
 
-Self-hosted WooCommerce **product personalization**: options with pricing, live mockup placement, print-ready composites, clip-art library, guest design save, live price updates, and admin print tools.
+Self-hosted WooCommerce **product personalization**: options with pricing, live mockup placement, print-ready composites, clip-art library, guest design save, live price updates, production queue, and admin print tools.
 
-## Features (1.0)
+## Features
 
 | Area | Capability |
 |------|------------|
 | Options | Select/radio/checkbox/text/… with flat, percent, qty, per-char pricing and `show_if` conditionals |
-| Live mockup | Multi-view canvas, constrain to print area, resize/rotate, multi-layer art + text layers |
-| Print-ready | DPI/bleed/RGB checks, GD composites per view, admin downloads, bulk ZIP, print sheet |
-| Library | Self-hosted clip-art CPT; product allow-list; front Library panel |
-| Designs | Logged-in CPT save; **guest** save via token/cookie (14 days) + email link |
-| Live price | Client-side total updates from option extras (no reload) |
-| Blocks | HPOS + cart/checkout blocks compatibility; shortcodes for block themes |
-| Orders admin | **SC Art** column + “Has StoreCanvas art” filter |
+| Live mockup | Multi-view canvas, multi-layer art + text (stroke optional), constrain/resize/rotate |
+| Design save | Guest token (14d) + logged-in CPT; **full rehydrate** from `src` / `attachment_id` |
+| Print-ready | DPI/bleed/RGB checks, GD composites, font mapping, scaled text, admin downloads, bulk ZIP |
+| Library | Self-hosted clip-art CPT; product allow-list |
+| Live price | Client-side total updates from option extras |
+| Blocks | HPOS + cart/checkout blocks; shortcodes `[storecanvas_options]` / `[storecanvas_customizer]` |
+| Orders | **SC Art** column + filter; **StoreCanvas Queue** (print workflow) |
+| Preview | `sc_preview_id` thumbnail on order items + queue |
 
 ## Requirements
 
-- WordPress **6.0+**
-- WooCommerce **7.0+**
-- PHP **7.4+**
-- **PHP GD** (recommended FreeType for quality text) — without GD, options/mockup still work; composites skip with order notes / admin notice
+- WordPress **6.0+**, WooCommerce **7.0+**, PHP **7.4+**
+- **PHP GD** (+ FreeType recommended for quality text)
 
 ## Install
 
-1. Upload the `storecanvas/` folder to `wp-content/plugins/`
-2. Activate **StoreCanvas** under Plugins
-3. Edit a product → **StoreCanvas** tab: enable mockup, add views/areas/options
-4. Optional: WooCommerce → **StoreCanvas library** (clip-art), **SC Proof Email**, **SC Journey**
+1. Upload `storecanvas/` → `wp-content/plugins/`
+2. Activate **StoreCanvas**
+3. Product → **StoreCanvas** tab: enable mockup, add views/areas/options
+4. WooCommerce → **StoreCanvas Queue** for production
 
-### From release zip
+## Shortcodes
 
-Unzip so the path is `wp-content/plugins/storecanvas/storecanvas.php` (root folder must be `storecanvas/`).
-
-## Shortcodes (block themes)
-
-| Shortcode | Purpose |
-|-----------|---------|
-| `[storecanvas_options]` | Product option fields on single product |
-| `[storecanvas_customizer]` | Live mockup canvas when enabled for the product |
-
-Classic themes use `woocommerce_before_add_to_cart_button` automatically.
+- `[storecanvas_options]`
+- `[storecanvas_customizer]`
 
 ## Cart / order meta keys
 
-Defined on `SC_Plugin`:
+| Key | Meaning |
+|-----|---------|
+| `sc_options` | Option values |
+| `sc_placement` | Placement JSON |
+| `sc_layers` | Layer stack (image/text/clipart; include `src` / `attachment_id` for rehydrate) |
+| `sc_attachments` | Sideloaded artwork |
+| `sc_price_extra` | Unit extras |
+| `sc_print_files` | Composite attachment ids per view |
+| `sc_preview_id` | Small PNG preview attachment |
+| `_sc_artwork_id` | Original artwork |
+| `_sc_has_custom_art` | Order stamp |
+| `_sc_printed_at` | Marked printed (queue) |
 
-| Constant | Key | Meaning |
-|----------|-----|---------|
-| `CART_OPTIONS` | `sc_options` | Selected option values |
-| `CART_PLACEMENT` | `sc_placement` | Active placement JSON |
-| `CART_LAYERS` | `sc_layers` | Layer stack (image/text/clipart) |
-| `CART_ATTACHMENTS` | `sc_attachments` | Sideloaded artwork attachment ids |
-| — | `sc_price_extra` | Unit price extras from options |
-| — | `sc_print_files` | Composite attachment ids per view |
-| — | `_sc_artwork_id` | Original artwork attachment |
-| — | `_sc_has_custom_art` | Order-level stamp for admin filter |
+## Design payload (rehydrate)
 
-Product meta: `_sc_options`, `_sc_customizer`, `_sc_validation`, `_sc_clipart_ids`.
+Image/clipart layers should include:
 
-## AJAX (public / nopriv)
+```json
+{ "type": "image", "src": "https://…", "attachment_id": 123, "placements": { … } }
+```
 
-All use nonces. Nopriv is intentional for:
+Text layers:
 
-- `sc_library_items` / `sc_list_library` — product library thumbnails
-- `sc_save_design`, `sc_load_design`, `sc_email_design_link` — guest designs
-- `sc_journey_log` — optional front debug log (when enabled)
+```json
+{ "type": "text", "content": "…", "fontSize": 28, "fill": "#111", "fontFamily": "Arial…",
+  "strokeColor": "#000", "strokeWidth": 0, "placements": { … } }
+```
 
-Admin-only: print generate, bulk ZIP, print sheet, design list (logged-in), clipart save.
+## Fonts
+
+Bundled under `assets/fonts/`:
+
+- `sc-sans.ttf` — default sans
+- `sc-sans-bold.ttf` — bold/Impact mapping
+- `sc-serif.ttf` — Georgia/Times mapping
 
 ## Uninstall
 
-Deleting the plugin runs `uninstall.php`, which removes:
-
-- Options: `sc_proof_email_*`, `sc_journey_enabled`
-- Guest design transients (`sc_gdesign_*`)
-- Journey debug table `{prefix}sc_journey`
-
-**Does not** delete order/product meta, media attachments, or CPT posts (`sc_clipart`, `sc_design`). Library and saved designs remain as content.
+Removes options, guest design transients, journey table. Does **not** delete order/product meta, media, or CPT posts.
 
 ## License
 
