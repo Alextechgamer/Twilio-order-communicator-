@@ -332,6 +332,7 @@ class OB_Fulfillment {
 		$ids = array_filter( array_map( 'absint', explode( ',', $raw ) ) );
 		$by_sku = array();
 		$order_numbers = array();
+		$any_bin = false;
 		foreach ( $ids as $id ) {
 			$order = wc_get_order( $id );
 			if ( ! $order ) {
@@ -347,23 +348,53 @@ class OB_Fulfillment {
 				if ( '' === $sku ) {
 					$sku = 'NO-SKU-' . ( $product ? $product->get_id() : $item->get_id() );
 				}
+				$bin = '';
+				if ( $product ) {
+					$bin = (string) $product->get_meta( OB_Plugin::META_BIN );
+					if ( ! $bin ) {
+						$bin = (string) get_post_meta( $product->get_id(), OB_Plugin::META_BIN, true );
+					}
+				}
+				if ( $bin ) {
+					$any_bin = true;
+				}
 				$name = $item->get_name();
 				$qty  = (int) $item->get_quantity();
-				if ( ! isset( $by_sku[ $sku ] ) ) {
-					$by_sku[ $sku ] = array(
+				$key  = $sku . '|' . $bin;
+				if ( ! isset( $by_sku[ $key ] ) ) {
+					$by_sku[ $key ] = array(
 						'sku'    => $sku,
+						'bin'    => $bin,
 						'name'   => $name,
 						'qty'    => 0,
 						'orders' => array(),
 					);
 				}
-				$by_sku[ $sku ]['qty'] += $qty;
-				$by_sku[ $sku ]['orders'][ $order->get_order_number() ] = true;
+				$by_sku[ $key ]['qty'] += $qty;
+				$by_sku[ $key ]['orders'][ $order->get_order_number() ] = true;
 			}
 		}
-		ksort( $by_sku, SORT_NATURAL | SORT_FLAG_CASE );
+		$lines = array_values( $by_sku );
+		if ( $any_bin ) {
+			usort(
+				$lines,
+				function ( $a, $b ) {
+					$c = strnatcasecmp( (string) ( $a['bin'] ?? '' ), (string) ( $b['bin'] ?? '' ) );
+					if ( 0 !== $c ) {
+						return $c;
+					}
+					return strnatcasecmp( (string) $a['sku'], (string) $b['sku'] );
+				}
+			);
+		} else {
+			usort(
+				$lines,
+				function ( $a, $b ) {
+					return strnatcasecmp( (string) $a['sku'], (string) $b['sku'] );
+				}
+			);
+		}
 		$settings = OB_Plugin::get_doc_settings();
-		$lines    = array_values( $by_sku );
 		include OB_PLUGIN_DIR . 'templates/pick-list.php';
 		exit;
 	}

@@ -23,6 +23,8 @@ class OB_Catalog {
 		add_filter( 'post_row_actions', array( $this, 'row_actions' ), 20, 2 );
 		add_action( 'admin_post_ob_duplicate_product', array( $this, 'handle_duplicate' ) );
 		add_action( 'admin_notices', array( $this, 'bulk_notices' ) );
+		add_action( 'woocommerce_product_options_inventory_product_data', array( $this, 'product_bin_field' ) );
+		add_action( 'woocommerce_process_product_meta', array( $this, 'save_product_bin' ) );
 	}
 
 	public function bulk_actions( $actions ) {
@@ -228,6 +230,38 @@ class OB_Catalog {
 		}
 		if ( ! empty( $_GET['ob_cat_msg'] ) ) { // phpcs:ignore
 			echo '<div class="notice notice-warning is-dismissible"><p>' . esc_html( sanitize_text_field( wp_unslash( $_GET['ob_cat_msg'] ) ) ) . '</p></div>'; // phpcs:ignore
+		}
+	}
+
+	/**
+	 * Product inventory: bin / location field.
+	 */
+	public function product_bin_field() {
+		woocommerce_wp_text_input(
+			array(
+				'id'          => 'ob_bin_location',
+				'label'       => __( 'Bin / location (Orderbay)', 'orderbay' ),
+				'desc_tip'    => true,
+				'description' => __( 'Shown on warehouse pick lists.', 'orderbay' ),
+				'value'       => get_post_meta( get_the_ID(), OB_Plugin::META_BIN, true ),
+			)
+		);
+	}
+
+	/**
+	 * @param int $product_id Product ID.
+	 */
+	public function save_product_bin( $product_id ) {
+		if ( ! current_user_can( 'edit_products' ) ) {
+			return;
+		}
+		if ( isset( $_POST['ob_bin_location'] ) ) { // phpcs:ignore
+			$bin = sanitize_text_field( wp_unslash( $_POST['ob_bin_location'] ) ); // phpcs:ignore
+			if ( $bin ) {
+				update_post_meta( $product_id, OB_Plugin::META_BIN, $bin );
+			} else {
+				delete_post_meta( $product_id, OB_Plugin::META_BIN );
+			}
 		}
 	}
 }

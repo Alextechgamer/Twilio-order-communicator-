@@ -27,12 +27,16 @@ class OB_RMA {
 		add_action( 'woocommerce_admin_order_data_after_order_details', array( $this, 'order_panel' ), 35 );
 		add_action( 'admin_post_ob_print_rma', array( $this, 'handle_print' ) );
 		add_action( 'admin_post_ob_issue_rma', array( $this, 'handle_issue' ) );
+		add_action( 'woocommerce_order_details_after_order_table', array( $this, 'customer_rma_form' ), 25 );
+		add_action( 'template_redirect', array( $this, 'handle_customer_request' ) );
 	}
 
 	public static function default_settings() {
 		return array(
-			'return_address'       => get_bloginfo( 'name' ) . "\n" . get_option( 'woocommerce_store_address', '' ),
-			'attention_on_request' => '0',
+			'return_address'         => get_bloginfo( 'name' ) . "\n" . get_option( 'woocommerce_store_address', '' ),
+			'attention_on_request'   => '0',
+			'customer_request'       => '0', // default off
+			'customer_statuses'      => array( 'completed', 'processing' ),
 		);
 	}
 
@@ -87,6 +91,17 @@ class OB_RMA {
 		}
 		$out['return_address']       = isset( $input['return_address'] ) ? sanitize_textarea_field( $input['return_address'] ) : '';
 		$out['attention_on_request'] = ! empty( $input['attention_on_request'] ) ? '1' : '0';
+		$out['customer_request']     = ! empty( $input['customer_request'] ) ? '1' : '0';
+		$statuses = array();
+		if ( ! empty( $input['customer_statuses'] ) && is_array( $input['customer_statuses'] ) ) {
+			foreach ( $input['customer_statuses'] as $st ) {
+				$st = str_replace( 'wc-', '', sanitize_key( $st ) );
+				if ( $st ) {
+					$statuses[] = $st;
+				}
+			}
+		}
+		$out['customer_statuses'] = $statuses ? array_values( array_unique( $statuses ) ) : array( 'completed', 'processing' );
 		return $out;
 	}
 
@@ -114,6 +129,17 @@ class OB_RMA {
 		echo '<input type="hidden" name="' . esc_attr( OB_Plugin::OPT_RMA ) . '[attention_on_request]" value="0" />';
 		echo '<label><input type="checkbox" name="' . esc_attr( OB_Plugin::OPT_RMA ) . '[attention_on_request]" value="1" ' . checked( $s['attention_on_request'], '1', false ) . ' /> ';
 		echo esc_html__( 'Set needs-attention when RMA status becomes requested', 'orderbay' ) . '</label></td></tr>';
+		echo '<tr><th>' . esc_html__( 'Customer RMA requests', 'orderbay' ) . '</th><td>';
+		echo '<input type="hidden" name="' . esc_attr( OB_Plugin::OPT_RMA ) . '[customer_request]" value="0" />';
+		echo '<label><input type="checkbox" name="' . esc_attr( OB_Plugin::OPT_RMA ) . '[customer_request]" value="1" ' . checked( $s['customer_request'], '1', false ) . ' /> ';
+		echo esc_html__( 'Allow logged-in customers to request RMA on My Account (default off)', 'orderbay' ) . '</label></td></tr>';
+		echo '<tr><th>' . esc_html__( 'Eligible order statuses', 'orderbay' ) . '</th><td><fieldset>';
+		$cs = is_array( $s['customer_statuses'] ?? null ) ? $s['customer_statuses'] : array( 'completed', 'processing' );
+		foreach ( wc_get_order_statuses() as $slug => $label ) {
+			$key = str_replace( 'wc-', '', $slug );
+			echo '<label style="display:inline-block;min-width:160px;margin:2px 8px 2px 0;"><input type="checkbox" name="' . esc_attr( OB_Plugin::OPT_RMA ) . '[customer_statuses][]" value="' . esc_attr( $key ) . '" ' . checked( in_array( $key, $cs, true ), true, false ) . ' /> ' . esc_html( $label ) . '</label>';
+		}
+		echo '</fieldset></td></tr>';
 		echo '</table>';
 		submit_button( __( 'Save RMA settings', 'orderbay' ) );
 		echo '</form></div>';
@@ -317,6 +343,125 @@ class OB_RMA {
 		$rma      = self::get_settings();
 		$orders   = array( $order );
 		include OB_PLUGIN_DIR . 'templates/rma-slip.php';
+		exit;
+	}
+
+	/**
+	 * My Account view-order: request RMA (logged-in owner only).
+	 *
+	 * @param WC_Order $order Order.
+	 */
+	public function customer_rma_form( $order ) {
+		if ( ! is_user_logged_in() || ! $order instanceof WC_Order ) {
+			return;
+		}
+		$cfg = self::get_settings();
+		if ( '1' !== (string) $cfg['customer_request'] ) {
+			return;
+		}
+		if ( ! class_exists( 'OB_Invoicing' ) || ! OB_Invoicing::customer_can_view_invoice( $order ) ) {
+			// Reuse ownership check (same rules as invoice).
+			return;
+		}
+
+		$status = $order->get_meta( OB_Plugin::META_RMA_STATUS );
+		$number = $order->get_meta( OB_Plugin::META_RMA_NUMBER );
+		$reason = $order->get_meta( OB_Plugin::META_RMA_REASON );
+
+		echo '<section class="ob-customer-rma" style="margin-top:24px;">';
+		echo '<h2>' . esc_html__( 'Return / RMA', 'orderbay' ) . '</h2>';
+
+		if ( $status && 'none' !== $status ) {
+			echo '<p><strong>' . esc_html__( 'Status', 'orderbay' ) . ':</strong> ' . esc_html( $status ) . '</p>';
+			if ( $number ) {
+				echo '<p><strong>' . esc_html__( 'RMA #', 'orderbay' ) . ':</strong> ' . esc_html( $number ) . '</p>';
+			}
+			if ( $reason ) {
+				echo '<p><strong>' . esc_html__( 'Reason', 'orderbay' ) . ':</strong> ' . esc_html( $reason ) . '</p>';
+			}
+			echo '<p class="description">' . esc_html__( 'Your return request is being reviewed. You cannot change the status here.', 'orderbay' ) . '</p>';
+			echo '</section>';
+			return;
+		}
+
+		$eligible = is_array( $cfg['customer_statuses'] ?? null ) ? $cfg['customer_statuses'] : array( 'completed', 'processing' );
+		if ( ! in_array( $order->get_status(), $eligible, true ) ) {
+			echo '<p class="description">' . esc_html__( 'Returns are not available for this order status.', 'orderbay' ) . '</p>';
+			echo '</section>';
+			return;
+		}
+
+		$action = add_query_arg(
+			array(
+				'ob_customer_rma' => 1,
+				'order_id'        => $order->get_id(),
+			),
+			wc_get_page_permalink( 'myaccount' ) ?: home_url( '/' )
+		);
+		echo '<form method="post" action="' . esc_url( $action ) . '">';
+		wp_nonce_field( 'ob_customer_rma_' . $order->get_id() );
+		echo '<p><label>' . esc_html__( 'Reason for return', 'orderbay' ) . '<br />';
+		echo '<textarea name="ob_rma_reason" rows="4" style="width:100%;max-width:480px;" required></textarea></label></p>';
+		echo '<p><button type="submit" class="button">' . esc_html__( 'Request return', 'orderbay' ) . '</button></p>';
+		echo '</form></section>';
+	}
+
+	/**
+	 * Process customer RMA request.
+	 */
+	public function handle_customer_request() {
+		if ( empty( $_GET['ob_customer_rma'] ) && empty( $_POST['ob_customer_rma'] ) && empty( $_REQUEST['ob_customer_rma'] ) ) { // phpcs:ignore
+			// Form posts to URL with query arg; check REQUEST.
+			if ( empty( $_REQUEST['ob_customer_rma'] ) ) { // phpcs:ignore
+				return;
+			}
+		}
+		if ( empty( $_REQUEST['ob_customer_rma'] ) ) { // phpcs:ignore
+			return;
+		}
+		if ( ! is_user_logged_in() ) {
+			auth_redirect();
+			exit;
+		}
+		$cfg = self::get_settings();
+		if ( '1' !== (string) $cfg['customer_request'] ) {
+			wp_die( esc_html__( 'Customer RMA requests are disabled.', 'orderbay' ), 403 );
+		}
+		$order_id = isset( $_REQUEST['order_id'] ) ? absint( $_REQUEST['order_id'] ) : 0; // phpcs:ignore
+		if ( ! $order_id || ! wp_verify_nonce( isset( $_REQUEST['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['_wpnonce'] ) ) : '', 'ob_customer_rma_' . $order_id ) ) { // phpcs:ignore
+			wp_die( esc_html__( 'Invalid RMA request.', 'orderbay' ), 403 );
+		}
+		$order = wc_get_order( $order_id );
+		if ( ! $order || ! class_exists( 'OB_Invoicing' ) || ! OB_Invoicing::customer_can_view_invoice( $order ) ) {
+			wp_die( esc_html__( 'You cannot request a return for this order.', 'orderbay' ), 403 );
+		}
+		// Already requested?
+		$existing = $order->get_meta( OB_Plugin::META_RMA_STATUS );
+		if ( $existing && 'none' !== $existing ) {
+			wp_safe_redirect( $order->get_view_order_url() );
+			exit;
+		}
+		$eligible = is_array( $cfg['customer_statuses'] ?? null ) ? $cfg['customer_statuses'] : array( 'completed', 'processing' );
+		if ( ! in_array( $order->get_status(), $eligible, true ) ) {
+			wp_die( esc_html__( 'Returns are not available for this order status.', 'orderbay' ), 403 );
+		}
+		$reason = isset( $_POST['ob_rma_reason'] ) ? sanitize_textarea_field( wp_unslash( $_POST['ob_rma_reason'] ) ) : ''; // phpcs:ignore
+		if ( ! $reason ) {
+			wp_die( esc_html__( 'Please provide a reason.', 'orderbay' ), 400 );
+		}
+		$order->update_meta_data( OB_Plugin::META_RMA_STATUS, 'requested' );
+		$order->update_meta_data( OB_Plugin::META_RMA_REASON, $reason );
+		$order->save();
+		self::ensure_rma_number( $order );
+		if ( '1' === (string) $cfg['attention_on_request'] && ! $order->get_meta( OB_Plugin::META_ATTENTION ) ) {
+			$order->update_meta_data( OB_Plugin::META_ATTENTION, '1' );
+			$order->add_order_note( __( 'Orderbay: needs attention (customer RMA request).', 'orderbay' ), false, true );
+			$order->save();
+		} else {
+			$order->add_order_note( __( 'Orderbay: customer submitted RMA request.', 'orderbay' ), false, true );
+			$order->save();
+		}
+		wp_safe_redirect( add_query_arg( 'ob_rma_submitted', '1', $order->get_view_order_url() ) );
 		exit;
 	}
 }

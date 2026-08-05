@@ -47,6 +47,10 @@ $paper = ( isset( $settings['paper'] ) && 'a4' === $settings['paper'] ) ? 'A4' :
 			<?php echo esc_html( sprintf( __( 'Order #%s', 'orderbay' ), $order->get_order_number() ) ); ?>
 			<?php if ( $status && 'none' !== $status ) : ?> · <?php echo esc_html( $status ); ?><?php endif; ?>
 			· <?php echo esc_html( $order->get_date_created() ? $order->get_date_created()->date_i18n( get_option( 'date_format' ) ) : '' ); ?>
+		<?php if ( class_exists( 'OB_Barcode' ) && OB_Barcode::enabled() ) : ?>
+			<?php OB_Barcode::render( $order->get_order_number() ); ?>
+		<?php endif; ?>
+
 		</div>
 		<div class="box"><strong><?php esc_html_e( 'Ship return to', 'orderbay' ); ?></strong><br /><?php echo esc_html( $rma['return_address'] ?? '' ); ?></div>
 		<?php if ( $reason ) : ?>

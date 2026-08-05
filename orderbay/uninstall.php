@@ -2,7 +2,7 @@
 /**
  * Orderbay uninstall — options only.
  *
- * Keeps order meta (invoice/credit/tracking/RMA/attention/tags).
+ * Keeps order/product meta (invoice/credit/tracking/RMA/bins/fulfillment/attention/tags).
  *
  * @package Orderbay
  */
