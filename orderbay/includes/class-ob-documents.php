@@ -55,6 +55,8 @@ class OB_Documents {
 		$out['footer_text'] = isset( $input['footer_text'] ) ? sanitize_textarea_field( $input['footer_text'] ) : '';
 		$paper              = isset( $input['paper'] ) ? sanitize_key( $input['paper'] ) : 'letter';
 		$out['paper']       = in_array( $paper, array( 'letter', 'a4' ), true ) ? $paper : 'letter';
+		$out['tax_id']      = isset( $input['tax_id'] ) ? sanitize_text_field( $input['tax_id'] ) : '';
+		$out['show_thumbs'] = ! empty( $input['show_thumbs'] ) ? '1' : '0';
 		return $out;
 	}
 
@@ -85,9 +87,16 @@ class OB_Documents {
 		echo '<option value="a4"' . selected( $s['paper'] ?? 'letter', 'a4', false ) . '>A4</option>';
 		echo '</select>';
 		echo '<p class="description">' . esc_html__( 'Applied via @page CSS in the print view. Use browser Print → Save as PDF for a PDF file.', 'orderbay' ) . '</p></td></tr>';
+		echo '<tr><th><label for="ob_tax_id">' . esc_html__( 'Company VAT / Tax ID', 'orderbay' ) . '</label></th><td>';
+		echo '<input type="text" id="ob_tax_id" class="regular-text" name="' . esc_attr( OB_Plugin::OPT_DOCS ) . '[tax_id]" value="' . esc_attr( $s['tax_id'] ?? '' ) . '" />';
+		echo '<p class="description">' . esc_html__( 'Printed on invoice header when set.', 'orderbay' ) . '</p></td></tr>';
+		echo '<tr><th>' . esc_html__( 'Packing slip thumbnails', 'orderbay' ) . '</th><td>';
+		echo '<input type="hidden" name="' . esc_attr( OB_Plugin::OPT_DOCS ) . '[show_thumbs]" value="0" />';
+		echo '<label><input type="checkbox" name="' . esc_attr( OB_Plugin::OPT_DOCS ) . '[show_thumbs]" value="1" ' . checked( ( $s['show_thumbs'] ?? '0' ), '1', false ) . ' /> ';
+		echo esc_html__( 'Show product image column (default off)', 'orderbay' ) . '</label></td></tr>';
 		echo '</table>';
 
-		echo '<tr><th><label for="ob_inv_prefix">' . esc_html__( 'Invoice number prefix', 'orderbay' ) . '</label></th><td>';
+		echo '<table class="form-table"><tr><th><label for="ob_inv_prefix">' . esc_html__( 'Invoice number prefix', 'orderbay' ) . '</label></th><td>';
 		echo '<input type="text" id="ob_inv_prefix" name="ob_invoice_prefix" value="' . esc_attr( get_option( OB_Plugin::OPT_INVOICE_PREFIX, 'INV-' ) ) . '" />';
 		echo '<p class="description">' . esc_html__( 'Default INV-. Existing order invoice numbers are never renumbered.', 'orderbay' ) . '</p></td></tr>';
 		echo '<tr><th><label for="ob_inv_next">' . esc_html__( 'Next invoice sequence', 'orderbay' ) . '</label></th><td>';
@@ -97,8 +106,9 @@ class OB_Documents {
 		echo '<input type="text" id="ob_cn_prefix" name="ob_credit_prefix" value="' . esc_attr( get_option( OB_Plugin::OPT_CREDIT_PREFIX, 'CN-' ) ) . '" /></td></tr>';
 		echo '<tr><th><label for="ob_cn_next">' . esc_html__( 'Next credit note sequence', 'orderbay' ) . '</label></th><td>';
 		echo '<input type="number" min="1" id="ob_cn_next" name="ob_credit_next" value="' . esc_attr( (string) max( 1, (int) get_option( OB_Plugin::OPT_CREDIT_NEXT, 1 ) ) ) . '" /></td></tr>';
+		echo '</table>';
 
-				submit_button( __( 'Save document settings', 'orderbay' ) );
+		submit_button( __( 'Save document settings', 'orderbay' ) );
 		echo '</form></div>';
 	}
 

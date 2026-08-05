@@ -18,6 +18,11 @@ class OB_Plugin {
 	const OPT_CREDIT_NEXT     = 'ob_credit_next';
 	const OPT_TRACKING_EMAIL  = 'ob_tracking_email_settings';
 	const OPT_AUTO_ATTENTION  = 'ob_auto_attention_statuses';
+	const OPT_RMA             = 'ob_rma_settings';
+	const OPT_RMA_PREFIX      = 'ob_rma_prefix';
+	const OPT_RMA_NEXT        = 'ob_rma_next';
+	const OPT_SLA             = 'ob_sla_settings';
+	const OPT_NOTE_TEMPLATES  = 'ob_note_templates';
 
 	const META_ATTENTION      = '_ob_needs_attention';
 	const META_TAGS           = '_ob_order_tags';
@@ -26,6 +31,10 @@ class OB_Plugin {
 	const META_TRACKING       = '_ob_tracking_number';
 	const META_TRACKING_URL   = '_ob_tracking_url';
 	const META_TRACKING_EMAIL = '_ob_tracking_emailed_at';
+	const META_RMA_STATUS     = '_ob_rma_status';
+	const META_RMA_NUMBER     = '_ob_rma_number';
+	const META_RMA_REASON     = '_ob_rma_reason';
+	const META_SLA_AGED       = '_ob_sla_aged_at';
 	const TAX_ORDER_TAG       = 'ob_order_tag';
 
 	private static $instance = null;
@@ -58,6 +67,8 @@ class OB_Plugin {
 			'from_lines'  => get_bloginfo( 'name' ) . "\n" . get_option( 'woocommerce_store_address', '' ),
 			'footer_text' => __( 'Thank you for your order.', 'orderbay' ),
 			'paper'       => 'letter',
+			'tax_id'      => '',
+			'show_thumbs' => '0',
 		);
 	}
 
@@ -105,6 +116,30 @@ class OB_Plugin {
 			'manage_woocommerce',
 			'orderbay-fulfillment',
 			array( 'OB_Fulfillment', 'render_settings_static' )
+		);
+		add_submenu_page(
+			'orderbay',
+			__( 'Returns / RMA', 'orderbay' ),
+			__( 'Returns / RMA', 'orderbay' ),
+			'manage_woocommerce',
+			'orderbay-rma',
+			array( 'OB_RMA', 'render_settings_static' )
+		);
+		add_submenu_page(
+			'orderbay',
+			__( 'SLA aging', 'orderbay' ),
+			__( 'SLA aging', 'orderbay' ),
+			'manage_woocommerce',
+			'orderbay-sla',
+			array( 'OB_SLA', 'render_settings_static' )
+		);
+		add_submenu_page(
+			'orderbay',
+			__( 'Note templates', 'orderbay' ),
+			__( 'Note templates', 'orderbay' ),
+			'manage_woocommerce',
+			'orderbay-notes',
+			array( 'OB_Notes', 'render_settings_static' )
 		);
 		add_submenu_page(
 			'orderbay',

@@ -110,6 +110,9 @@ class OB_Dashboard {
 		echo '<h2>' . esc_html__( 'Quick links', 'orderbay' ) . '</h2><ul>';
 		echo '<li><a href="' . esc_url( admin_url( 'admin.php?page=orderbay-documents' ) ) . '">' . esc_html__( 'Document settings (invoice / packing slip)', 'orderbay' ) . '</a></li>';
 		echo '<li><a href="' . esc_url( admin_url( 'admin.php?page=orderbay-fulfillment' ) ) . '">' . esc_html__( 'Fulfillment (tracking / auto-attention / pick list)', 'orderbay' ) . '</a></li>';
+		echo '<li><a href="' . esc_url( admin_url( 'admin.php?page=orderbay-rma' ) ) . '">' . esc_html__( 'Returns / RMA', 'orderbay' ) . '</a></li>';
+		echo '<li><a href="' . esc_url( admin_url( 'admin.php?page=orderbay-sla' ) ) . '">' . esc_html__( 'SLA aging', 'orderbay' ) . '</a></li>';
+		echo '<li><a href="' . esc_url( admin_url( 'admin.php?page=orderbay-notes' ) ) . '">' . esc_html__( 'Note templates', 'orderbay' ) . '</a></li>';
 		echo '<li><a href="' . esc_url( admin_url( 'admin.php?page=orderbay-notifications' ) ) . '">' . esc_html__( 'Email rules & low stock', 'orderbay' ) . '</a></li>';
 		echo '<li><a href="' . esc_url( admin_url( 'admin.php?page=orderbay-digest' ) ) . '">' . esc_html__( 'Staff digest', 'orderbay' ) . '</a></li>';
 		echo '<li><a href="' . esc_url( admin_url( 'admin.php?page=orderbay-export' ) ) . '">' . esc_html__( 'Export orders CSV', 'orderbay' ) . '</a></li>';

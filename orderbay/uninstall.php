@@ -2,7 +2,7 @@
 /**
  * Orderbay uninstall — options only.
  *
- * Preserves order meta (invoice/credit/tracking/attention/tags) and media.
+ * Keeps order meta (invoice/credit/tracking/RMA/attention/tags).
  *
  * @package Orderbay
  */
@@ -23,6 +23,11 @@ $options = array(
 	'ob_credit_next',
 	'ob_tracking_email_settings',
 	'ob_auto_attention_statuses',
+	'ob_rma_settings',
+	'ob_rma_prefix',
+	'ob_rma_next',
+	'ob_sla_settings',
+	'ob_note_templates',
 );
 
 foreach ( $options as $opt ) {
@@ -30,7 +35,7 @@ foreach ( $options as $opt ) {
 	delete_site_option( $opt );
 }
 
-foreach ( array( 'ob_daily_stock_scan', 'ob_digest_cron' ) as $hook ) {
+foreach ( array( 'ob_daily_stock_scan', 'ob_digest_cron', 'ob_sla_aging_cron' ) as $hook ) {
 	$timestamp = wp_next_scheduled( $hook );
 	while ( $timestamp ) {
 		wp_unschedule_event( $timestamp, $hook );

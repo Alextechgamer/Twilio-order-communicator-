@@ -65,9 +65,11 @@ $paper = ( isset( $settings['paper'] ) && 'a4' === $settings['paper'] ) ? 'A4' :
 			}
 			?>
 		</div>
+		<?php $show_thumbs = ! empty( $settings['show_thumbs'] ) && '1' === (string) $settings['show_thumbs']; ?>
 		<table class="items">
 			<thead>
 				<tr>
+					<?php if ( $show_thumbs ) : ?><th></th><?php endif; ?>
 					<th><?php esc_html_e( 'Item', 'orderbay' ); ?></th>
 					<th><?php esc_html_e( 'SKU', 'orderbay' ); ?></th>
 					<th class="num"><?php esc_html_e( 'Qty', 'orderbay' ); ?></th>
@@ -78,8 +80,21 @@ $paper = ( isset( $settings['paper'] ) && 'a4' === $settings['paper'] ) ? 'A4' :
 				<?php
 				$product = $item->get_product();
 				$sku     = $product ? $product->get_sku() : '';
+				$thumb   = '';
+				if ( $show_thumbs && $product ) {
+					$img_id = $product->get_image_id();
+					if ( $img_id ) {
+						$src = wp_get_attachment_image_url( $img_id, 'thumbnail' );
+						if ( $src ) {
+							$thumb = $src;
+						}
+					}
+				}
 				?>
 				<tr>
+					<?php if ( $show_thumbs ) : ?>
+						<td><?php if ( $thumb ) : ?><img src="<?php echo esc_url( $thumb ); ?>" alt="" style="width:40px;height:40px;object-fit:cover;" /><?php else : ?>—<?php endif; ?></td>
+					<?php endif; ?>
 					<td><?php echo esc_html( $item->get_name() ); ?></td>
 					<td><?php echo esc_html( $sku ? $sku : '—' ); ?></td>
 					<td class="num"><?php echo esc_html( (string) $item->get_quantity() ); ?></td>
@@ -95,6 +110,18 @@ $paper = ( isset( $settings['paper'] ) && 'a4' === $settings['paper'] ) ? 'A4' :
 			<div class="notes"><strong><?php esc_html_e( 'Tracking', 'orderbay' ); ?>:</strong> <?php echo esc_html( $track ); ?>
 			<?php if ( $turl ) : ?> — <a href="<?php echo esc_url( $turl ); ?>"><?php echo esc_html( $turl ); ?></a><?php endif; ?>
 			</div>
+		<?php endif; ?>
+		<?php
+		$gift = $order->get_meta( 'gift_message' );
+		if ( ! $gift ) {
+			$gift = $order->get_meta( '_gift_message' );
+		}
+		if ( ! $gift ) {
+			$gift = $order->get_meta( 'Gift Message' );
+		}
+		if ( $gift ) :
+			?>
+			<div class="notes"><strong><?php esc_html_e( 'Gift message', 'orderbay' ); ?>:</strong> <?php echo esc_html( is_string( $gift ) ? $gift : '' ); ?></div>
 		<?php endif; ?>
 		<?php if ( $order->get_customer_note() ) : ?>
 			<div class="notes"><strong><?php esc_html_e( 'Customer note', 'orderbay' ); ?>:</strong> <?php echo esc_html( $order->get_customer_note() ); ?></div>
