@@ -110,6 +110,8 @@ class OB_Dashboard {
 		echo '<h2>' . esc_html__( 'Quick links', 'orderbay' ) . '</h2><ul>';
 		echo '<li><a href="' . esc_url( admin_url( 'admin.php?page=orderbay-documents' ) ) . '">' . esc_html__( 'Document settings (invoice / packing slip)', 'orderbay' ) . '</a></li>';
 		echo '<li><a href="' . esc_url( admin_url( 'admin.php?page=orderbay-notifications' ) ) . '">' . esc_html__( 'Email rules & low stock', 'orderbay' ) . '</a></li>';
+		echo '<li><a href="' . esc_url( admin_url( 'admin.php?page=orderbay-digest' ) ) . '">' . esc_html__( 'Staff digest', 'orderbay' ) . '</a></li>';
+		echo '<li><a href="' . esc_url( admin_url( 'admin.php?page=orderbay-export' ) ) . '">' . esc_html__( 'Export orders CSV', 'orderbay' ) . '</a></li>';
 		echo '<li><a href="' . esc_url( $orders_url ) . '">' . esc_html__( 'Orders list', 'orderbay' ) . '</a></li>';
 		echo '<li><a href="' . esc_url( admin_url( 'edit.php?post_type=product' ) ) . '">' . esc_html__( 'Products (bulk price/stock/duplicate)', 'orderbay' ) . '</a></li>';
 		echo '</ul>';
