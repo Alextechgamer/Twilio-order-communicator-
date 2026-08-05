@@ -35,6 +35,9 @@ class OB_Plugin {
 	const META_RMA_NUMBER     = '_ob_rma_number';
 	const META_RMA_REASON     = '_ob_rma_reason';
 	const META_SLA_AGED       = '_ob_sla_aged_at';
+	const META_BIN            = '_ob_bin_location';
+	const META_QTY_FULFILLED  = '_ob_qty_fulfilled';
+	const META_FULFILL_STATUS = '_ob_fulfillment_status';
 	const TAX_ORDER_TAG       = 'ob_order_tag';
 
 	private static $instance = null;
@@ -68,7 +71,8 @@ class OB_Plugin {
 			'footer_text' => __( 'Thank you for your order.', 'orderbay' ),
 			'paper'       => 'letter',
 			'tax_id'      => '',
-			'show_thumbs' => '0',
+			'show_thumbs'   => '0',
+			'show_barcodes' => '0',
 		);
 	}
 

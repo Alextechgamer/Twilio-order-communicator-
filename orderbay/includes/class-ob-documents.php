@@ -56,7 +56,8 @@ class OB_Documents {
 		$paper              = isset( $input['paper'] ) ? sanitize_key( $input['paper'] ) : 'letter';
 		$out['paper']       = in_array( $paper, array( 'letter', 'a4' ), true ) ? $paper : 'letter';
 		$out['tax_id']      = isset( $input['tax_id'] ) ? sanitize_text_field( $input['tax_id'] ) : '';
-		$out['show_thumbs'] = ! empty( $input['show_thumbs'] ) ? '1' : '0';
+		$out['show_thumbs']   = ! empty( $input['show_thumbs'] ) ? '1' : '0';
+		$out['show_barcodes'] = ! empty( $input['show_barcodes'] ) ? '1' : '0';
 		return $out;
 	}
 
@@ -94,6 +95,10 @@ class OB_Documents {
 		echo '<input type="hidden" name="' . esc_attr( OB_Plugin::OPT_DOCS ) . '[show_thumbs]" value="0" />';
 		echo '<label><input type="checkbox" name="' . esc_attr( OB_Plugin::OPT_DOCS ) . '[show_thumbs]" value="1" ' . checked( ( $s['show_thumbs'] ?? '0' ), '1', false ) . ' /> ';
 		echo esc_html__( 'Show product image column (default off)', 'orderbay' ) . '</label></td></tr>';
+		echo '<tr><th>' . esc_html__( 'Barcodes on documents', 'orderbay' ) . '</th><td>';
+		echo '<input type="hidden" name="' . esc_attr( OB_Plugin::OPT_DOCS ) . '[show_barcodes]" value="0" />';
+		echo '<label><input type="checkbox" name="' . esc_attr( OB_Plugin::OPT_DOCS ) . '[show_barcodes]" value="1" ' . checked( ( $s['show_barcodes'] ?? '0' ), '1', false ) . ' /> ';
+		echo esc_html__( 'Print Code 128 barcode (SVG) for order number on invoice, packing slip, and RMA (default off; pure PHP, no Composer)', 'orderbay' ) . '</label></td></tr>';
 		echo '</table>';
 
 		echo '<table class="form-table"><tr><th><label for="ob_inv_prefix">' . esc_html__( 'Invoice number prefix', 'orderbay' ) . '</label></th><td>';

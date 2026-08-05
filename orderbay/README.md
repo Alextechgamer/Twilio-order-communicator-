@@ -1,19 +1,19 @@
-# Orderbay 0.5.0
+# Orderbay 0.6.0
 
-Self-hosted WooCommerce ops + fulfillment + light returns toolkit.
+Self-hosted WooCommerce ops + fulfillment + returns toolkit.
 
 Independent of Twilio Order Communicator and StoreCanvas.
 
-## 0.5.0
+## 0.6.0
 
-1. **RMA / returns** — status, reason, sequential RMA numbers, print slip; optional attention on request
-2. **SLA aging** — hourly cron (default off) flags old processing/on-hold orders
-3. **Doc polish** — VAT/Tax ID on invoice; optional packing thumbnails; gift message soft-detect
-4. **Note templates** — up to 8 canned private order notes
+1. **Customer RMA request** on My Account (default **off**); owner + nonce; staff still approves
+2. **Code 128 barcodes** (pure PHP → SVG; default off) on invoice / packing / RMA
+3. **Bin / location** product meta for pick lists (sort bin then SKU)
+4. **Partial fulfillment** — per-line `_ob_qty_fulfilled`; packing shows done/left
 
-## Modules
+### Barcode approach
 
-Documents · Fulfillment · RMA · SLA · Notes · Order ops · Notifications · Digest · Export · Catalog · Dashboard
+No Composer. Pure-PHP Code 128B encoder renders inline SVG bars. If encoding fails, falls back to monospace `*ORDER*` style text.
 
 ## Install
 
@@ -21,7 +21,7 @@ Documents · Fulfillment · RMA · SLA · Notes · Order ops · Notifications ·
 
 ## Uninstall
 
-Removes options + crons. **Keeps** all order meta (including RMA).
+Removes options. **Keeps** order/product meta (RMA, bins, fulfillment).
 
 ## License
 

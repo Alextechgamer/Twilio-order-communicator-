@@ -53,6 +53,10 @@ $paper = ( isset( $settings['paper'] ) && 'a4' === $settings['paper'] ) ? 'A4' :
 				<?php endif; ?>
 				<h1><?php echo esc_html( sprintf( __( 'Packing slip — Order #%s', 'orderbay' ), $order->get_order_number() ) ); ?></h1>
 				<div class="meta"><?php echo esc_html( $order->get_date_created() ? $order->get_date_created()->date_i18n( get_option( 'date_format' ) ) : '' ); ?></div>
+		<?php if ( class_exists( 'OB_Barcode' ) && OB_Barcode::enabled() ) : ?>
+			<?php OB_Barcode::render( $order->get_order_number() ); ?>
+		<?php endif; ?>
+
 			</div>
 			<div style="white-space:pre-line;text-align:right;"><?php echo esc_html( $settings['from_lines'] ); ?></div>
 		</div>
@@ -65,7 +69,18 @@ $paper = ( isset( $settings['paper'] ) && 'a4' === $settings['paper'] ) ? 'A4' :
 			}
 			?>
 		</div>
-		<?php $show_thumbs = ! empty( $settings['show_thumbs'] ) && '1' === (string) $settings['show_thumbs']; ?>
+		<?php
+		$show_thumbs = ! empty( $settings['show_thumbs'] ) && '1' === (string) $settings['show_thumbs'];
+		$show_partial = false;
+		if ( class_exists( 'OB_Partial' ) ) {
+			foreach ( $order->get_items() as $_it ) {
+				if ( $_it instanceof WC_Order_Item_Product && (int) $_it->get_meta( OB_Plugin::META_QTY_FULFILLED, true ) > 0 ) {
+					$show_partial = true;
+					break;
+				}
+			}
+		}
+		?>
 		<table class="items">
 			<thead>
 				<tr>
@@ -73,6 +88,7 @@ $paper = ( isset( $settings['paper'] ) && 'a4' === $settings['paper'] ) ? 'A4' :
 					<th><?php esc_html_e( 'Item', 'orderbay' ); ?></th>
 					<th><?php esc_html_e( 'SKU', 'orderbay' ); ?></th>
 					<th class="num"><?php esc_html_e( 'Qty', 'orderbay' ); ?></th>
+					<?php if ( $show_partial ) : ?><th class="num"><?php esc_html_e( 'Done', 'orderbay' ); ?></th><th class="num"><?php esc_html_e( 'Left', 'orderbay' ); ?></th><?php endif; ?>
 				</tr>
 			</thead>
 			<tbody>
@@ -98,6 +114,13 @@ $paper = ( isset( $settings['paper'] ) && 'a4' === $settings['paper'] ) ? 'A4' :
 					<td><?php echo esc_html( $item->get_name() ); ?></td>
 					<td><?php echo esc_html( $sku ? $sku : '—' ); ?></td>
 					<td class="num"><?php echo esc_html( (string) $item->get_quantity() ); ?></td>
+					<?php if ( $show_partial ) :
+						$done = class_exists( 'OB_Partial' ) ? OB_Partial::get_fulfilled( $item ) : 0;
+						$left = max( 0, (int) $item->get_quantity() - $done );
+						?>
+						<td class="num"><?php echo esc_html( (string) $done ); ?></td>
+						<td class="num"><?php echo esc_html( (string) $left ); ?></td>
+					<?php endif; ?>
 				</tr>
 			<?php endforeach; ?>
 			</tbody>

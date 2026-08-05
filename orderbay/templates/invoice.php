@@ -59,6 +59,10 @@ $paper = ( isset( $settings['paper'] ) && 'a4' === $settings['paper'] ) ? 'A4' :
 				<?php $inv_no = $order->get_meta( OB_Plugin::META_INVOICE_NUMBER ); ?>
 				<h1><?php echo esc_html( $inv_no ? sprintf( __( 'Invoice %1$s — Order #%2$s', 'orderbay' ), $inv_no, $order->get_order_number() ) : sprintf( __( 'Invoice — Order #%s', 'orderbay' ), $order->get_order_number() ) ); ?></h1>
 				<?php if ( $inv_no ) : ?><div class="meta"><strong><?php esc_html_e( 'Invoice number', 'orderbay' ); ?>:</strong> <?php echo esc_html( $inv_no ); ?></div><?php endif; ?>
+		<?php if ( class_exists( 'OB_Barcode' ) && OB_Barcode::enabled() ) : ?>
+			<?php OB_Barcode::render( $order->get_order_number() ); ?>
+		<?php endif; ?>
+
 				<div class="meta">
 					<?php echo esc_html( $order->get_date_created() ? $order->get_date_created()->date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) : '' ); ?>
 					· <?php echo esc_html( wc_get_order_status_name( $order->get_status() ) ); ?>

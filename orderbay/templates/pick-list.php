@@ -39,6 +39,7 @@ $paper = ( isset( $settings['paper'] ) && 'a4' === $settings['paper'] ) ? 'A4' :
 	<thead>
 		<tr>
 			<th class="check">✓</th>
+			<th><?php esc_html_e( 'Bin', 'orderbay' ); ?></th>
 			<th><?php esc_html_e( 'SKU', 'orderbay' ); ?></th>
 			<th><?php esc_html_e( 'Product', 'orderbay' ); ?></th>
 			<th class="num"><?php esc_html_e( 'Qty', 'orderbay' ); ?></th>
@@ -47,11 +48,12 @@ $paper = ( isset( $settings['paper'] ) && 'a4' === $settings['paper'] ) ? 'A4' :
 	</thead>
 	<tbody>
 	<?php if ( empty( $lines ) ) : ?>
-		<tr><td colspan="5"><?php esc_html_e( 'No line items in selection.', 'orderbay' ); ?></td></tr>
+		<tr><td colspan="6"><?php esc_html_e( 'No line items in selection.', 'orderbay' ); ?></td></tr>
 	<?php else : ?>
 		<?php foreach ( $lines as $row ) : ?>
 			<tr>
 				<td class="check">☐</td>
+				<td><?php echo esc_html( $row['bin'] ?? '' ); ?></td>
 				<td><?php echo esc_html( $row['sku'] ); ?></td>
 				<td><?php echo esc_html( $row['name'] ); ?></td>
 				<td class="num"><?php echo esc_html( (string) $row['qty'] ); ?></td>
