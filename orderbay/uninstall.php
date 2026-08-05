@@ -2,8 +2,7 @@
 /**
  * Orderbay uninstall — options only.
  *
- * Preserves order/product meta (_ob_needs_attention, _ob_order_tags, email sent keys)
- * and all media. Does not touch StoreCanvas or Twilio Order Communicator.
+ * Preserves order meta (invoice/credit/tracking/attention/tags) and media.
  *
  * @package Orderbay
  */
@@ -18,6 +17,12 @@ $options = array(
 	'ob_low_stock_settings',
 	'ob_digest_settings',
 	'ob_digest_last_sent',
+	'ob_invoice_prefix',
+	'ob_invoice_next',
+	'ob_credit_prefix',
+	'ob_credit_next',
+	'ob_tracking_email_settings',
+	'ob_auto_attention_statuses',
 );
 
 foreach ( $options as $opt ) {
@@ -25,7 +30,6 @@ foreach ( $options as $opt ) {
 	delete_site_option( $opt );
 }
 
-// Clear scheduled stock scan + digest.
 foreach ( array( 'ob_daily_stock_scan', 'ob_digest_cron' ) as $hook ) {
 	$timestamp = wp_next_scheduled( $hook );
 	while ( $timestamp ) {
@@ -35,7 +39,6 @@ foreach ( array( 'ob_daily_stock_scan', 'ob_digest_cron' ) as $hook ) {
 }
 delete_transient( 'ob_digest_sending' );
 
-// Low-stock rate-limit transients.
 global $wpdb;
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 $wpdb->query(

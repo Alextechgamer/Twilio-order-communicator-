@@ -8,13 +8,25 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class OB_Plugin {
 
-	const OPT_DOCS          = 'ob_documents_settings';
-	const OPT_EMAIL_RULES   = 'ob_email_rules';
-	const OPT_LOW_STOCK     = 'ob_low_stock_settings';
-	const OPT_DIGEST       = 'ob_digest_settings';
-	const META_ATTENTION    = '_ob_needs_attention';
-	const META_TAGS         = '_ob_order_tags';
-	const TAX_ORDER_TAG     = 'ob_order_tag';
+	const OPT_DOCS            = 'ob_documents_settings';
+	const OPT_EMAIL_RULES     = 'ob_email_rules';
+	const OPT_LOW_STOCK       = 'ob_low_stock_settings';
+	const OPT_DIGEST          = 'ob_digest_settings';
+	const OPT_INVOICE_PREFIX  = 'ob_invoice_prefix';
+	const OPT_INVOICE_NEXT    = 'ob_invoice_next';
+	const OPT_CREDIT_PREFIX   = 'ob_credit_prefix';
+	const OPT_CREDIT_NEXT     = 'ob_credit_next';
+	const OPT_TRACKING_EMAIL  = 'ob_tracking_email_settings';
+	const OPT_AUTO_ATTENTION  = 'ob_auto_attention_statuses';
+
+	const META_ATTENTION      = '_ob_needs_attention';
+	const META_TAGS           = '_ob_order_tags';
+	const META_INVOICE_NUMBER = '_ob_invoice_number';
+	const META_CREDIT_NUMBER  = '_ob_credit_note_number';
+	const META_TRACKING       = '_ob_tracking_number';
+	const META_TRACKING_URL   = '_ob_tracking_url';
+	const META_TRACKING_EMAIL = '_ob_tracking_emailed_at';
+	const TAX_ORDER_TAG       = 'ob_order_tag';
 
 	private static $instance = null;
 
@@ -32,7 +44,7 @@ class OB_Plugin {
 	}
 
 	public function register_taxonomies() {
-		// Registered by order ops if needed; keep hook for future.
+		// Reserved for future taxonomy tags.
 	}
 
 	/**
@@ -45,7 +57,7 @@ class OB_Plugin {
 			'logo_url'    => '',
 			'from_lines'  => get_bloginfo( 'name' ) . "\n" . get_option( 'woocommerce_store_address', '' ),
 			'footer_text' => __( 'Thank you for your order.', 'orderbay' ),
-			'paper'       => 'letter', // letter|a4 — CSS @page size for print
+			'paper'       => 'letter',
 		);
 	}
 
@@ -70,7 +82,6 @@ class OB_Plugin {
 			'dashicons-clipboard',
 			56
 		);
-		// Dashboard is first submenu (same slug).
 		add_submenu_page(
 			'orderbay',
 			__( 'Dashboard', 'orderbay' ),
@@ -86,6 +97,14 @@ class OB_Plugin {
 			'manage_woocommerce',
 			'orderbay-documents',
 			array( 'OB_Documents', 'render_settings_static' )
+		);
+		add_submenu_page(
+			'orderbay',
+			__( 'Fulfillment', 'orderbay' ),
+			__( 'Fulfillment', 'orderbay' ),
+			'manage_woocommerce',
+			'orderbay-fulfillment',
+			array( 'OB_Fulfillment', 'render_settings_static' )
 		);
 		add_submenu_page(
 			'orderbay',
@@ -115,7 +134,6 @@ class OB_Plugin {
 
 	public function enqueue_admin( $hook ) {
 		if ( false === strpos( (string) $hook, 'orderbay' ) && false === strpos( (string) $hook, 'shop_order' ) && false === strpos( (string) $hook, 'wc-orders' ) && false === strpos( (string) $hook, 'product' ) ) {
-			// Still load lightly on order/product screens.
 			if ( ! in_array( $hook, array( 'edit.php', 'post.php', 'post-new.php', 'woocommerce_page_wc-orders' ), true ) ) {
 				return;
 			}

@@ -1,31 +1,25 @@
-# Orderbay 0.3.0
+# Orderbay 0.4.0
 
-Self-hosted **WooCommerce ops toolkit** — documents, order ops, email rules, staff digests, CSV export, catalog helpers, dashboard.
+Self-hosted **WooCommerce ops + fulfillment** toolkit.
 
-Independent of Twilio Order Communicator and StoreCanvas.
+Independent of Twilio Order Communicator (SMS/voice) and StoreCanvas.
 
-## 0.3.0
+## 0.4.0
 
-- **Staff digest** — optional daily/weekly email (default off); WP-Cron `ob_digest_cron`; unschedules on deactivate/uninstall
-- **CSV export** — orders list button + Orderbay → Export CSV tools (capability + nonce)
-- **Print polish** — stronger page-breaks / print CSS; browser Save as PDF remains primary (no Dompdf)
-- **Email rules** — validation (subject/body/custom email); rule IDs; TOC independence documented
+1. **Sequential invoice numbers** — `INV-` + counter; immutable `_ob_invoice_number`
+2. **Customer My Account invoice** — logged-in owner only
+3. **Warehouse pick list** — bulk HTML by SKU
+4. **Tracking meta + optional email** — default off; once-guard; not Twilio
+5. **Credit notes** — refund-aware print template + `CN-` numbers
+6. **Auto-attention** — optional status list sets `_ob_needs_attention` (never auto-clears)
 
 ## Modules
 
-| Module | Capability |
-|--------|------------|
-| Documents | Invoice + packing slip HTML print / bulk print |
-| Order ops | Tags, needs attention, bulk status/notes |
-| Notifications | Status email rules + low stock (`wp_mail`) |
-| Digest | Daily/weekly staff summary |
-| Export | Orders CSV stream |
-| Catalog | Bulk price/stock/category; duplicate |
-| Dashboard | Ops counts + links |
+Documents · Fulfillment · Order ops · Notifications · Digest · Export · Catalog · Dashboard
 
 ## PDF
 
-Open print view → browser **Print → Save as PDF**. No Composer PDF library.
+Browser Print → Save as PDF (no Dompdf).
 
 ## Install
 
@@ -33,7 +27,7 @@ Open print view → browser **Print → Save as PDF**. No Composer PDF library.
 
 ## Uninstall
 
-Removes `ob_*` options, digest/stock crons, low-stock transients. Keeps order/product meta.
+Deletes `ob_*` options and counters. **Keeps** order meta (invoice/tracking/etc.).
 
 ## License
 
