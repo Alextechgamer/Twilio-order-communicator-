@@ -11,6 +11,7 @@ class OB_Plugin {
 	const OPT_DOCS          = 'ob_documents_settings';
 	const OPT_EMAIL_RULES   = 'ob_email_rules';
 	const OPT_LOW_STOCK     = 'ob_low_stock_settings';
+	const OPT_DIGEST       = 'ob_digest_settings';
 	const META_ATTENTION    = '_ob_needs_attention';
 	const META_TAGS         = '_ob_order_tags';
 	const TAX_ORDER_TAG     = 'ob_order_tag';
@@ -93,6 +94,22 @@ class OB_Plugin {
 			'manage_woocommerce',
 			'orderbay-notifications',
 			array( 'OB_Notifications', 'render_settings_static' )
+		);
+		add_submenu_page(
+			'orderbay',
+			__( 'Staff digest', 'orderbay' ),
+			__( 'Staff digest', 'orderbay' ),
+			'manage_woocommerce',
+			'orderbay-digest',
+			array( 'OB_Digest', 'render_settings_static' )
+		);
+		add_submenu_page(
+			'orderbay',
+			__( 'Export CSV', 'orderbay' ),
+			__( 'Export CSV', 'orderbay' ),
+			'edit_shop_orders',
+			'orderbay-export',
+			array( 'OB_Export', 'render_tools_static' )
 		);
 	}
 

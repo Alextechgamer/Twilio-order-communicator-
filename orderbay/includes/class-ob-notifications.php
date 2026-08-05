@@ -100,14 +100,31 @@ class OB_Notifications {
 			if ( ! $id ) {
 				$id = 'r' . substr( md5( wp_json_encode( $row ) . microtime( true ) . wp_rand() ), 0, 10 );
 			}
+			$enabled = ! empty( $row['enabled'] ) ? '1' : '0';
+			$subject = isset( $row['subject'] ) ? sanitize_text_field( $row['subject'] ) : '';
+			$body    = isset( $row['body'] ) ? sanitize_textarea_field( $row['body'] ) : '';
+			$recipient = isset( $row['recipient'] ) ? sanitize_key( $row['recipient'] ) : 'admin';
+			$custom  = isset( $row['custom_email'] ) ? sanitize_email( $row['custom_email'] ) : '';
+			// Disable incomplete enabled rules (empty subject/body).
+			if ( '1' === $enabled && ( '' === $subject || '' === $body ) ) {
+				$enabled = '0';
+			}
+			// Invalid custom email → fall back to admin recipient.
+			if ( 'custom' === $recipient && $custom && ! is_email( $custom ) ) {
+				$custom = '';
+				$recipient = 'admin';
+			}
+			if ( 'custom' === $recipient && ! $custom ) {
+				$enabled = '0';
+			}
 			$out[] = array(
 				'id'           => $id,
-				'enabled'      => ! empty( $row['enabled'] ) ? '1' : '0',
+				'enabled'      => $enabled,
 				'status'       => $status,
-				'recipient'    => isset( $row['recipient'] ) ? sanitize_key( $row['recipient'] ) : 'admin',
-				'custom_email' => isset( $row['custom_email'] ) ? sanitize_email( $row['custom_email'] ) : '',
-				'subject'      => isset( $row['subject'] ) ? sanitize_text_field( $row['subject'] ) : '',
-				'body'         => isset( $row['body'] ) ? sanitize_textarea_field( $row['body'] ) : '',
+				'recipient'    => $recipient,
+				'custom_email' => $custom,
+				'subject'      => $subject,
+				'body'         => $body,
 			);
 		}
 		return $out;
@@ -168,7 +185,7 @@ class OB_Notifications {
 		if ( ! empty( $_GET['updated'] ) ) { // phpcs:ignore
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Settings saved.', 'orderbay' ) . '</p></div>';
 		}
-		echo '<p class="description">' . esc_html__( 'wp_mail only — independent of Twilio Order Communicator. All rules default off. Merge tags: {order_number} {customer_first_name} {customer_email} {store_name} {order_status} {order_total}', 'orderbay' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'wp_mail only — completely independent of Twilio Order Communicator (no SMS/voice). All rules default off. Enabled rules require subject + body; custom recipient needs a valid email. Merge tags: {order_number} {customer_first_name} {customer_email} {store_name} {order_status} {order_total}', 'orderbay' ) . '</p>';
 
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		echo '<input type="hidden" name="action" value="ob_save_email_rules" />';
@@ -182,6 +199,7 @@ class OB_Notifications {
 		echo '<th>' . esc_html__( 'Custom email', 'orderbay' ) . '</th>';
 		echo '<th>' . esc_html__( 'Subject', 'orderbay' ) . '</th>';
 		echo '<th>' . esc_html__( 'Body', 'orderbay' ) . '</th>';
+		echo '<th>' . esc_html__( 'Rule ID', 'orderbay' ) . '</th>';
 		echo '<th>' . esc_html__( 'Delete', 'orderbay' ) . '</th>';
 		echo '</tr></thead><tbody>';
 
@@ -211,6 +229,7 @@ class OB_Notifications {
 			echo '<td><input type="email" name="ob_rules[' . (int) $i . '][custom_email]" value="' . esc_attr( $row['custom_email'] ?? '' ) . '" placeholder="you@example.com" /></td>';
 			echo '<td><input type="text" class="large-text" name="ob_rules[' . (int) $i . '][subject]" value="' . esc_attr( $row['subject'] ?? '' ) . '" /></td>';
 			echo '<td><textarea rows="3" class="large-text" name="ob_rules[' . (int) $i . '][body]">' . esc_textarea( $row['body'] ?? '' ) . '</textarea></td>';
+			echo '<td><code style="font-size:11px;">' . esc_html( $id ? $id : '—' ) . '</code></td>';
 			echo '<td>';
 			if ( $id ) {
 				echo '<label><input type="checkbox" name="ob_rules[' . (int) $i . '][delete]" value="1" /> ' . esc_html__( 'Remove', 'orderbay' ) . '</label>';
@@ -220,7 +239,7 @@ class OB_Notifications {
 			echo '</td></tr>';
 		}
 		echo '</tbody></table>';
-		echo '<p class="description">' . esc_html__( 'Leave the last row status empty to skip. Check Remove to delete a rule on save. Once-per-rule-per-order guard prevents re-send spam.', 'orderbay' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Leave the last row status empty to skip. Check Remove to delete a rule on save. Once-per-rule-per-order meta _ob_emailed_rule_{id}_at prevents re-send spam when status is re-applied.', 'orderbay' ) . '</p>';
 
 		echo '<h2>' . esc_html__( 'Low stock alerts', 'orderbay' ) . '</h2>';
 		echo '<table class="form-table"><tr><th>' . esc_html__( 'Enable', 'orderbay' ) . '</th><td>';

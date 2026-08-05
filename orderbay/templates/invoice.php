@@ -36,7 +36,12 @@ $paper = ( isset( $settings['paper'] ) && 'a4' === $settings['paper'] ) ? 'A4' :
 		.totals .row.grand { font-weight: 700; font-size: 14px; border-top: 2px solid #222; margin-top: 6px; padding-top: 8px; }
 		.notes { margin-top: 16px; padding: 8px 10px; background: #f6f7f7; border: 1px solid #e0e0e0; }
 		.footer { margin-top: 20px; color: #666; font-size: 11px; border-top: 1px solid #eee; padding-top: 8px; }
-		@media print { .no-print { display: none !important; } body { margin: 0; } }
+		@media print {
+			.no-print, #wpadminbar, .woocommerce-store-notice { display: none !important; }
+			body { margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+			.sheet { page-break-after: always; break-after: page; }
+			.sheet:last-child { page-break-after: auto; break-after: auto; }
+		}
 	</style>
 </head>
 <body>
