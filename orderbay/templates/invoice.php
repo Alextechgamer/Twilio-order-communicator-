@@ -65,7 +65,9 @@ $paper = ( isset( $settings['paper'] ) && 'a4' === $settings['paper'] ) ? 'A4' :
 					· <?php echo esc_html( $order->get_currency() ); ?>
 				</div>
 			</div>
-			<div class="from" style="white-space:pre-line;text-align:right;"><strong><?php esc_html_e( 'From', 'orderbay' ); ?></strong><br /><?php echo esc_html( $settings['from_lines'] ); ?></div>
+			<div class="from" style="white-space:pre-line;text-align:right;"><strong><?php esc_html_e( 'From', 'orderbay' ); ?></strong><br /><?php echo esc_html( $settings['from_lines'] ); ?>
+				<?php if ( ! empty( $settings['tax_id'] ) ) : ?><br /><strong><?php esc_html_e( 'VAT / Tax ID', 'orderbay' ); ?>:</strong> <?php echo esc_html( $settings['tax_id'] ); ?><?php endif; ?>
+			</div>
 		</div>
 		<div class="cols">
 			<div><strong><?php esc_html_e( 'Bill to', 'orderbay' ); ?></strong><?php echo wp_kses_post( $order->get_formatted_billing_address() ? $order->get_formatted_billing_address() : esc_html( $order->get_formatted_billing_full_name() ) ); ?>
@@ -117,8 +119,11 @@ $paper = ( isset( $settings['paper'] ) && 'a4' === $settings['paper'] ) ? 'A4' :
 		<?php if ( $order->get_customer_note() ) : ?>
 			<div class="notes"><strong><?php esc_html_e( 'Customer note', 'orderbay' ); ?>:</strong> <?php echo esc_html( $order->get_customer_note() ); ?></div>
 		<?php endif; ?>
-		<?php if ( ! empty( $settings['footer_text'] ) ) : ?>
-			<div class="footer"><?php echo esc_html( $settings['footer_text'] ); ?></div>
+		<?php if ( ! empty( $settings['footer_text'] ) || ! empty( $settings['tax_id'] ) ) : ?>
+			<div class="footer">
+				<?php if ( ! empty( $settings['footer_text'] ) ) : ?><?php echo esc_html( $settings['footer_text'] ); ?><?php endif; ?>
+				<?php if ( ! empty( $settings['tax_id'] ) ) : ?><?php echo $settings['footer_text'] ? '<br />' : ''; ?><strong><?php esc_html_e( 'VAT / Tax ID', 'orderbay' ); ?>:</strong> <?php echo esc_html( $settings['tax_id'] ); ?><?php endif; ?>
+			</div>
 		<?php endif; ?>
 	</div>
 <?php endforeach; ?>
