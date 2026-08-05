@@ -3,7 +3,7 @@ Contributors: alextechgamer
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -31,6 +31,13 @@ Requires PHP GD for print composites. Works with classic and block-friendly setu
 Removes plugin options, guest design transients, and the journey debug table. Does not remove order/product meta, media, or library/design CPT posts.
 
 == Changelog ==
+
+= 1.1.0 =
+* Guest/logged-in design full rehydrate (src/attachment_id on image layers)
+* Print text quality: font map, scaled size, optional stroke
+* Production queue admin (All/Unprinted/Printed, ZIP, mark printed)
+* Product tab status line + empty-setup notice
+* Order item preview thumbnail (sc_preview_id)
 
 = 1.0.0 =
 * First stable release

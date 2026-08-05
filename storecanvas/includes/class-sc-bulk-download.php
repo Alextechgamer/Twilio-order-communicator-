@@ -54,7 +54,7 @@ class SC_Bulk_Download {
 	 * @param int $order_id Order ID.
 	 * @return string
 	 */
-	private function download_url( $order_id ) {
+	public function download_url( $order_id ) {
 		return admin_url(
 			'admin-post.php?action=sc_bulk_print_zip&order_id=' . absint( $order_id ) . '&_wpnonce=' . wp_create_nonce( 'sc_bulk_print_zip_' . absint( $order_id ) )
 		);

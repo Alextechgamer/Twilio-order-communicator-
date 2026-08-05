@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * - CART_PLACEMENT   (sc_placement)
  * - CART_ATTACHMENTS (sc_attachments)
  * - CART_LAYERS      (sc_layers)
- * - sc_price_extra, sc_print_files, _sc_artwork_id (see SC_Print_Ready / SC_Cart_Order)
+ * - sc_price_extra, sc_print_files, _sc_artwork_id, sc_preview_id (see SC_Print_Ready / SC_Cart_Order)
  *
  * Public AJAX (nopriv + nonce): library items, guest design save/load/email, journey log.
  * Admin AJAX / admin-post: print generate, bulk ZIP, print sheet (capability-checked).

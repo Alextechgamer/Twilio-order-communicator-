@@ -231,9 +231,18 @@
 					row.fontSize = L.fontSize || 28;
 					row.fill = L.fill || '#111111';
 					row.fontFamily = L.fontFamily || 'Arial, Helvetica, sans-serif';
+					row.strokeColor = L.strokeColor || '';
+					row.strokeWidth = L.strokeWidth || 0;
 				}
 				if (L.clipart_id) row.clipart_id = L.clipart_id;
-				if (L.srcUrl) row.srcUrl = L.srcUrl;
+				// Full rehydrate: prefer explicit src, then srcUrl, then object URL if still live.
+				var src = L.src || L.srcUrl || '';
+				if (!src && L.image && L.image.src) src = L.image.src;
+				if (src) {
+					row.src = src;
+					row.srcUrl = src;
+				}
+				if (L.attachment_id) row.attachment_id = L.attachment_id;
 				return row;
 			});
 		}
@@ -319,6 +328,8 @@
 			$root.find('#sc-text-size').val(L.fontSize || 28);
 			$root.find('#sc-text-fill').val(L.fill || '#111111');
 			$root.find('#sc-text-font').val(L.fontFamily || 'Arial, Helvetica, sans-serif');
+			$root.find('#sc-text-stroke-color').val(L.strokeColor || '#000000');
+			$root.find('#sc-text-stroke-width').val(L.strokeWidth != null ? L.strokeWidth : 0);
 		}
 
 		function drawLayerArt(layer, selected) {
@@ -334,10 +345,18 @@
 			if (isText(layer)) {
 				var fs = (layer.fontSize || 28) * (p.scale || 1);
 				ctx.font = fs + 'px ' + (layer.fontFamily || 'Arial, Helvetica, sans-serif');
-				ctx.fillStyle = layer.fill || '#111111';
 				ctx.textAlign = 'center';
 				ctx.textBaseline = 'middle';
-				ctx.fillText(layer.content || 'Text', 0, 0);
+				var txt = layer.content || 'Text';
+				var sw = parseFloat(layer.strokeWidth) || 0;
+				if (sw > 0) {
+					ctx.lineWidth = sw * 2;
+					ctx.strokeStyle = layer.strokeColor || '#000000';
+					ctx.lineJoin = 'round';
+					ctx.strokeText(txt, 0, 0);
+				}
+				ctx.fillStyle = layer.fill || '#111111';
+				ctx.fillText(txt, 0, 0);
 			} else {
 				ctx.drawImage(layer.image, -size.w / 2, -size.h / 2, size.w, size.h);
 			}
@@ -476,6 +495,8 @@
 					label: file.name ? file.name.replace(/\.[^.]+$/, '') : 'Layer ' + (layers.length + 1),
 					fileName: file.name || '',
 					image: img,
+					src: url,
+					srcUrl: url,
 					placementByView: {},
 				};
 				seedPlacements(layer);
@@ -523,6 +544,8 @@
 				fontSize: 28,
 				fill: '#111111',
 				fontFamily: 'Arial, Helvetica, sans-serif',
+				strokeColor: '',
+				strokeWidth: 0,
 				placementByView: {},
 			};
 			seedPlacements(layer);
@@ -638,13 +661,15 @@
 		}
 
 		// Text editor bindings
-		$root.on('input change', '#sc-text-content, #sc-text-size, #sc-text-fill, #sc-text-font', function () {
+		$root.on('input change', '#sc-text-content, #sc-text-size, #sc-text-fill, #sc-text-font, #sc-text-stroke-color, #sc-text-stroke-width', function () {
 			var L = getActiveLayer();
 			if (!L || L.type !== 'text') return;
 			L.content = $root.find('#sc-text-content').val() || '';
 			L.fontSize = parseFloat($root.find('#sc-text-size').val()) || 28;
 			L.fill = $root.find('#sc-text-fill').val() || '#111111';
 			L.fontFamily = $root.find('#sc-text-font').val() || 'Arial, Helvetica, sans-serif';
+			L.strokeColor = $root.find('#sc-text-stroke-color').val() || '';
+			L.strokeWidth = parseFloat($root.find('#sc-text-stroke-width').val()) || 0;
 			L.label = truncate(L.content, 24) || 'Text';
 			draw();
 		});
@@ -932,110 +957,157 @@
 			});
 		});
 
+		/**
+		 * Full rehydrate from saved design JSON (guest token + CPT).
+		 * Clears current layers then rebuilds from payload.
+		 */
 		function applyDesignPayload(payload) {
 			if (!payload || typeof payload !== 'object') return;
 
-			if (Array.isArray(payload.layers) && payload.layers.length) {
-				// Rebuild layers; image layers need re-upload except clipart with srcUrl/clipart_id.
-				var pending = 0;
-				var next = [];
-
-				function finish() {
-					layers = next;
-					if (layers.length) {
-						activeLayerId = payload.active_layer || layers[layers.length - 1].id;
-					}
-					if (payload.current_view) loadView(payload.current_view);
-					else draw();
-				}
-
-				payload.layers.forEach(function (saved) {
-					if ((saved.type || 'image') === 'text') {
-						var tl = {
-							id: saved.id || uid('t'),
-							type: 'text',
-							label: saved.name || saved.label || truncate(saved.content, 24) || 'Text',
-							content: saved.content || 'Text',
-							fontSize: saved.fontSize || 28,
-							fill: saved.fill || '#111111',
-							fontFamily: saved.fontFamily || 'Arial, Helvetica, sans-serif',
-							placementByView: {},
-						};
-						var places = saved.placements || saved.placementByView || {};
-						Object.keys(places).forEach(function (vid) {
-							tl.placementByView[vid] = $.extend(defaultPlacement(vid), places[vid]);
+			var layerList = payload.layers;
+			if (!Array.isArray(layerList) && payload.placement && Array.isArray(payload.placement.layers)) {
+				layerList = payload.placement.layers;
+			}
+			if (!Array.isArray(layerList) || !layerList.length) {
+				if (payload.placement && layers[0]) {
+					var pl0 = payload.placement;
+					if (pl0.placements) {
+						Object.keys(pl0.placements).forEach(function (vid) {
+							layers[0].placementByView[vid] = $.extend(defaultPlacement(vid), pl0.placements[vid]);
 						});
-						seedPlacements(tl);
-						next.push(tl);
-					} else if (saved.srcUrl || saved.clipart_id) {
-						pending++;
-						var img = new Image();
-						img.crossOrigin = 'anonymous';
-						(function (sv) {
-							img.onload = function () {
-								var L = {
-									id: sv.id || uid('c'),
-									type: sv.type || 'clipart',
-									label: sv.name || sv.label || 'Clip-art',
-									image: img,
-									srcUrl: sv.srcUrl || img.src,
-									clipart_id: sv.clipart_id || 0,
-									placementByView: {},
-								};
-								var places2 = sv.placements || sv.placementByView || {};
-								Object.keys(places2).forEach(function (vid) {
-									L.placementByView[vid] = $.extend(defaultPlacement(vid), places2[vid]);
+					}
+					draw();
+				}
+				return;
+			}
+
+			// Clear canvas layers for clean hydrate.
+			layers = [];
+			activeLayerId = null;
+			var pending = 0;
+			var next = [];
+			var skipped = 0;
+
+			function finish() {
+				// Preserve saved order.
+				next.sort(function (a, b) {
+					return (a._order || 0) - (b._order || 0);
+				});
+				layers = next.map(function (L) {
+					delete L._order;
+					return L;
+				});
+				if (layers.length) {
+					activeLayerId = payload.active_layer || layers[layers.length - 1].id;
+					// Ensure active_layer exists.
+					var found = false;
+					layers.forEach(function (L) {
+						if (L.id === activeLayerId) found = true;
+					});
+					if (!found) activeLayerId = layers[layers.length - 1].id;
+				}
+				if (skipped) {
+					showGuestHint('Restored design (' + skipped + ' layer(s) could not load).');
+				}
+				if (payload.current_view) loadView(payload.current_view);
+				else draw();
+			}
+
+			function applyPlacements(L, saved) {
+				var places = saved.placements || saved.placementByView || {};
+				Object.keys(places).forEach(function (vid) {
+					L.placementByView[vid] = $.extend(defaultPlacement(vid), places[vid]);
+				});
+				seedPlacements(L);
+			}
+
+			function loadImageLayer(sv, order) {
+				var src = sv.src || sv.srcUrl || '';
+				pending++;
+				var img = new Image();
+				img.crossOrigin = 'anonymous';
+				img.onload = function () {
+					var L = {
+						id: sv.id || uid('img'),
+						type: sv.type || 'image',
+						label: sv.name || sv.label || 'Layer',
+						fileName: sv.fileName || '',
+						image: img,
+						src: src || img.src,
+						srcUrl: src || img.src,
+						clipart_id: sv.clipart_id || 0,
+						attachment_id: sv.attachment_id || 0,
+						placementByView: {},
+						_order: order,
+					};
+					applyPlacements(L, sv);
+					next.push(L);
+					pending--;
+					if (pending === 0) finish();
+				};
+				img.onerror = function () {
+					skipped++;
+					pending--;
+					if (pending === 0) finish();
+				};
+				if (src) {
+					img.src = src;
+				} else if (sv.clipart_id && typeof scLibrary !== 'undefined' && scLibrary.ajax) {
+					$.get(scLibrary.ajax, {
+						action: 'sc_library_items',
+						nonce: scLibrary.nonce,
+						product_id: productId,
+					})
+						.done(function (res) {
+							var found = null;
+							if (res && res.success && res.data.items) {
+								res.data.items.forEach(function (it) {
+									if (it.id === sv.clipart_id) found = it;
 								});
-								seedPlacements(L);
-								next.push(L);
-								pending--;
-								if (pending === 0) finish();
-							};
-							img.onerror = function () {
-								pending--;
-								if (pending === 0) finish();
-							};
-							if (sv.srcUrl) {
-								img.src = sv.srcUrl;
-							} else if (typeof scLibrary !== 'undefined' && scLibrary.ajax && sv.clipart_id) {
-								// resolve via library list
-								$.get(scLibrary.ajax, {
-									action: 'sc_library_items',
-									nonce: scLibrary.nonce,
-									product_id: productId,
-								}).done(function (res) {
-									var found = null;
-									if (res && res.success && res.data.items) {
-										res.data.items.forEach(function (it) {
-											if (it.id === sv.clipart_id) found = it;
-										});
-									}
-									if (found) img.src = found.url;
-									else {
-										pending--;
-										if (pending === 0) finish();
-									}
-								});
+							}
+							if (found) {
+								img.src = found.url;
 							} else {
+								skipped++;
 								pending--;
 								if (pending === 0) finish();
 							}
-						})(saved);
-					} else {
-						// Image without server URL: keep placement slots empty — user re-uploads.
-						// Try map onto existing image layers by index later — skip for clean restore.
-					}
-				});
-				if (pending === 0) finish();
-			} else if (payload.placement && layers[0]) {
-				var pl = payload.placement;
-				if (pl.placements) {
-					Object.keys(pl.placements).forEach(function (vid) {
-						layers[0].placementByView[vid] = $.extend(defaultPlacement(vid), pl.placements[vid]);
-					});
+						})
+						.fail(function () {
+							skipped++;
+							pending--;
+							if (pending === 0) finish();
+						});
+				} else {
+					skipped++;
+					pending--;
+					if (pending === 0) finish();
 				}
-				draw();
 			}
+
+			layerList.forEach(function (saved, order) {
+				if ((saved.type || 'image') === 'text') {
+					var tl = {
+						id: saved.id || uid('t'),
+						type: 'text',
+						label: saved.name || saved.label || truncate(saved.content, 24) || 'Text',
+						content: saved.content || 'Text',
+						fontSize: saved.fontSize || 28,
+						fill: saved.fill || '#111111',
+						fontFamily: saved.fontFamily || 'Arial, Helvetica, sans-serif',
+						strokeColor: saved.strokeColor || '',
+						strokeWidth: saved.strokeWidth || 0,
+						placementByView: {},
+						_order: order,
+					};
+					applyPlacements(tl, saved);
+					next.push(tl);
+				} else {
+					// image | clipart
+					loadImageLayer(saved, order);
+				}
+			});
+			if (pending === 0) finish();
 		}
 
 		$root.data('scCustomizerApi', {

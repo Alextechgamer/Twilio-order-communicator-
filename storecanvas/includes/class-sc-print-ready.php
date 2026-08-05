@@ -9,6 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class SC_Print_Ready {
 
 	const META_PRINT_FILES = 'sc_print_files'; // order item meta: [ view_id => attachment_id ]
+	const META_PREVIEW     = 'sc_preview_id'; // order item: small PNG preview attachment
 
 	private static $instance = null;
 
@@ -454,22 +455,67 @@ class SC_Print_Ready {
 
 
 	/**
-	 * Path to bundled TTF for text composites, or empty.
+	 * Default bundled sans TTF path, or empty.
 	 *
 	 * @return string
 	 */
 	public static function font_path() {
-		$candidates = array(
-			SC_PLUGIN_DIR . 'assets/fonts/sc-sans.ttf',
-			SC_PLUGIN_DIR . 'assets/fonts/DejaVuSans.ttf',
-			'/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+		return self::resolve_font_path( 'Arial, Helvetica, sans-serif' );
+	}
+
+	/**
+	 * Map CSS fontFamily to bundled TTF (1.1.0).
+	 *
+	 * @param string $family CSS font stack.
+	 * @return string Absolute path or empty.
+	 */
+	public static function resolve_font_path( $family = '' ) {
+		$family = strtolower( (string) $family );
+		$dir    = SC_PLUGIN_DIR . 'assets/fonts/';
+		$map    = array(
+			'serif'   => $dir . 'sc-serif.ttf',
+			'georgia' => $dir . 'sc-serif.ttf',
+			'times'   => $dir . 'sc-serif.ttf',
+			'impact'  => $dir . 'sc-sans-bold.ttf',
+			'bold'    => $dir . 'sc-sans-bold.ttf',
+			'courier' => $dir . 'sc-sans.ttf',
+			'mono'    => $dir . 'sc-sans.ttf',
 		);
-		foreach ( $candidates as $c ) {
-			if ( $c && file_exists( $c ) ) {
+		$path = $dir . 'sc-sans.ttf';
+		foreach ( $map as $needle => $candidate ) {
+			if ( false !== strpos( $family, $needle ) && file_exists( $candidate ) ) {
+				$path = $candidate;
+				break;
+			}
+		}
+		if ( file_exists( $path ) ) {
+			return $path;
+		}
+		// Last-resort system fonts.
+		foreach ( array( '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', '/usr/share/fonts/truetype/freefont/FreeSans.ttf' ) as $c ) {
+			if ( file_exists( $c ) ) {
 				return $c;
 			}
 		}
 		return '';
+	}
+
+	/**
+	 * Convert UI canvas font size to print-area pixels so preview ≈ composite.
+	 * Front canvas uses ~600px stage; print area is a fraction of the full composite.
+	 *
+	 * @param float $font_size_ui UI px.
+	 * @param float $scale        Layer scale.
+	 * @param float $area_w_px    Print area width in composite px.
+	 * @return int Point size for imagettftext.
+	 */
+	public static function scale_text_for_print( $font_size_ui, $scale, $area_w_px ) {
+		// Assume front mockup print area is roughly 400px wide on a 600 canvas.
+		$ui_area_ref = 400.0;
+		$ratio       = $area_w_px > 0 ? ( $area_w_px / $ui_area_ref ) : 1.0;
+		$pt          = (float) $font_size_ui * max( 0.2, min( 3.0, (float) $scale ) ) * $ratio;
+		// Clamp to avoid microscopic / huge text.
+		return max( 12, min( 400, (int) round( $pt ) ) );
 	}
 
 	/**
@@ -490,8 +536,6 @@ class SC_Print_Ready {
 		$ay = ( (float) $area['y'] / 100 ) * $bh;
 		$aw = ( (float) $area['w'] / 100 ) * $bw;
 		$ah = ( (float) $area['h'] / 100 ) * $bh;
-		$font = self::font_path();
-		$use_ttf = $font && function_exists( 'imagettftext' );
 
 		foreach ( $layers as $layer ) {
 			if ( ! is_array( $layer ) ) {
@@ -518,16 +562,19 @@ class SC_Print_Ready {
 			$cx       = $ax + ( ( (float) ( $pl['x'] ?? 50 ) ) / 100 ) * $aw;
 			$cy       = $ay + ( ( (float) ( $pl['y'] ?? 50 ) ) / 100 ) * $ah;
 			$font_size_ui = isset( $layer['fontSize'] ) ? (float) $layer['fontSize'] : 28.0;
-			// Map UI font size (canvas-ish) to print px: scale with area width.
-			$pt = max( 10, (int) round( $font_size_ui * $scale * ( $aw / 400 ) ) );
+			$pt = self::scale_text_for_print( $font_size_ui, $scale, $aw );
 			$fill = isset( $layer['fill'] ) ? (string) $layer['fill'] : '#111111';
 			$rgb  = $this->parse_hex_color( $fill );
 			$color = imagecolorallocate( $base, $rgb[0], $rgb[1], $rgb[2] );
+			$family = isset( $layer['fontFamily'] ) ? (string) $layer['fontFamily'] : 'Arial, Helvetica, sans-serif';
+			$font   = self::resolve_font_path( $family );
+			$use_ttf = $font && function_exists( 'imagettftext' );
+			$stroke_w = isset( $layer['strokeWidth'] ) ? (float) $layer['strokeWidth'] : 0.0;
+			$stroke_c = isset( $layer['strokeColor'] ) ? (string) $layer['strokeColor'] : '';
 
 			if ( $use_ttf ) {
-				// imagettftext angle is counter-clockwise degrees.
 				$angle = -$rotation;
-				$bbox  = imagettfbbox( $pt, $angle, $font, $content );
+				$bbox  = @imagettfbbox( $pt, $angle, $font, $content );
 				if ( is_array( $bbox ) ) {
 					$minx = min( $bbox[0], $bbox[2], $bbox[4], $bbox[6] );
 					$maxx = max( $bbox[0], $bbox[2], $bbox[4], $bbox[6] );
@@ -541,9 +588,26 @@ class SC_Print_Ready {
 					$tx = (int) $cx;
 					$ty = (int) $cy;
 				}
+				// Stroke outline (multi-pass) when strokeWidth > 0.
+				if ( $stroke_w > 0 && $stroke_c ) {
+					$srgb = $this->parse_hex_color( $stroke_c );
+					$scol = imagecolorallocate( $base, $srgb[0], $srgb[1], $srgb[2] );
+					$rad  = max( 1, min( 12, (int) round( $stroke_w ) ) );
+					for ( $ox = -$rad; $ox <= $rad; $ox++ ) {
+						for ( $oy = -$rad; $oy <= $rad; $oy++ ) {
+							if ( 0 === $ox && 0 === $oy ) {
+								continue;
+							}
+							if ( ( $ox * $ox + $oy * $oy ) > ( $rad * $rad ) ) {
+								continue;
+							}
+							@imagettftext( $base, $pt, $angle, $tx + $ox, $ty + $oy, $scol, $font, $content );
+						}
+					}
+				}
 				@imagettftext( $base, $pt, $angle, $tx, $ty, $color, $font, $content );
 			} else {
-				// GD built-in font fallback (no rotation, approximate size).
+				// GD built-in font fallback (no rotation/stroke).
 				$font_id = 5;
 				$tw = imagefontwidth( $font_id ) * strlen( $content );
 				$th = imagefontheight( $font_id );
@@ -752,7 +816,72 @@ class SC_Print_Ready {
 			if ( $art_id ) {
 				$item->add_meta_data( '_sc_artwork_id', $art_id, true );
 			}
+			// Thumbnail preview for admin / queue (1.1.0).
+			$primary = (int) reset( $files );
+			$preview = $this->generate_preview_from_attachment( $primary, $product_id );
+			if ( ! is_wp_error( $preview ) && $preview ) {
+				$item->add_meta_data( 'sc_preview_id', (int) $preview, true );
+			}
 		}
+	}
+
+	/**
+	 * Create a max-600px-wide PNG preview from a composite attachment.
+	 *
+	 * @param int $attachment_id Source composite.
+	 * @param int $product_id    Product id for naming.
+	 * @return int|\WP_Error Attachment id.
+	 */
+	public function generate_preview_from_attachment( $attachment_id, $product_id = 0 ) {
+		$attachment_id = (int) $attachment_id;
+		if ( ! $attachment_id || ! function_exists( 'imagecreatefrompng' ) ) {
+			return new WP_Error( 'sc_no_preview', 'skip' );
+		}
+		$path = get_attached_file( $attachment_id );
+		if ( ! $path || ! file_exists( $path ) ) {
+			return new WP_Error( 'sc_missing', 'missing file' );
+		}
+		$src = $this->gd_load( $path );
+		if ( ! $src ) {
+			return new WP_Error( 'sc_load', 'load failed' );
+		}
+		$sw = imagesx( $src );
+		$sh = imagesy( $src );
+		$max = 600;
+		if ( $sw <= $max ) {
+			$nw = $sw;
+			$nh = $sh;
+		} else {
+			$nw = $max;
+			$nh = max( 1, (int) round( $sh * ( $max / $sw ) ) );
+		}
+		$dst = imagecreatetruecolor( $nw, $nh );
+		imagealphablending( $dst, false );
+		imagesavealpha( $dst, true );
+		imagecopyresampled( $dst, $src, 0, 0, 0, 0, $nw, $nh, $sw, $sh );
+		imagedestroy( $src );
+		$upload = wp_upload_dir();
+		$fname  = 'sc-preview-' . absint( $product_id ) . '-' . $attachment_id . '-' . wp_generate_password( 4, false ) . '.png';
+		$out    = trailingslashit( $upload['path'] ) . $fname;
+		imagepng( $dst, $out, 6 );
+		imagedestroy( $dst );
+		if ( ! file_exists( $out ) ) {
+			return new WP_Error( 'sc_write', 'write failed' );
+		}
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+		$att = array(
+			'post_mime_type' => 'image/png',
+			'post_title'     => sprintf( 'StoreCanvas preview – product %d', $product_id ),
+			'post_content'   => '',
+			'post_status'    => 'inherit',
+		);
+		$att_id = wp_insert_attachment( $att, $out );
+		if ( is_wp_error( $att_id ) ) {
+			return $att_id;
+		}
+		$meta = wp_generate_attachment_metadata( $att_id, $out );
+		wp_update_attachment_metadata( $att_id, $meta );
+		return (int) $att_id;
 	}
 
 	/**
