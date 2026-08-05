@@ -2,8 +2,8 @@
 /**
  * Plugin Name:       Orderbay
  * Plugin URI:        https://github.com/Alextechgamer/Twilio-order-communicator-
- * Description:       Self-hosted WooCommerce ops toolkit — invoices/packing slips, order ops, email rules, catalog helpers, and dashboard. Independent of Twilio Order Communicator and StoreCanvas.
- * Version:           0.3.0
+ * Description:       Self-hosted WooCommerce ops toolkit — invoices/packing slips, fulfillment, order ops, email rules, catalog helpers, and dashboard. Independent of Twilio Order Communicator and StoreCanvas.
+ * Version:           0.4.0
  * Author:            Alextechgamer
  * Author URI:        https://github.com/Alextechgamer
  * Requires at least: 6.0
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'OB_VERSION', '0.3.0' );
+define( 'OB_VERSION', '0.4.0' );
 define( 'OB_PLUGIN_FILE', __FILE__ );
 define( 'OB_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'OB_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -33,6 +33,8 @@ require_once OB_PLUGIN_DIR . 'includes/class-ob-catalog.php';
 require_once OB_PLUGIN_DIR . 'includes/class-ob-dashboard.php';
 require_once OB_PLUGIN_DIR . 'includes/class-ob-digest.php';
 require_once OB_PLUGIN_DIR . 'includes/class-ob-export.php';
+require_once OB_PLUGIN_DIR . 'includes/class-ob-invoicing.php';
+require_once OB_PLUGIN_DIR . 'includes/class-ob-fulfillment.php';
 
 /**
  * Bootstrap when WooCommerce is active.
@@ -50,6 +52,8 @@ function ob_init() {
 	OB_Dashboard::instance();
 	OB_Digest::instance();
 	OB_Export::instance();
+	OB_Invoicing::instance();
+	OB_Fulfillment::instance();
 }
 
 register_deactivation_hook( __FILE__, 'ob_deactivate' );

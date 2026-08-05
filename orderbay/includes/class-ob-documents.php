@@ -86,7 +86,19 @@ class OB_Documents {
 		echo '</select>';
 		echo '<p class="description">' . esc_html__( 'Applied via @page CSS in the print view. Use browser Print → Save as PDF for a PDF file.', 'orderbay' ) . '</p></td></tr>';
 		echo '</table>';
-		submit_button( __( 'Save document settings', 'orderbay' ) );
+
+		echo '<tr><th><label for="ob_inv_prefix">' . esc_html__( 'Invoice number prefix', 'orderbay' ) . '</label></th><td>';
+		echo '<input type="text" id="ob_inv_prefix" name="ob_invoice_prefix" value="' . esc_attr( get_option( OB_Plugin::OPT_INVOICE_PREFIX, 'INV-' ) ) . '" />';
+		echo '<p class="description">' . esc_html__( 'Default INV-. Existing order invoice numbers are never renumbered.', 'orderbay' ) . '</p></td></tr>';
+		echo '<tr><th><label for="ob_inv_next">' . esc_html__( 'Next invoice sequence', 'orderbay' ) . '</label></th><td>';
+		echo '<input type="number" min="1" id="ob_inv_next" name="ob_invoice_next" value="' . esc_attr( (string) max( 1, (int) get_option( OB_Plugin::OPT_INVOICE_NEXT, 1 ) ) ) . '" />';
+		echo '<p class="description">' . esc_html__( 'Admin only: sets the next number to assign. Does not change past invoices.', 'orderbay' ) . '</p></td></tr>';
+		echo '<tr><th><label for="ob_cn_prefix">' . esc_html__( 'Credit note prefix', 'orderbay' ) . '</label></th><td>';
+		echo '<input type="text" id="ob_cn_prefix" name="ob_credit_prefix" value="' . esc_attr( get_option( OB_Plugin::OPT_CREDIT_PREFIX, 'CN-' ) ) . '" /></td></tr>';
+		echo '<tr><th><label for="ob_cn_next">' . esc_html__( 'Next credit note sequence', 'orderbay' ) . '</label></th><td>';
+		echo '<input type="number" min="1" id="ob_cn_next" name="ob_credit_next" value="' . esc_attr( (string) max( 1, (int) get_option( OB_Plugin::OPT_CREDIT_NEXT, 1 ) ) ) . '" /></td></tr>';
+
+				submit_button( __( 'Save document settings', 'orderbay' ) );
 		echo '</form></div>';
 	}
 
@@ -117,6 +129,10 @@ class OB_Documents {
 		}
 		$inv  = $this->print_url( $order->get_id(), 'invoice' );
 		$pack = $this->print_url( $order->get_id(), 'packing' );
+		$inv_no = $order->get_meta( OB_Plugin::META_INVOICE_NUMBER );
+		if ( $inv_no ) {
+			echo '<p class="form-field" style="clear:both;padding-left:0;"><strong>' . esc_html__( 'Invoice #', 'orderbay' ) . ':</strong> ' . esc_html( $inv_no ) . '</p>';
+		}
 		echo '<p class="form-field" style="clear:both;padding-left:0;">';
 		echo '<a class="button button-primary" target="_blank" href="' . esc_url( $inv ) . '">' . esc_html__( 'Print invoice', 'orderbay' ) . '</a> ';
 		echo '<a class="button" target="_blank" href="' . esc_url( $pack ) . '">' . esc_html__( 'Print packing slip', 'orderbay' ) . '</a> ';
@@ -183,6 +199,9 @@ class OB_Documents {
 			wp_die( esc_html__( 'Order not found', 'orderbay' ) );
 		}
 		$settings = OB_Plugin::get_doc_settings();
+		if ( 'invoice' === $type && class_exists( 'OB_Invoicing' ) ) {
+			OB_Invoicing::ensure_invoice_number( $order );
+		}
 		$orders   = array( $order );
 		$template = ( 'packing' === $type ) ? 'packing-slip.php' : 'invoice.php';
 		include OB_PLUGIN_DIR . 'templates/' . $template;
@@ -247,6 +266,11 @@ class OB_Documents {
 			wp_die( esc_html__( 'No orders selected.', 'orderbay' ) );
 		}
 		$settings = OB_Plugin::get_doc_settings();
+		if ( 'invoice' === $type && class_exists( 'OB_Invoicing' ) ) {
+			foreach ( $orders as $o ) {
+				OB_Invoicing::ensure_invoice_number( $o );
+			}
+		}
 		$template = ( 'packing' === $type ) ? 'packing-slip.php' : 'invoice.php';
 		include OB_PLUGIN_DIR . 'templates/' . $template;
 		exit;
