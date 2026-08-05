@@ -92,6 +92,21 @@ class OB_Dashboard {
 		}
 		echo '</div>';
 
+		$docs = OB_Plugin::get_doc_settings();
+		$rules = OB_Notifications::get_rules();
+		$any_rule_on = false;
+		foreach ( $rules as $r ) {
+			if ( ! empty( $r['enabled'] ) && '1' === (string) $r['enabled'] ) {
+				$any_rule_on = true;
+				break;
+			}
+		}
+		if ( empty( $docs['logo_url'] ) && ! $any_rule_on ) {
+			echo '<div class="notice notice-info inline" style="margin:12px 0;"><p><strong>' . esc_html__( 'Getting started', 'orderbay' ) . '</strong> — ';
+			echo esc_html__( 'Set a logo under Documents, add an email rule (optional, defaults off), and try Print invoice on an order. Flag orders with Needs attention for the queue card above.', 'orderbay' );
+			echo '</p></div>';
+		}
+
 		echo '<h2>' . esc_html__( 'Quick links', 'orderbay' ) . '</h2><ul>';
 		echo '<li><a href="' . esc_url( admin_url( 'admin.php?page=orderbay-documents' ) ) . '">' . esc_html__( 'Document settings (invoice / packing slip)', 'orderbay' ) . '</a></li>';
 		echo '<li><a href="' . esc_url( admin_url( 'admin.php?page=orderbay-notifications' ) ) . '">' . esc_html__( 'Email rules & low stock', 'orderbay' ) . '</a></li>';

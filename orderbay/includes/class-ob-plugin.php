@@ -44,6 +44,7 @@ class OB_Plugin {
 			'logo_url'    => '',
 			'from_lines'  => get_bloginfo( 'name' ) . "\n" . get_option( 'woocommerce_store_address', '' ),
 			'footer_text' => __( 'Thank you for your order.', 'orderbay' ),
+			'paper'       => 'letter', // letter|a4 — CSS @page size for print
 		);
 	}
 

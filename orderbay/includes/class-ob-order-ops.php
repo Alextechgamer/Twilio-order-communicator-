@@ -94,6 +94,9 @@ class OB_Order_Ops {
 		if ( is_array( $tags ) ) {
 			$tags = implode( ', ', $tags );
 		}
+		if ( $attention ) {
+			echo '<p class="ob-attention-badge" style="margin:0 0 8px;"><span style="display:inline-block;background:#b32d2e;color:#fff;padding:2px 8px;border-radius:3px;font-weight:600;font-size:12px;">' . esc_html__( 'Needs attention', 'orderbay' ) . '</span></p>';
+		}
 		echo '<p><label><input type="checkbox" name="ob_needs_attention" value="1" ' . checked( $attention, '1', false ) . ' /> ';
 		echo esc_html__( 'Needs attention', 'orderbay' ) . '</label></p>';
 		echo '<p><label>' . esc_html__( 'Tags (comma-separated)', 'orderbay' ) . '<br />';
@@ -300,7 +303,7 @@ class OB_Order_Ops {
 		$actions['ob_set_attention']   = __( 'Orderbay: mark needs attention', 'orderbay' );
 		$actions['ob_clear_attention'] = __( 'Orderbay: clear attention', 'orderbay' );
 		$actions['ob_add_note']        = __( 'Orderbay: add private note…', 'orderbay' );
-		// Status set uses a dedicated action with prompt via admin.js if needed; provide processing/completed shortcuts.
+		$actions['ob_add_tag']         = __( 'Orderbay: add tag…', 'orderbay' );
 		$actions['ob_status_processing'] = __( 'Orderbay: set status → Processing', 'orderbay' );
 		$actions['ob_status_completed']  = __( 'Orderbay: set status → Completed', 'orderbay' );
 		return $actions;
@@ -337,13 +340,27 @@ class OB_Order_Ops {
 					$count++;
 					break;
 				case 'ob_add_note':
-					// Note text via query arg when redirected from JS; fallback generic.
 					$note = isset( $_REQUEST['ob_bulk_note'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['ob_bulk_note'] ) ) : ''; // phpcs:ignore
 					if ( ! $note ) {
 						$note = __( 'Orderbay bulk note.', 'orderbay' );
 					}
 					$order->add_order_note( $note, false, true );
 					$count++;
+					break;
+				case 'ob_add_tag':
+					$tag = isset( $_REQUEST['ob_bulk_tag'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['ob_bulk_tag'] ) ) : ''; // phpcs:ignore
+					if ( $tag ) {
+						$existing = $order->get_meta( OB_Plugin::META_TAGS );
+						if ( ! is_array( $existing ) ) {
+							$existing = $existing ? array( (string) $existing ) : array();
+						}
+						if ( ! in_array( $tag, $existing, true ) ) {
+							$existing[] = $tag;
+						}
+						$order->update_meta_data( OB_Plugin::META_TAGS, array_values( $existing ) );
+						$order->save();
+						$count++;
+					}
 					break;
 			}
 		}
