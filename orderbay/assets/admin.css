@@ -1,0 +1,16 @@
+/* Orderbay admin */
+.ob-dashboard .ob-card:hover {
+	border-color: #2271b1;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.ob-order-side {
+	border-top: 1px solid #eee;
+	margin-top: 8px;
+}
+#ob-email-rules textarea {
+	min-width: 180px;
+}
+.wc-action-button.ob-print-invoice,
+.wc-action-button.ob-print-packing {
+	min-width: 2em;
+}
