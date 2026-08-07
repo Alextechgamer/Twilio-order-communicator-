@@ -687,7 +687,7 @@ class TOC_Logger {
 	 * Orders in the mapped Ready for Pickup status for bulk reminders.
 	 *
 	 * @param array $args {
-	 *     @type int  $days               Lookback window (default 30).
+	 *     @type int  $days               Lookback by date_modified (default 30). 0 = all time.
 	 *     @type int  $limit              Max orders to return (default 200).
 	 *     @type int  $skip_recent_hours  Hide orders reminded within this many hours (0 = show all).
 	 *     @type bool $require_phone      Require billing phone (default true).
@@ -705,22 +705,28 @@ class TOC_Logger {
 			)
 		);
 
-		$days  = max( 1, min( 365, absint( $args['days'] ) ) );
-		$limit = max( 1, min( 500, absint( $args['limit'] ) ) );
-		$skip  = max( 0, absint( $args['skip_recent_hours'] ) );
+		// days=0 → all time (no date window). Otherwise clamp 1–365.
+		$days_raw = absint( $args['days'] );
+		$all_time = ( 0 === $days_raw );
+		$days     = $all_time ? 0 : max( 1, min( 365, $days_raw ) );
+		$limit    = max( 1, min( 500, absint( $args['limit'] ) ) );
+		$skip     = max( 0, absint( $args['skip_recent_hours'] ) );
 
-		$date_limit = gmdate( 'Y-m-d H:i:s', time() - ( $days * DAY_IN_SECONDS ) );
-		$status     = TOC_Statuses::bare_status( TOC_Statuses::mapped_ready_status() );
+		$status = TOC_Statuses::bare_status( TOC_Statuses::mapped_ready_status() );
 
-		$orders = wc_get_orders(
-			array(
-				'limit'        => $limit * 3,
-				'status'       => $status,
-				'date_created' => '>=' . $date_limit,
-				'orderby'      => 'date',
-				'order'        => 'DESC',
-			)
+		// Prefer date_modified so older orders recently moved to Ready still appear.
+		$query = array(
+			'limit'   => $limit * 3,
+			'status'  => $status,
+			'orderby' => 'modified',
+			'order'   => 'DESC',
 		);
+		if ( ! $all_time ) {
+			$date_limit              = gmdate( 'Y-m-d H:i:s', time() - ( $days * DAY_IN_SECONDS ) );
+			$query['date_modified']  = '>=' . $date_limit;
+		}
+
+		$orders = wc_get_orders( $query );
 
 		$candidates = array();
 		$cutoff     = $skip > 0 ? ( time() - ( $skip * HOUR_IN_SECONDS ) ) : 0;

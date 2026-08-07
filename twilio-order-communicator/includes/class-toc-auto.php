@@ -447,7 +447,7 @@ class TOC_Auto {
 	/**
 	 * Optional customer email when order enters Ready for Pickup / Shipped.
 	 * Independent of voice/SMS auto-notify toggles. Quiet hours do not apply
-	 * (email is not disruptive like a phone call). Uses wp_mail with store From.
+	 * (email is not disruptive like a phone call). Uses WC mailer wrap when available, else wp_mail.
 	 * Once per order via _toc_emailed_* meta. Never gated by license.
 	 *
 	 * @param int    $order_id Order ID.
@@ -497,15 +497,34 @@ class TOC_Auto {
 		$subject = $twilio->merge_tags( $cfg['subject'], $order );
 		$body    = $twilio->merge_tags( $cfg['body'], $order );
 
-		// Plain-text email; store From headers when available.
-		$headers = array( 'Content-Type: text/plain; charset=UTF-8' );
-		$from_name  = wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
-		$from_email = get_option( 'woocommerce_email_from_address', get_option( 'admin_email' ) );
-		if ( is_email( $from_email ) ) {
-			$headers[] = 'From: ' . sprintf( '%s <%s>', $from_name, $from_email );
+		// Prefer WooCommerce mailer template wrap (HTML); fallback plain wp_mail.
+		$sent = false;
+		if ( function_exists( 'WC' ) && WC() && is_callable( array( WC(), 'mailer' ) ) ) {
+			$mailer = WC()->mailer();
+			if ( $mailer && method_exists( $mailer, 'wrap_message' ) && method_exists( $mailer, 'send' ) ) {
+				$heading = $subject;
+				// Body setting is plain text (or light HTML); merge_tags then wpautop for WC template.
+				$html    = wpautop( wp_kses_post( $body ) );
+				$message = $mailer->wrap_message( $heading, $html );
+				$sent    = (bool) $mailer->send(
+					$email,
+					$subject,
+					$message,
+					array( 'Content-Type: text/html; charset=UTF-8' )
+				);
+			}
 		}
 
-		$sent = wp_mail( $email, $subject, $body, $headers );
+		if ( ! $sent ) {
+			// Fallback: plain text wp_mail when WC mailer unavailable or send failed once.
+			$headers    = array( 'Content-Type: text/plain; charset=UTF-8' );
+			$from_name  = wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
+			$from_email = get_option( 'woocommerce_email_from_address', get_option( 'admin_email' ) );
+			if ( is_email( $from_email ) ) {
+				$headers[] = 'From: ' . sprintf( '%s <%s>', $from_name, $from_email );
+			}
+			$sent = (bool) wp_mail( $email, $subject, $body, $headers );
+		}
 
 		if ( $sent ) {
 			$order->add_order_note(
@@ -520,7 +539,7 @@ class TOC_Auto {
 			$order->add_order_note(
 				sprintf(
 					/* translators: %s: notification label */
-					__( 'Status email failed (%s): wp_mail returned false.', 'twilio-order-communicator' ),
+					__( 'Status email failed (%s): mailer returned false.', 'twilio-order-communicator' ),
 					$cfg['label']
 				)
 			);

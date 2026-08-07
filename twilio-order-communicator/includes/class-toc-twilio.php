@@ -606,6 +606,21 @@ class TOC_Twilio {
 			}
 		}
 
+		// WC additional checkout field meta keys (block): any key containing sms-consent.
+		foreach ( $order->get_meta_data() as $meta ) {
+			$data = $meta->get_data();
+			$key  = isset( $data['key'] ) ? (string) $data['key'] : '';
+			if ( $key === '' ) {
+				continue;
+			}
+			if ( false === stripos( $key, 'sms-consent' ) && false === stripos( $key, 'sms_consent' ) ) {
+				continue;
+			}
+			if ( $this->is_truthy_consent( $data['value'] ?? '' ) ) {
+				return true;
+			}
+		}
+
 		$user_id = $order->get_user_id();
 		if ( $user_id ) {
 			foreach ( array( $meta_key, '_toc_sms_consent', 'sms_opt_in', '_sms_consent' ) as $key ) {
@@ -616,6 +631,60 @@ class TOC_Twilio {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Explicit consent state for admin display: yes|no|unknown.
+	 *
+	 * @param int $order_id Order ID.
+	 * @return string
+	 */
+	public function get_sms_consent_state( $order_id ) {
+		$order = wc_get_order( $order_id );
+		if ( ! $order ) {
+			return 'unknown';
+		}
+		if ( $this->customer_consented_sms( $order_id ) ) {
+			return 'yes';
+		}
+		// Explicit no on canonical keys only.
+		$keys = array_filter(
+			array(
+				get_option( 'toc_sms_consent_meta', '_toc_sms_consent' ),
+				'_toc_sms_consent',
+			)
+		);
+		foreach ( $keys as $key ) {
+			$val = $order->get_meta( $key );
+			if ( $val === '' || $val === null ) {
+				continue;
+			}
+			if ( $this->is_falsy_consent( $val ) ) {
+				return 'no';
+			}
+		}
+		return 'unknown';
+	}
+
+	/**
+	 * @param mixed $value Value.
+	 * @return bool
+	 */
+	public function is_falsy_consent( $value ) {
+		if ( is_bool( $value ) ) {
+			return false === $value;
+		}
+		if ( is_int( $value ) || is_float( $value ) ) {
+			return (int) $value === 0;
+		}
+		if ( ! is_string( $value ) && ! is_numeric( $value ) ) {
+			return false;
+		}
+		$v = strtolower( trim( (string) $value ) );
+		if ( $v === '' ) {
+			return false;
+		}
+		return in_array( $v, array( 'no', 'n', '0', 'false', 'off', 'unchecked', 'opt-out', 'optout', 'declined' ), true );
 	}
 
 	public function set_sms_consent( $order_id, $consented, $phone = '' ) {

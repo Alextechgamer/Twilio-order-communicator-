@@ -4,7 +4,7 @@ Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
 WC requires at least: 7.0
-Stable tag: 1.13.0
+Stable tag: 1.14.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -85,6 +85,12 @@ No. The plugin includes its own tokenized TwiML endpoint.
 They text START or UNSTOP. Plain "YES" is intentionally not treated as re-subscribe.
 
 == Changelog ==
+
+= 1.14.0 =
+* Fix: block checkout SMS consent Yes no longer overwritten by missing field (unknown leaves meta alone)
+* Bulk Ready reminders: filter by date_modified; add All time (days=0)
+* Status emails use WooCommerce mailer template wrap when available
+
 
 = 1.13.0 =
 * Fix: map Polly voice options (polly.joanna → Polly.Joanna, etc.) in TwiML <Say>

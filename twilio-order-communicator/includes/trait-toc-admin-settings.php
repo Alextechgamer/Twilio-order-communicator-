@@ -391,7 +391,8 @@ trait TOC_Admin_Settings {
 				</tr>
 				<tr>
 					<th><label for="toc_email_ready_body"><?php echo esc_html__( 'Body', 'twilio-order-communicator' ); ?></label></th>
-					<td><textarea id="toc_email_ready_body" name="toc_email_ready_body" rows="5" class="large-text"><?php echo esc_textarea( get_option( 'toc_email_ready_body', "Hello {customer_first_name},\n\nYour order #{order_number} is ready for pickup at {store_name}.\n\nThank you." ) ); ?></textarea></td>
+					<td><textarea id="toc_email_ready_body" name="toc_email_ready_body" rows="5" class="large-text"><?php echo esc_textarea( get_option( 'toc_email_ready_body', "Hello {customer_first_name},\n\nYour order #{order_number} is ready for pickup at {store_name}.\n\nThank you." ) ); ?></textarea>
+						<p class="description"><?php echo esc_html__( 'Sent with the WooCommerce email template when available (plain text is auto-wrapped). Light HTML is allowed. Quiet hours do not apply.', 'twilio-order-communicator' ); ?></p></td>
 				</tr>
 			</table>
 
@@ -411,7 +412,8 @@ trait TOC_Admin_Settings {
 				</tr>
 				<tr>
 					<th><label for="toc_email_shipped_body"><?php echo esc_html__( 'Body', 'twilio-order-communicator' ); ?></label></th>
-					<td><textarea id="toc_email_shipped_body" name="toc_email_shipped_body" rows="5" class="large-text"><?php echo esc_textarea( get_option( 'toc_email_shipped_body', "Hello {customer_first_name},\n\nYour order #{order_number} has shipped.\n\nThank you for shopping at {store_name}." ) ); ?></textarea></td>
+					<td><textarea id="toc_email_shipped_body" name="toc_email_shipped_body" rows="5" class="large-text"><?php echo esc_textarea( get_option( 'toc_email_shipped_body', "Hello {customer_first_name},\n\nYour order #{order_number} has shipped.\n\nThank you for shopping at {store_name}." ) ); ?></textarea>
+						<p class="description"><?php echo esc_html__( 'Sent with the WooCommerce email template when available. Quiet hours do not apply.', 'twilio-order-communicator' ); ?></p></td>
 				</tr>
 			</table>
 

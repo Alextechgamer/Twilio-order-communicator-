@@ -11,7 +11,7 @@ trait TOC_Admin_Bulk {
 	/* ---------- BULK ---------- */
 	private function render_bulk() {
 		$days = isset( $_GET['days'] ) ? absint( $_GET['days'] ) : 30;
-		if ( ! in_array( $days, array( 7, 14, 30, 60, 90, 180 ), true ) ) {
+		if ( ! in_array( $days, array( 0, 7, 14, 30, 60, 90, 180 ), true ) ) {
 			$days = 30;
 		}
 
@@ -53,14 +53,17 @@ trait TOC_Admin_Bulk {
 			echo $consent_required ? '' : esc_html__( ' (consent currently disabled in Settings)', 'twilio-order-communicator' );
 			echo '. ';
 			echo esc_html__( 'Orders marked as collected are excluded.', 'twilio-order-communicator' );
+			echo ' ';
+			echo esc_html__( 'The time window filters by last modified (when the order entered/changed Ready), not by original order created date — so older orders newly marked Ready still appear.', 'twilio-order-communicator' );
 			?>
 		</p>
 
 		<form method="get" class="toc-filters toc-bulk-filters">
 			<input type="hidden" name="page" value="toc-communicator" />
 			<input type="hidden" name="tab" value="bulk" />
-			<label><?php echo esc_html__( 'Created within', 'twilio-order-communicator' ); ?>
+			<label><?php echo esc_html__( 'In Ready status (modified within)', 'twilio-order-communicator' ); ?>
 				<select name="days">
+					<option value="0" <?php selected( $days, 0 ); ?>><?php echo esc_html__( 'All time', 'twilio-order-communicator' ); ?></option>
 					<?php foreach ( array( 7, 14, 30, 60, 90, 180 ) as $d ) : ?>
 						<option value="<?php echo (int) $d; ?>" <?php selected( $days, $d ); ?>><?php echo (int) $d; ?> <?php echo esc_html__( 'days', 'twilio-order-communicator' ); ?></option>
 					<?php endforeach; ?>

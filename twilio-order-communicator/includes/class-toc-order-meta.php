@@ -153,6 +153,9 @@ class TOC_Order_Meta {
 		$history   = TOC_Logger::instance()->get_order_history( $order_id );
 		$twilio    = TOC_Twilio::instance();
 		$consented = $twilio->customer_consented_sms( $order_id );
+		$consent_state = method_exists( $twilio, 'get_sms_consent_state' )
+			? $twilio->get_sms_consent_state( $order_id )
+			: ( $consented ? 'yes' : 'no' );
 		$opted_out = $phone && $twilio->phone_is_opted_out( $phone );
 		$collected = self::is_collected( $order );
 		$collected_at = $order->get_meta( self::META_COLLECTED );
@@ -196,10 +199,12 @@ class TOC_Order_Meta {
 				<?php endif; ?>
 				<?php if ( $opted_out ) : ?>
 					<span class="toc-badge toc-badge-no"><?php echo esc_html__( 'SMS STOP / opted out', 'twilio-order-communicator' ); ?></span>
-				<?php elseif ( $consented ) : ?>
+				<?php elseif ( 'yes' === $consent_state || $consented ) : ?>
 					<span class="toc-badge toc-badge-ok"><?php echo esc_html__( 'SMS consent: Yes', 'twilio-order-communicator' ); ?></span>
-				<?php else : ?>
+				<?php elseif ( 'no' === $consent_state ) : ?>
 					<span class="toc-badge toc-badge-no"><?php echo esc_html__( 'SMS consent: No', 'twilio-order-communicator' ); ?></span>
+				<?php else : ?>
+					<span class="toc-badge"><?php echo esc_html__( 'SMS consent: Unknown', 'twilio-order-communicator' ); ?></span>
 				<?php endif; ?>
 				<?php if ( ! $twilio->is_configured() ) : ?>
 					<span class="toc-warn"><?php echo esc_html__( 'Twilio not configured', 'twilio-order-communicator' ); ?></span>
