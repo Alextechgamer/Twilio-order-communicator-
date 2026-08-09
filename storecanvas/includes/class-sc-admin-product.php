@@ -254,7 +254,34 @@ class SC_Admin_Product {
 			</div>
 
 			<div class="options_group sc-admin-section">
-				<h4 style="padding-left:12px;"><?php esc_html_e( 'Option fields', 'storecanvas' ); ?></h4>
+				<h4 style="padding-left:12px;"><?php esc_html_e( 'Global option groups', 'storecanvas' ); ?></h4>
+				<p class="form-field" style="padding-left:12px;">
+					<span class="description"><?php esc_html_e( 'Select groups to use on this product (WooCommerce → Option groups). Empty = auto-match by group product/category assignment. Local fields with the same id override group fields.', 'storecanvas' ); ?></span>
+				</p>
+				<p class="form-field" style="padding-left:12px;max-height:160px;overflow:auto;">
+					<?php
+					$groups_all = class_exists( 'SC_Option_Groups' ) ? SC_Option_Groups::all_groups() : array();
+					$groups_sel = get_post_meta( $post->ID, SC_Plugin::META_OPTION_GROUPS, true );
+					$groups_sel = is_array( $groups_sel ) ? array_map( 'intval', $groups_sel ) : array();
+					if ( empty( $groups_all ) ) :
+						?>
+						<em><?php esc_html_e( 'No option groups yet.', 'storecanvas' ); ?></em>
+					<?php else : ?>
+						<?php foreach ( $groups_all as $g ) : ?>
+							<label style="display:block;margin:2px 0;">
+								<input type="checkbox" name="sc_option_group_ids[]" value="<?php echo esc_attr( (string) $g['id'] ); ?>" <?php checked( in_array( (int) $g['id'], $groups_sel, true ) ); ?> />
+								<?php echo esc_html( $g['title'] ); ?>
+							</label>
+						<?php endforeach; ?>
+					<?php endif; ?>
+				</p>
+			</div>
+
+			<div class="options_group sc-admin-section">
+				<h4 style="padding-left:12px;"><?php esc_html_e( 'Option fields (local)', 'storecanvas' ); ?></h4>
+				<p class="form-field" style="padding-left:12px;">
+					<span class="description"><?php esc_html_e( 'Required + limits apply when the field is visible (show_if / role / variation). per_char pricing only for text-like fields. stock_qty on choices is optional (omit = unlimited).', 'storecanvas' ); ?></span>
+				</p>
 				<div id="sc-fields-builder" class="sc-builder" style="padding:0 12px 12px;">
 					<p>
 						<button type="button" class="button button-primary" id="sc-add-field"><?php esc_html_e( 'Add field', 'storecanvas' ); ?></button>
@@ -359,33 +386,22 @@ class SC_Admin_Product {
 					if ( ! is_array( $f ) ) {
 						continue;
 					}
-					$show_if = array();
-					if ( ! empty( $f['show_if'] ) && is_array( $f['show_if'] ) ) {
-						$sf = sanitize_key( $f['show_if']['field'] ?? '' );
-						if ( $sf ) {
-							$show_if = array(
-								'field' => $sf,
-								'value' => sanitize_text_field( $f['show_if']['value'] ?? '' ),
-							);
-						}
+					$row = SC_Product_Options::sanitize_field_row( $f );
+					if ( ! empty( $row['id'] ) ) {
+						$fields[] = $row;
 					}
-					$field_row = array(
-						'id'         => sanitize_key( $f['id'] ?? wp_generate_password( 6, false ) ),
-						'type'       => sanitize_key( $f['type'] ?? 'text' ),
-						'label'      => sanitize_text_field( $f['label'] ?? '' ),
-						'required'   => ! empty( $f['required'] ),
-						'price_type' => sanitize_key( $f['price_type'] ?? 'none' ),
-						'price'      => (float) ( $f['price'] ?? 0 ),
-						'choices'    => isset( $f['choices'] ) && is_array( $f['choices'] ) ? $f['choices'] : array(),
-					);
-					if ( $show_if ) {
-						$field_row['show_if'] = $show_if;
-					}
-					$fields[] = $field_row;
 				}
 			}
 		}
 		update_post_meta( $post_id, SC_Plugin::META_OPTIONS, array( 'fields' => $fields ) );
+
+		$group_ids = array();
+		if ( isset( $_POST['sc_option_group_ids'] ) && is_array( $_POST['sc_option_group_ids'] ) ) { // phpcs:ignore
+			foreach ( $_POST['sc_option_group_ids'] as $gid ) { // phpcs:ignore
+				$group_ids[] = absint( $gid );
+			}
+		}
+		update_post_meta( $post_id, SC_Plugin::META_OPTION_GROUPS, array_values( array_unique( array_filter( $group_ids ) ) ) );
 
 		$clip_ids = array();
 		if ( isset( $_POST['sc_clipart_ids'] ) && is_array( $_POST['sc_clipart_ids'] ) ) { // phpcs:ignore

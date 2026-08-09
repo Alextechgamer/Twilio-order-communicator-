@@ -1,4 +1,4 @@
-# StoreCanvas 1.1.0
+# StoreCanvas 1.2.0 1.1.0
 
 Self-hosted WooCommerce **product personalization**: options with pricing, live mockup placement, print-ready composites, clip-art library, guest design save, live price updates, production queue, and admin print tools.
 
@@ -78,3 +78,14 @@ Removes options, guest design transients, journey table. Does **not** delete ord
 ## License
 
 GPLv2 or later.
+
+
+## 1.2.0 — Options depth
+
+- **Types:** select, radio, checkbox, multi_select, text, textarea, email, phone/tel, number, date, color, image_choice, file, heading
+- **Global groups:** CPT `sc_option_group` (WooCommerce → Option groups). Assign products/categories; product multi-select; local field `id` overrides global.
+- **Limits:** required, min/max chars, number min/max/step, default_value (hidden/show_if fields not required)
+- **Role / variation / stock:** `roles_allowed`, `variation_ids`, choice `stock_qty` (omit = unlimited; best-effort restore on cancel/failed)
+- Uninstall does **not** delete `sc_option_group` posts (same as clipart).
+
+Mockup / print / queue behavior unchanged.

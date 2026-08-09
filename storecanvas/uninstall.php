@@ -5,7 +5,7 @@
  * Preserves:
  * - Order/product meta (sc_options, sc_placement, sc_layers, print files, etc.)
  * - Media attachments / composites
- * - CPT content (sc_clipart library items, sc_design saved designs)
+ * - CPT content (sc_clipart library items, sc_design saved designs, sc_option_group global option groups)
  *
  * Removes:
  * - Plugin options (sc_proof_email_*, sc_journey_enabled)
