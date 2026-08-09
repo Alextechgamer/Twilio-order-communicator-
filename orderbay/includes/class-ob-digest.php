@@ -175,12 +175,89 @@ class OB_Digest {
 		$body .= sprintf( __( "Processing / on-hold: %d\n", 'orderbay' ), $processing );
 		$body .= sprintf( __( "Needs attention: %d\n", 'orderbay' ), $attention );
 		$body .= sprintf( __( "Low-stock products (≤%d): %d\n", 'orderbay' ), $threshold, $low_stock_hits );
+		$body .= $this->attention_section();
 		$body .= "\n" . admin_url( 'admin.php?page=orderbay' ) . "\n";
 		$body .= __( "This email is independent of Twilio Order Communicator.\n", 'orderbay' );
 
 		wp_mail( $email, $subject, $body, array( 'Content-Type: text/plain; charset=UTF-8' ) );
 		update_option( self::OPT_LAST, time(), false );
 		delete_transient( 'ob_digest_sending' );
+	}
+
+
+	/**
+	 * Orders needing attention (not completed/cancelled) for digest body.
+	 *
+	 * @return string
+	 */
+	private function attention_section() {
+		$exclude = array( 'completed', 'cancelled', 'refunded', 'failed', 'trash' );
+		$all     = function_exists( 'wc_get_order_statuses' ) ? wc_get_order_statuses() : array();
+		$want    = array();
+		foreach ( array_keys( $all ) as $slug ) {
+			$bare = str_replace( 'wc-', '', $slug );
+			if ( ! in_array( $bare, $exclude, true ) ) {
+				$want[] = $bare;
+			}
+		}
+		if ( ! $want ) {
+			$want = array( 'processing', 'on-hold', 'pending' );
+		}
+		$orders = wc_get_orders(
+			array(
+				'limit'      => 40,
+				'status'     => $want,
+				'meta_key'   => OB_Plugin::META_ATTENTION,
+				'meta_value' => '1',
+				'orderby'    => 'date',
+				'order'      => 'ASC',
+				'return'     => 'objects',
+			)
+		);
+		if ( ! is_array( $orders ) ) {
+			$orders = array();
+		}
+		$lines = array();
+		foreach ( $orders as $order ) {
+			if ( ! $order instanceof WC_Order ) {
+				continue;
+			}
+			if ( ! $order->get_meta( OB_Plugin::META_ATTENTION ) ) {
+				continue;
+			}
+			$st = $order->get_status();
+			if ( in_array( $st, $exclude, true ) ) {
+				continue;
+			}
+			$created = $order->get_date_created();
+			$age     = ( $created && function_exists( 'human_time_diff' ) )
+				? human_time_diff( $created->getTimestamp(), time() )
+				: '—';
+			$reason  = '';
+			$rma     = $order->get_meta( OB_Plugin::META_RMA_STATUS );
+			if ( $rma && 'none' !== $rma ) {
+				$reason = 'RMA:' . $rma;
+			}
+			if ( $order->get_meta( OB_Plugin::META_SLA_AGED ) ) {
+				$reason = $reason ? ( $reason . '; SLA' ) : 'SLA aged';
+			}
+			$lines[] = sprintf(
+				'#%s | %s | age %s%s',
+				$order->get_order_number(),
+				$st,
+				$age,
+				$reason ? ( ' | ' . $reason ) : ''
+			);
+		}
+		$out = "\n" . __( '--- Needs attention (open) ---', 'orderbay' ) . "\n";
+		if ( ! $lines ) {
+			$out .= __( 'None', 'orderbay' ) . "\n";
+		} else {
+			foreach ( $lines as $line ) {
+				$out .= $line . "\n";
+			}
+		}
+		return $out;
 	}
 
 	/**

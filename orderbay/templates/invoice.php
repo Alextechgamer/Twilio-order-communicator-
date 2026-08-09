@@ -123,6 +123,15 @@ $paper = ( isset( $settings['paper'] ) && 'a4' === $settings['paper'] ) ? 'A4' :
 		<?php if ( $order->get_customer_note() ) : ?>
 			<div class="notes"><strong><?php esc_html_e( 'Customer note', 'orderbay' ); ?>:</strong> <?php echo esc_html( $order->get_customer_note() ); ?></div>
 		<?php endif; ?>
+		<?php
+		$track = $order->get_meta( OB_Plugin::META_TRACKING );
+		$turl  = class_exists( 'OB_Fulfillment' ) ? OB_Fulfillment::build_tracking_url( $order ) : '';
+		if ( $track ) :
+			?>
+			<div class="notes"><strong><?php esc_html_e( 'Tracking', 'orderbay' ); ?>:</strong> <?php echo esc_html( $track ); ?>
+			<?php if ( $turl ) : ?> — <a href="<?php echo esc_url( $turl ); ?>"><?php esc_html_e( 'Track', 'orderbay' ); ?></a><?php endif; ?>
+			</div>
+		<?php endif; ?>
 		<?php if ( ! empty( $settings['footer_text'] ) || ! empty( $settings['tax_id'] ) ) : ?>
 			<div class="footer">
 				<?php if ( ! empty( $settings['footer_text'] ) ) : ?><?php echo esc_html( $settings['footer_text'] ); ?><?php endif; ?>

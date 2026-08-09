@@ -127,11 +127,14 @@ $paper = ( isset( $settings['paper'] ) && 'a4' === $settings['paper'] ) ? 'A4' :
 		</table>
 		<?php
 		$track = $order->get_meta( OB_Plugin::META_TRACKING );
-		$turl  = $order->get_meta( OB_Plugin::META_TRACKING_URL );
+		$turl  = class_exists( 'OB_Fulfillment' ) ? OB_Fulfillment::build_tracking_url( $order ) : (string) $order->get_meta( OB_Plugin::META_TRACKING_URL );
+		$clab  = class_exists( 'OB_Fulfillment' ) ? OB_Fulfillment::carrier_label( $order ) : '';
 		if ( $track ) :
 			?>
-			<div class="notes"><strong><?php esc_html_e( 'Tracking', 'orderbay' ); ?>:</strong> <?php echo esc_html( $track ); ?>
-			<?php if ( $turl ) : ?> — <a href="<?php echo esc_url( $turl ); ?>"><?php echo esc_html( $turl ); ?></a><?php endif; ?>
+			<div class="notes"><strong><?php esc_html_e( 'Tracking', 'orderbay' ); ?>:</strong>
+			<?php if ( $clab ) : ?><?php echo esc_html( $clab ); ?> · <?php endif; ?>
+			<?php echo esc_html( $track ); ?>
+			<?php if ( $turl ) : ?> — <a href="<?php echo esc_url( $turl ); ?>"><?php esc_html_e( 'Track', 'orderbay' ); ?></a><?php endif; ?>
 			</div>
 		<?php endif; ?>
 		<?php

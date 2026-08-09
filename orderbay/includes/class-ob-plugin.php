@@ -23,6 +23,8 @@ class OB_Plugin {
 	const OPT_RMA_NEXT        = 'ob_rma_next';
 	const OPT_SLA             = 'ob_sla_settings';
 	const OPT_NOTE_TEMPLATES  = 'ob_note_templates';
+	const OPT_TRACKING_CARRIERS = 'ob_tracking_carriers';
+	const OPT_CUSTOMER_PACKING = 'ob_customer_packing_slip_enabled';
 
 	const META_ATTENTION      = '_ob_needs_attention';
 	const META_TAGS           = '_ob_order_tags';
@@ -30,6 +32,7 @@ class OB_Plugin {
 	const META_CREDIT_NUMBER  = '_ob_credit_note_number';
 	const META_TRACKING       = '_ob_tracking_number';
 	const META_TRACKING_URL   = '_ob_tracking_url';
+	const META_TRACKING_CARRIER = '_ob_tracking_carrier';
 	const META_TRACKING_EMAIL = '_ob_tracking_emailed_at';
 	const META_RMA_STATUS     = '_ob_rma_status';
 	const META_RMA_NUMBER     = '_ob_rma_number';
