@@ -93,19 +93,24 @@ class OB_Dashboard {
 		echo '</div>';
 
 		$docs = OB_Plugin::get_doc_settings();
-		$rules = OB_Notifications::get_rules();
-		$any_rule_on = false;
-		foreach ( $rules as $r ) {
-			if ( ! empty( $r['enabled'] ) && '1' === (string) $r['enabled'] ) {
-				$any_rule_on = true;
-				break;
+		$from_missing = empty( trim( (string) ( $docs['from_lines'] ?? '' ) ) );
+		$logo_missing = empty( $docs['logo_url'] );
+		if ( $logo_missing || $from_missing ) {
+			echo '<div class="notice notice-info inline" style="margin:12px 0;"><p><strong>' . esc_html__( 'Getting started — documents', 'orderbay' ) . '</strong> — ';
+			if ( $logo_missing && $from_missing ) {
+				echo esc_html__( 'Add a logo URL and From name/address under Documents so invoices look complete.', 'orderbay' );
+			} elseif ( $logo_missing ) {
+				echo esc_html__( 'Optional: add a logo URL under Documents for branded invoices.', 'orderbay' );
+			} else {
+				echo esc_html__( 'Set From name/address under Documents (used on invoices and packing slips).', 'orderbay' );
 			}
-		}
-		if ( empty( $docs['logo_url'] ) && ! $any_rule_on ) {
-			echo '<div class="notice notice-info inline" style="margin:12px 0;"><p><strong>' . esc_html__( 'Getting started', 'orderbay' ) . '</strong> — ';
-			echo esc_html__( 'Set a logo under Documents, add an email rule (optional, defaults off), and try Print invoice on an order. Flag orders with Needs attention for the queue card above.', 'orderbay' );
+			echo ' <a href="' . esc_url( admin_url( 'admin.php?page=orderbay-documents' ) ) . '">' . esc_html__( 'Open Documents', 'orderbay' ) . '</a>';
 			echo '</p></div>';
 		}
+
+		echo '<div class="notice notice-info inline" style="margin:12px 0;"><p><strong>' . esc_html__( 'Safe defaults', 'orderbay' ) . '</strong> — ';
+		echo esc_html__( 'Customer RMA, barcodes, staff digests, tracking email, and customer packing slip stay off until you enable them. Bulk print / pick list / CSV need the edit_shop_orders capability.', 'orderbay' );
+		echo '</p></div>';
 
 		echo '<h2>' . esc_html__( 'Quick links', 'orderbay' ) . '</h2><ul>';
 		echo '<li><a href="' . esc_url( admin_url( 'admin.php?page=orderbay-documents' ) ) . '">' . esc_html__( 'Document settings (invoice / packing slip)', 'orderbay' ) . '</a></li>';

@@ -76,6 +76,7 @@ class OB_Export {
 		}
 		$url = wp_nonce_url( admin_url( 'admin-post.php?action=ob_export_orders_csv' ), 'ob_export_orders_csv' );
 		echo '<div class="wrap"><h1>' . esc_html__( 'Orderbay export', 'orderbay' ) . '</h1>';
+		echo '<p class="description">' . esc_html__( 'Requires the edit_shop_orders capability. Streams a CSV download of matching orders.', 'orderbay' ) . '</p>';
 		echo '<p>' . esc_html__( 'Download recent orders as CSV (order_id, number, date, status, total, customer, email, phone, needs_attention, tags).', 'orderbay' ) . '</p>';
 		echo '<form method="get" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		echo '<input type="hidden" name="action" value="ob_export_orders_csv" />';
