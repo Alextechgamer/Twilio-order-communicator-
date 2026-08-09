@@ -28,6 +28,8 @@ class SC_Plugin {
 	const META_CUSTOMIZER  = '_sc_customizer';
 	const META_VALIDATION  = '_sc_validation';
 	const META_CLIPART     = '_sc_clipart_ids'; // product: array of clipart post IDs, empty = all
+	const META_OPTION_GROUPS = '_sc_option_group_ids'; // product: assigned global group IDs
+	const CPT_OPTION_GROUP = 'sc_option_group';
 
 	/** Cart/order item keys */
 	const CART_OPTIONS     = 'sc_options';

@@ -171,12 +171,20 @@
 			if (Array.isArray(f.choices)) {
 				choicesStr = f.choices
 					.map(function (c) {
-						return typeof c === 'object' ? c.label || c.value || '' : c;
+						if (typeof c !== 'object') return String(c);
+						var s = c.label || c.value || '';
+						if (c.image_url) s += '|' + c.image_url;
+						else if (c.image_id) s += '|#' + c.image_id;
+						if (c.stock_qty != null && c.stock_qty !== '') s += '@' + c.stock_qty;
+						return s;
 					})
 					.join(', ');
 			}
 			var showIfField = (f.show_if && f.show_if.field) || f.show_if_field || '';
 			var showIfValue = (f.show_if && f.show_if.value != null) ? f.show_if.value : (f.show_if_value || '');
+			var rolesStr = Array.isArray(f.roles_allowed) ? f.roles_allowed.join(',') : (f.roles_allowed || '');
+			var varsStr = Array.isArray(f.variation_ids) ? f.variation_ids.join(',') : (f.variation_ids || '');
+			var defVal = Array.isArray(f.default_value) ? f.default_value.join(',') : (f.default_value != null ? f.default_value : '');
 			var $row = $(
 				'<div class="sc-row sc-field-row" style="margin-bottom:8px;padding:8px;border:1px solid #ddd;background:#fff;">' +
 					'<input type="hidden" class="sc-field-id" value="' +
@@ -197,9 +205,33 @@
 					'<input type="number" class="sc-field-price" value="' +
 					(f.price != null ? f.price : 0) +
 					'" step="0.01" style="width:80px" /> ' +
-					'<label class="sc-choices-wrap">Choices <input type="text" class="sc-field-choices" placeholder="A, B, C" value="' +
+					'<label class="sc-choices-wrap">Choices <input type="text" class="sc-field-choices" placeholder="A, B|url@stock" value="' +
 					esc(choicesStr) +
-					'" style="width:200px" /></label><br/>' +
+					'" style="width:220px" title="label or label|image_url@stock" /></label><br/>' +
+					'<label>Default <input type="text" class="sc-field-default" value="' +
+					esc(defVal) +
+					'" style="width:100px" /></label> ' +
+					'<label>Min chars <input type="number" class="sc-field-min-chars" value="' +
+					(f.min_chars != null ? f.min_chars : '') +
+					'" style="width:60px" /></label> ' +
+					'<label>Max chars <input type="number" class="sc-field-max-chars" value="' +
+					(f.max_chars != null ? f.max_chars : '') +
+					'" style="width:60px" /></label> ' +
+					'<label>Min <input type="number" class="sc-field-min" value="' +
+					(f.min != null ? f.min : '') +
+					'" style="width:60px" step="any" /></label> ' +
+					'<label>Max <input type="number" class="sc-field-max" value="' +
+					(f.max != null ? f.max : '') +
+					'" style="width:60px" step="any" /></label> ' +
+					'<label>Step <input type="number" class="sc-field-step" value="' +
+					(f.step != null ? f.step : '') +
+					'" style="width:60px" step="any" /></label><br/>' +
+					'<label>Roles <input type="text" class="sc-field-roles" placeholder="customer,wholesale" value="' +
+					esc(rolesStr) +
+					'" style="width:140px" /></label> ' +
+					'<label>Variation IDs <input type="text" class="sc-field-variations" placeholder="101,102" value="' +
+					esc(varsStr) +
+					'" style="width:120px" /></label> ' +
 					'<label>Show if field <input type="text" class="sc-field-show-if-field" placeholder="other_field_id" value="' +
 					esc(showIfField) +
 					'" style="width:120px" /></label> ' +
@@ -213,6 +245,32 @@
 		});
 	}
 
+	function parseChoiceToken(s) {
+		s = s.trim();
+		if (!s) return null;
+		var stock = null;
+		var at = s.lastIndexOf('@');
+		if (at > 0 && /^\d+$/.test(s.slice(at + 1))) {
+			stock = parseInt(s.slice(at + 1), 10);
+			s = s.slice(0, at);
+		}
+		var image_url = '';
+		var image_id = 0;
+		var pipe = s.indexOf('|');
+		var label = s;
+		if (pipe >= 0) {
+			label = s.slice(0, pipe).trim();
+			var img = s.slice(pipe + 1).trim();
+			if (img.charAt(0) === '#') image_id = parseInt(img.slice(1), 10) || 0;
+			else image_url = img;
+		}
+		var row = { value: label, label: label };
+		if (image_url) row.image_url = image_url;
+		if (image_id) row.image_id = image_id;
+		if (stock != null) row.stock_qty = stock;
+		return row;
+	}
+
 	function syncFields() {
 		var fields = [];
 		$('#sc-fields-list .sc-field-row').each(function () {
@@ -220,11 +278,9 @@
 			var type = $r.find('.sc-field-type').val();
 			var choicesRaw = $r.find('.sc-field-choices').val() || '';
 			var choices = [];
-			if (choicesRaw && (type === 'select' || type === 'radio' || type === 'checkbox')) {
-				choices = choicesRaw.split(',').map(function (s) {
-					s = s.trim();
-					return { value: s, label: s };
-				});
+			var choiceTypes = ['select', 'radio', 'checkbox', 'multi_select', 'image_choice'];
+			if (choicesRaw && choiceTypes.indexOf(type) >= 0) {
+				choices = choicesRaw.split(',').map(parseChoiceToken).filter(Boolean);
 			}
 			var showIfField = ($r.find('.sc-field-show-if-field').val() || '').trim();
 			var showIfValue = $r.find('.sc-field-show-if-value').val() || '';
@@ -237,6 +293,19 @@
 				price: parseFloat($r.find('.sc-field-price').val()) || 0,
 				choices: choices,
 			};
+			var def = ($r.find('.sc-field-default').val() || '').trim();
+			if (def) row.default_value = def;
+			['min_chars', 'max_chars', 'min', 'max', 'step'].forEach(function (k) {
+				var cls = '.sc-field-' + k.replace('_', '-');
+				if (k === 'min_chars') cls = '.sc-field-min-chars';
+				if (k === 'max_chars') cls = '.sc-field-max-chars';
+				var v = $r.find(cls).val();
+				if (v !== '' && v != null) row[k] = parseFloat(v);
+			});
+			var roles = ($r.find('.sc-field-roles').val() || '').trim();
+			if (roles) row.roles_allowed = roles.split(/[\s,]+/).filter(Boolean);
+			var vars = ($r.find('.sc-field-variations').val() || '').trim();
+			if (vars) row.variation_ids = vars.split(/[\s,]+/).map(function (x) { return parseInt(x, 10); }).filter(Boolean);
 			if (showIfField) {
 				row.show_if = { field: showIfField, value: showIfValue };
 			}

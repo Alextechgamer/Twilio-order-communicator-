@@ -3,72 +3,33 @@ Contributors: alextechgamer
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 License: GPLv2 or later
-License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Self-hosted WooCommerce personalization: product options, live mockup, print-ready exports, library, guest save.
+Self-hosted WooCommerce personalization: product options, live mockup, print-ready, library, guest save.
 
 == Description ==
 
-StoreCanvas is a self-hosted WooCommerce module for product options (with pricing), live mockup placement (images, text, clip-art), print-ready validation and GD composites, guest design save, live price updates, and admin print tools.
+Product options parity with common add-ons plugins plus live mockup and print composites (PHP GD).
 
-Requires PHP GD for print composites. Works with classic and block-friendly setups via shortcodes.
-
-== Installation ==
-
-1. Upload the `storecanvas` folder to `/wp-content/plugins/`
-2. Activate the plugin through the 'Plugins' menu
-3. Configure products on the StoreCanvas product data tab
-
-== Shortcodes ==
-
-* `[storecanvas_options]` — option fields on the product page
-* `[storecanvas_customizer]` — live mockup panel
-
-== Uninstall ==
-
-Removes plugin options, guest design transients, and the journey debug table. Does not remove order/product meta, media, or library/design CPT posts.
+Independent of Twilio Order Communicator and Orderbay.
 
 == Changelog ==
 
+= 1.2.0 =
+* Expanded field types: date, color, number, email, phone, multi_select, image_choice
+* Global option groups (CPT sc_option_group) by product/category; local id override
+* Required, min/max chars, number min/max/step, defaults
+* Role visibility, variation targeting, optional per-choice stock
+* Cart/order human-readable option labels
+
 = 1.1.0 =
-* Guest/logged-in design full rehydrate (src/attachment_id on image layers)
-* Print text quality: font map, scaled size, optional stroke
-* Production queue admin (All/Unprinted/Printed, ZIP, mark printed)
-* Product tab status line + empty-setup notice
-* Order item preview thumbnail (sc_preview_id)
+* Design rehydrate, text print quality, production queue, admin UX
 
 = 1.0.0 =
-* First stable release
-* Docs, uninstall.php, GD soft-fail notice, AJAX/meta key documentation
-* Packaging for WordPress install (storecanvas/ root)
+* Stable polish
 
-= 0.8.0 =
-* Live product-page price updates from option extras
-* Block cart/checkout compatibility + shortcodes
-* Orders list SC Art column and filter (HPOS + legacy)
+== Upgrade Notice ==
 
-= 0.7.0 =
-* Text layers; clip-art library; guest save design
-* Text rasterization in print composites (bundled TTF or GD fallback)
-
-= 0.6.0 =
-* Visual print-area editor; bleed/color validation
-* Bulk order print ZIP; optional customer proof email
-
-= 0.5.0 =
-* Rotation; show_if conditionals; multi-layer art
-* Print sheet; journey log; safe margins; saved designs (logged-in)
-
-= 0.4.0 =
-* Print-ready DPI validation; artwork sideload; GD composites; admin downloads
-
-= 0.3.0 =
-* Constrain art to print area; corner resize; wheel scale; multi-view placements
-
-= 0.2.0 =
-* Visual product admin builders; option cart pricing
-
-= 0.1.0-scaffold =
-* Initial scaffold
+= 1.2.0 =
+Option field JSON remains backward compatible; new keys are optional.
