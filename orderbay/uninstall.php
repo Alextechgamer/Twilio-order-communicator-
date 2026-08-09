@@ -28,6 +28,8 @@ $options = array(
 	'ob_rma_next',
 	'ob_sla_settings',
 	'ob_note_templates',
+	'ob_tracking_carriers',
+	'ob_customer_packing_slip_enabled',
 );
 
 foreach ( $options as $opt ) {

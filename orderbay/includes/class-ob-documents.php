@@ -31,6 +31,7 @@ class OB_Documents {
 		add_filter( 'handle_bulk_actions-edit-shop_order', array( $this, 'handle_bulk_legacy' ), 10, 3 );
 		add_filter( 'handle_bulk_actions-woocommerce_page_wc-orders', array( $this, 'handle_bulk_hpos' ), 10, 3 );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
+		add_action( 'admin_notices', array( $this, 'bulk_empty_notice' ) );
 	}
 
 	public function register_settings() {
@@ -252,8 +253,10 @@ class OB_Documents {
 		$ids  = array_map( 'absint', (array) $ids );
 		$ids  = array_filter( $ids );
 		if ( ! $ids ) {
-			return $redirect;
+			return add_query_arg( 'ob_bulk_empty', '1', $redirect );
 		}
+		// Cap bulk print to keep browser print usable.
+		$ids = array_slice( $ids, 0, 50 );
 		$url = wp_nonce_url(
 			admin_url( 'admin-post.php?action=ob_bulk_print&type=' . rawurlencode( $type ) . '&ids=' . implode( ',', $ids ) ),
 			'ob_bulk_print'
@@ -289,5 +292,15 @@ class OB_Documents {
 		$template = ( 'packing' === $type ) ? 'packing-slip.php' : 'invoice.php';
 		include OB_PLUGIN_DIR . 'templates/' . $template;
 		exit;
+	}
+
+	public function bulk_empty_notice() {
+		if ( empty( $_GET['ob_bulk_empty'] ) ) { // phpcs:ignore
+			return;
+		}
+		if ( ! current_user_can( 'edit_shop_orders' ) ) {
+			return;
+		}
+		echo '<div class="notice notice-warning is-dismissible"><p>' . esc_html__( 'Orderbay: no orders selected for bulk print.', 'orderbay' ) . '</p></div>';
 	}
 }
