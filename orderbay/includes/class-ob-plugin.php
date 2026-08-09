@@ -16,6 +16,8 @@ class OB_Plugin {
 	const OPT_INVOICE_NEXT    = 'ob_invoice_next';
 	const OPT_CREDIT_PREFIX   = 'ob_credit_prefix';
 	const OPT_CREDIT_NEXT     = 'ob_credit_next';
+	const OPT_PROFORMA_PREFIX = 'ob_proforma_prefix';
+	const OPT_PROFORMA_NEXT   = 'ob_proforma_next';
 	const OPT_TRACKING_EMAIL  = 'ob_tracking_email_settings';
 	const OPT_AUTO_ATTENTION  = 'ob_auto_attention_statuses';
 	const OPT_RMA             = 'ob_rma_settings';
@@ -30,6 +32,7 @@ class OB_Plugin {
 	const META_TAGS           = '_ob_order_tags';
 	const META_INVOICE_NUMBER = '_ob_invoice_number';
 	const META_CREDIT_NUMBER  = '_ob_credit_note_number';
+	const META_PROFORMA_NUMBER = '_ob_proforma_number';
 	const META_TRACKING       = '_ob_tracking_number';
 	const META_TRACKING_URL   = '_ob_tracking_url';
 	const META_TRACKING_CARRIER = '_ob_tracking_carrier';
@@ -74,8 +77,11 @@ class OB_Plugin {
 			'footer_text' => __( 'Thank you for your order.', 'orderbay' ),
 			'paper'       => 'letter',
 			'tax_id'      => '',
-			'show_thumbs'   => '0',
-			'show_barcodes' => '0',
+			'show_thumbs'     => '0',
+			'show_barcodes'   => '0',
+			'qr_enabled'      => '0',
+			'pdf_engine'      => 'browser',
+			'delivery_prices' => '0',
 		);
 	}
 

@@ -1,4 +1,4 @@
-# Orderbay 1.0.0
+# Orderbay 1.1.0
 
 Self-hosted **WooCommerce ops toolkit** — invoices, packing slips, fulfillment, RMA, digests, catalog helpers, and dashboard.
 
@@ -77,3 +77,14 @@ Deletes `ob_*` **options** and unschedules crons. **Does not** delete order/prod
 ## License
 
 GPLv2 or later.
+
+
+## 1.1.0 — Document polish
+
+- **Proforma** — `PRO-` sequence (`_ob_proforma_number`), watermark, not a tax invoice
+- **Delivery note** — ship-to + lines/qty; prices optional (default off)
+- **Shipping label** — ~4×6 address label; optional Code 128 barcode
+- **QR** — pure PHP SVG on invoice/packing when `qr_enabled` (default off)
+- **PDF** — browser primary; Auto uses host Dompdf/TCPDF only if already installed (not bundled)
+
+No Composer. Independent of TOC and StoreCanvas.
