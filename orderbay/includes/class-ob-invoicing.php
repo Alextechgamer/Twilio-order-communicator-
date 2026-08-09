@@ -54,6 +54,19 @@ class OB_Invoicing {
 			'sanitize_callback' => array( $this, 'sanitize_next' ),
 			'default'           => 1,
 		) );
+		register_setting( 'ob_documents', OB_Plugin::OPT_PROFORMA_PREFIX, array(
+			'type'              => 'string',
+			'sanitize_callback' => function ( $v ) {
+				$v = is_string( $v ) ? sanitize_text_field( $v ) : 'PRO-';
+				return $v ? $v : 'PRO-';
+			},
+			'default'           => 'PRO-',
+		) );
+		register_setting( 'ob_documents', OB_Plugin::OPT_PROFORMA_NEXT, array(
+			'type'              => 'integer',
+			'sanitize_callback' => array( $this, 'sanitize_next' ),
+			'default'           => 1,
+		) );
 	}
 
 	public function sanitize_prefix( $v ) {
@@ -98,6 +111,28 @@ class OB_Invoicing {
 	 * @param WC_Order $order Order.
 	 * @return string
 	 */
+
+	/**
+	 * Assign immutable proforma number once (PRO- sequence).
+	 *
+	 * @param WC_Order $order Order.
+	 * @return string
+	 */
+	public static function ensure_proforma_number( $order ) {
+		if ( ! $order instanceof WC_Order ) {
+			return '';
+		}
+		$existing = $order->get_meta( OB_Plugin::META_PROFORMA_NUMBER );
+		if ( $existing ) {
+			return (string) $existing;
+		}
+		$number = self::allocate_number( OB_Plugin::OPT_PROFORMA_PREFIX, OB_Plugin::OPT_PROFORMA_NEXT, 'PRO-' );
+		$order->update_meta_data( OB_Plugin::META_PROFORMA_NUMBER, $number );
+		$order->add_order_note( sprintf( __( 'Orderbay proforma number assigned: %s', 'orderbay' ), $number ), false, true );
+		$order->save();
+		return $number;
+	}
+
 	public static function ensure_credit_number( $order ) {
 		if ( ! $order instanceof WC_Order ) {
 			return '';

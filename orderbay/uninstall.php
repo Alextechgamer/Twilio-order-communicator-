@@ -3,7 +3,7 @@
  * Orderbay uninstall — options + crons only.
  *
  * Does NOT delete order/product meta:
- * _ob_invoice_number, _ob_credit_note_number, _ob_tracking_*, _ob_rma_*,
+ * _ob_invoice_number, _ob_proforma_number, _ob_credit_note_number, _ob_tracking_*, _ob_rma_*,
  * _ob_bin_location, _ob_qty_fulfilled, _ob_fulfillment_status, _ob_needs_attention,
  * _ob_order_tags, _ob_sla_aged_at, email once-guards, etc.
  *
@@ -21,6 +21,8 @@ $options = array(
 	'ob_invoice_next',
 	'ob_credit_prefix',
 	'ob_credit_next',
+	'ob_proforma_next',
+	'ob_proforma_prefix',
 	// Notifications.
 	'ob_email_rules',
 	'ob_low_stock_settings',

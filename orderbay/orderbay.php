@@ -3,7 +3,7 @@
  * Plugin Name:       Orderbay
  * Plugin URI:        https://github.com/Alextechgamer/Twilio-order-communicator-
  * Description:       Self-hosted WooCommerce ops toolkit — invoices/packing slips, fulfillment, order ops, email rules, catalog helpers, and dashboard. Independent of Twilio Order Communicator and StoreCanvas.
- * Version:           1.0.0
+ * Version:           1.1.0
  * Author:            Alextechgamer
  * Author URI:        https://github.com/Alextechgamer
  * Requires at least: 6.0
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'OB_VERSION', '1.0.0' );
+define( 'OB_VERSION', '1.1.0' );
 define( 'OB_PLUGIN_FILE', __FILE__ );
 define( 'OB_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'OB_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -40,6 +40,7 @@ require_once OB_PLUGIN_DIR . 'includes/class-ob-sla.php';
 require_once OB_PLUGIN_DIR . 'includes/class-ob-notes.php';
 require_once OB_PLUGIN_DIR . 'includes/class-ob-partial.php';
 require_once OB_PLUGIN_DIR . 'includes/class-ob-barcode.php';
+require_once OB_PLUGIN_DIR . 'includes/class-ob-qr.php';
 require_once OB_PLUGIN_DIR . 'includes/class-ob-search.php';
 
 /**
@@ -56,6 +57,12 @@ function ob_init() {
 	}
 	if ( false === get_option( 'ob_customer_packing_slip_enabled', false ) ) {
 		add_option( 'ob_customer_packing_slip_enabled', '0', '', 'no' );
+	}
+	if ( false === get_option( 'ob_proforma_prefix', false ) ) {
+		add_option( 'ob_proforma_prefix', 'PRO-', '', 'no' );
+	}
+	if ( false === get_option( 'ob_proforma_next', false ) ) {
+		add_option( 'ob_proforma_next', 1, '', 'no' );
 	}
 
 	OB_Plugin::instance();
