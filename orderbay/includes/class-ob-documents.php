@@ -72,9 +72,10 @@ class OB_Documents {
 		}
 		$s = OB_Plugin::get_doc_settings();
 		echo '<div class="wrap"><h1>' . esc_html__( 'Orderbay documents', 'orderbay' ) . '</h1>';
-		echo '<p class="description">' . esc_html__( 'Primary path: open print view → browser Print / Save as PDF. No Dompdf/TCPDF dependency. Works offline once opened.', 'orderbay' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Primary path: open print view → browser Print / Save as PDF. No Dompdf/TCPDF dependency. Works offline once opened. Bulk print on the Orders list requires edit_shop_orders.', 'orderbay' ) . '</p>';
 		echo '<form method="post" action="options.php">';
 		settings_fields( 'ob_documents' );
+		echo '<h2>' . esc_html__( 'Document appearance', 'orderbay' ) . '</h2>';
 		echo '<table class="form-table" role="presentation">';
 		echo '<tr><th><label for="ob_logo">' . esc_html__( 'Logo URL', 'orderbay' ) . '</label></th><td>';
 		echo '<input type="url" class="large-text" id="ob_logo" name="' . esc_attr( OB_Plugin::OPT_DOCS ) . '[logo_url]" value="' . esc_attr( $s['logo_url'] ) . '" />';
@@ -102,6 +103,7 @@ class OB_Documents {
 		echo esc_html__( 'Print Code 128 barcode (SVG) for order number on invoice, packing slip, and RMA (default off; pure PHP, no Composer)', 'orderbay' ) . '</label></td></tr>';
 		echo '</table>';
 
+		echo '<h2>' . esc_html__( 'Invoice & credit note numbers', 'orderbay' ) . '</h2>';
 		echo '<table class="form-table"><tr><th><label for="ob_inv_prefix">' . esc_html__( 'Invoice number prefix', 'orderbay' ) . '</label></th><td>';
 		echo '<input type="text" id="ob_inv_prefix" name="ob_invoice_prefix" value="' . esc_attr( get_option( OB_Plugin::OPT_INVOICE_PREFIX, 'INV-' ) ) . '" />';
 		echo '<p class="description">' . esc_html__( 'Default INV-. Existing order invoice numbers are never renumbered.', 'orderbay' ) . '</p></td></tr>';

@@ -3,7 +3,7 @@
  * Plugin Name:       Orderbay
  * Plugin URI:        https://github.com/Alextechgamer/Twilio-order-communicator-
  * Description:       Self-hosted WooCommerce ops toolkit — invoices/packing slips, fulfillment, order ops, email rules, catalog helpers, and dashboard. Independent of Twilio Order Communicator and StoreCanvas.
- * Version:           0.7.0
+ * Version:           1.0.0
  * Author:            Alextechgamer
  * Author URI:        https://github.com/Alextechgamer
  * Requires at least: 6.0
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'OB_VERSION', '0.7.0' );
+define( 'OB_VERSION', '1.0.0' );
 define( 'OB_PLUGIN_FILE', __FILE__ );
 define( 'OB_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'OB_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
