@@ -12,3 +12,6 @@ vendor/
 smoke-wp/
 license-server/config.php
 *.sqlite
+
+# Release artifacts — build locally or attach to GitHub Releases; do not commit
+*.zip
