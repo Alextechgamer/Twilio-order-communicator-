@@ -411,7 +411,7 @@ trait TOC_Admin_Settings {
 
 			<h2><?php echo esc_html__( 'Customer status emails', 'twilio-order-communicator' ); ?></h2>
 			<p class="description"><?php echo esc_html__( 'Optional email to the customer when an order enters the mapped Ready for Pickup or Shipped status. Independent of voice/SMS auto-notify. Sent once per order (clear the order meta to re-send). Uses wp_mail with your store From address. Quiet hours do not apply. Never gated by license.', 'twilio-order-communicator' ); ?></p>
-			<p class="description"><?php echo esc_html__( 'Merge tags:', 'twilio-order-communicator' ); ?> <code>{order_number}</code> <code>{order_id}</code> <code>{customer_first_name}</code> <code>{customer_last_name}</code> <code>{customer_full_name}</code> <code>{store_name}</code> <code>{phone}</code> <code>{order_total}</code> <code>{billing_email}</code></p>
+			<p class="description"><?php echo esc_html__( 'Merge tags:', 'twilio-order-communicator' ); ?> <code>{order_number}</code> <code>{order_id}</code> <code>{customer_first_name}</code> <code>{customer_last_name}</code> <code>{customer_full_name}</code> <code>{store_name}</code> <code>{phone}</code> <code>{order_total}</code> <code>{billing_email}</code> <code>{tracking}</code> <code>{tracking_url}</code></p>
 
 			<h3><?php echo esc_html__( 'Ready for Pickup email', 'twilio-order-communicator' ); ?></h3>
 			<table class="form-table">
@@ -542,7 +542,7 @@ trait TOC_Admin_Settings {
 			</table>
 
 			<h2><?php echo esc_html__( 'Message Templates', 'twilio-order-communicator' ); ?></h2>
-			<p class="description"><?php echo esc_html__( 'Merge tags:', 'twilio-order-communicator' ); ?> <code>{order_number}</code> <code>{order_id}</code> <code>{customer_first_name}</code> <code>{customer_last_name}</code> <code>{customer_full_name}</code> <code>{store_name}</code> <code>{phone}</code> <code>{order_total}</code> <code>{billing_email}</code></p>
+			<p class="description"><?php echo esc_html__( 'Merge tags:', 'twilio-order-communicator' ); ?> <code>{order_number}</code> <code>{order_id}</code> <code>{customer_first_name}</code> <code>{customer_last_name}</code> <code>{customer_full_name}</code> <code>{store_name}</code> <code>{phone}</code> <code>{order_total}</code> <code>{billing_email}</code> <code>{tracking}</code> <code>{tracking_url}</code></p>
 			<table class="form-table">
 				<tr>
 					<th><?php echo esc_html__( 'Ready for Pickup', 'twilio-order-communicator' ); ?></th>

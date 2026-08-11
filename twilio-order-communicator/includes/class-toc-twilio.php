@@ -257,6 +257,7 @@ class TOC_Twilio {
 	 * Replace template merge tags.
 	 * {order_number} {order_id} {customer_first_name} {customer_last_name}
 	 * {customer_full_name} {store_name} {phone} {order_total} {billing_email}
+	 * {tracking} {tracking_url}
 	 */
 	public function merge_tags( $message, $order = null ) {
 		$message = (string) $message;
@@ -276,6 +277,8 @@ class TOC_Twilio {
 			'{phone}'               => '',
 			'{order_total}'         => '',
 			'{billing_email}'       => '',
+			'{tracking}'            => '',
+			'{tracking_url}'        => '',
 		);
 
 		if ( $order instanceof WC_Order ) {
@@ -287,9 +290,76 @@ class TOC_Twilio {
 			$replacements['{phone}']               = (string) $order->get_billing_phone();
 			$replacements['{order_total}']         = wp_strip_all_tags( $order->get_formatted_order_total() );
 			$replacements['{billing_email}']       = (string) $order->get_billing_email();
+
+			$tracking                       = $this->tracking_for( $order );
+			$replacements['{tracking}']     = $tracking['number'];
+			$replacements['{tracking_url}'] = $tracking['url'];
 		}
 
 		return str_ireplace( array_keys( $replacements ), array_values( $replacements ), $message );
+	}
+
+	/**
+	 * Resolve a tracking number + URL for an order from common sources (order meta).
+	 *
+	 * @param WC_Order $order Order.
+	 * @return array{number:string,url:string}
+	 */
+	private function tracking_for( $order ) {
+		$t = self::tracking_from_meta(
+			(string) $order->get_meta( '_ob_tracking_number' ),
+			(string) $order->get_meta( '_ob_tracking_url' ),
+			$order->get_meta( '_wc_shipment_tracking_items' )
+		);
+
+		/**
+		 * Filter the resolved tracking number/URL used by the {tracking} / {tracking_url} tags.
+		 *
+		 * @param array    $t     array{number:string,url:string}.
+		 * @param WC_Order $order Order.
+		 */
+		$t = apply_filters( 'toc_order_tracking', $t, $order );
+
+		return array(
+			'number' => isset( $t['number'] ) ? (string) $t['number'] : '',
+			'url'    => isset( $t['url'] ) ? (string) $t['url'] : '',
+		);
+	}
+
+	/**
+	 * Pure precedence resolver for tracking data (unit-testable, no WooCommerce runtime).
+	 * OrderBay meta wins; otherwise the first WooCommerce Shipment Tracking item with a number.
+	 *
+	 * @param string $ob_number OrderBay tracking number.
+	 * @param string $ob_url    OrderBay tracking URL.
+	 * @param mixed  $wc_items  WooCommerce Shipment Tracking items array (or non-array → ignored).
+	 * @return array{number:string,url:string}
+	 */
+	public static function tracking_from_meta( $ob_number, $ob_url, $wc_items ) {
+		$number = trim( (string) $ob_number );
+		$url    = trim( (string) $ob_url );
+
+		if ( '' === $number && is_array( $wc_items ) ) {
+			foreach ( $wc_items as $item ) {
+				if ( ! is_array( $item ) ) {
+					continue;
+				}
+				$n = trim( (string) ( $item['tracking_number'] ?? '' ) );
+				if ( '' === $n ) {
+					continue;
+				}
+				$number = $n;
+				if ( '' === $url ) {
+					$url = trim( (string) ( $item['custom_tracking_link'] ?? ( $item['formatted_tracking_link'] ?? '' ) ) );
+				}
+				break;
+			}
+		}
+
+		return array(
+			'number' => $number,
+			'url'    => $url,
+		);
 	}
 
 	public function validate_twilio_signature() {

@@ -65,6 +65,14 @@ check( 'falsy no', $twilio->is_falsy_consent( 'no' ), true );
 check( 'falsy yes', $twilio->is_falsy_consent( 'yes' ), false );
 check( 'falsy empty', $twilio->is_falsy_consent( '' ), false );
 
+/* ---- TOC_Twilio::tracking_from_meta (pins the {tracking} merge tag precedence) ---- */
+check( 'tracking OB wins', TOC_Twilio::tracking_from_meta( '1Z999', 'https://t/1Z999', array( array( 'tracking_number' => 'WC1' ) ) ), array( 'number' => '1Z999', 'url' => 'https://t/1Z999' ) );
+check( 'tracking WC fallback', TOC_Twilio::tracking_from_meta( '', '', array( array( 'tracking_number' => 'WC1', 'custom_tracking_link' => 'https://c/WC1' ) ) ), array( 'number' => 'WC1', 'url' => 'https://c/WC1' ) );
+check( 'tracking WC formatted link', TOC_Twilio::tracking_from_meta( '', '', array( array( 'tracking_number' => 'WC2', 'formatted_tracking_link' => 'https://f/WC2' ) ) ), array( 'number' => 'WC2', 'url' => 'https://f/WC2' ) );
+check( 'tracking OB number keeps OB url empty ok', TOC_Twilio::tracking_from_meta( 'OB9', '', 'not-an-array' ), array( 'number' => 'OB9', 'url' => '' ) );
+check( 'tracking none', TOC_Twilio::tracking_from_meta( '', '', array() ), array( 'number' => '', 'url' => '' ) );
+check( 'tracking skips empty WC items', TOC_Twilio::tracking_from_meta( '', '', array( array( 'tracking_number' => '' ), array( 'tracking_number' => 'WC3' ) ) ), array( 'number' => 'WC3', 'url' => '' ) );
+
 /* ---- TOC_Logger::normalize_phone (pins the international-normalization fix) ---- */
 $logger = TOC_Logger::instance();
 // Default store country (US, +1).
