@@ -10,7 +10,7 @@ This monorepo also contains independent plugins:
 |--------|------|---------|
 | Twilio Order Communicator | `twilio-order-communicator/` | 1.14.1 |
 | StoreCanvas | `storecanvas/` | 1.2.1 |
-| Orderbay | `orderbay/` | 1.1.1 |
+| Orderbay | `orderbay/` | 1.2.0 |
 
 ## Install
 

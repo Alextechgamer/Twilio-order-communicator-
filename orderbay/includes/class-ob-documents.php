@@ -68,6 +68,7 @@ class OB_Documents {
 		$paper              = isset( $input['paper'] ) ? sanitize_key( $input['paper'] ) : 'letter';
 		$out['paper']       = in_array( $paper, array( 'letter', 'a4' ), true ) ? $paper : 'letter';
 		$out['tax_id']      = isset( $input['tax_id'] ) ? sanitize_text_field( $input['tax_id'] ) : '';
+		$out['seller_country'] = isset( $input['seller_country'] ) ? strtoupper( substr( sanitize_text_field( $input['seller_country'] ), 0, 2 ) ) : '';
 		$out['show_thumbs']     = ! empty( $input['show_thumbs'] ) ? '1' : '0';
 		$out['show_barcodes']   = ! empty( $input['show_barcodes'] ) ? '1' : '0';
 		$out['qr_enabled']      = ! empty( $input['qr_enabled'] ) ? '1' : '0';
@@ -121,6 +122,9 @@ class OB_Documents {
 		echo '</select></td></tr>';
 		echo '<tr><th><label for="ob_tax_id">' . esc_html__( 'Company VAT / Tax ID', 'orderbay' ) . '</label></th><td>';
 		echo '<input type="text" id="ob_tax_id" class="regular-text" name="' . esc_attr( OB_Plugin::OPT_DOCS ) . '[tax_id]" value="' . esc_attr( $s['tax_id'] ?? '' ) . '" /></td></tr>';
+		echo '<tr><th><label for="ob_seller_country">' . esc_html__( 'Seller country (ISO)', 'orderbay' ) . '</label></th><td>';
+		echo '<input type="text" id="ob_seller_country" class="small-text" maxlength="2" name="' . esc_attr( OB_Plugin::OPT_DOCS ) . '[seller_country]" value="' . esc_attr( $s['seller_country'] ?? '' ) . '" placeholder="' . esc_attr( strtoupper( substr( (string) get_option( 'woocommerce_default_country', '' ), 0, 2 ) ) ) . '" />';
+		echo '<p class="description">' . esc_html__( 'For e-invoicing. Blank = WooCommerce store country.', 'orderbay' ) . '</p></td></tr>';
 		echo '<tr><th>' . esc_html__( 'Packing slip thumbnails', 'orderbay' ) . '</th><td>';
 		echo '<input type="hidden" name="' . esc_attr( OB_Plugin::OPT_DOCS ) . '[show_thumbs]" value="0" />';
 		echo '<label><input type="checkbox" name="' . esc_attr( OB_Plugin::OPT_DOCS ) . '[show_thumbs]" value="1" ' . checked( ( $s['show_thumbs'] ?? '0' ), '1', false ) . ' /> ';
@@ -151,6 +155,21 @@ class OB_Documents {
 		}
 		echo '</p></td></tr>';
 		echo '</table>';
+
+		if ( class_exists( 'OB_EInvoice' ) ) {
+			echo '<h2>' . esc_html__( 'E-invoicing (UBL / Factur-X)', 'orderbay' ) . '</h2>';
+			echo '<p class="description">' . esc_html__( 'Download UBL (Peppol BIS 3.0) or CII (Factur-X EN16931) invoice XML from the order screen. This is an EN16931 baseline — validate it against an official validator before relying on it. Factur-X PDF/A-3 embedding and Peppol network transmission are not included yet.', 'orderbay' ) . '</p>';
+			$seller_issues = OB_EInvoice::seller_issues( OB_EInvoice::seller_data() );
+			if ( $seller_issues ) {
+				echo '<div class="notice notice-warning inline"><p><strong>' . esc_html__( 'Seller details needed for compliant e-invoices:', 'orderbay' ) . '</strong></p><ul style="list-style:disc;margin-left:20px;">';
+				foreach ( $seller_issues as $iss ) {
+					echo '<li>' . esc_html( $iss ) . '</li>';
+				}
+				echo '</ul></div>';
+			} else {
+				echo '<p style="color:#1a7f37;">' . esc_html__( 'Seller details look complete for e-invoicing.', 'orderbay' ) . '</p>';
+			}
+		}
 
 		echo '<h2>' . esc_html__( 'Invoice, proforma & credit note numbers', 'orderbay' ) . '</h2>';
 		echo '<table class="form-table">';
@@ -218,7 +237,19 @@ class OB_Documents {
 		if ( 'auto' === ( $s['pdf_engine'] ?? 'browser' ) && self::detect_pdf_engine() ) {
 			echo '<a class="button" href="' . esc_url( $this->pdf_url( $order->get_id(), 'invoice' ) ) . '">' . esc_html__( 'Download PDF (host engine)', 'orderbay' ) . '</a> ';
 		}
+		if ( class_exists( 'OB_EInvoice' ) ) {
+			echo '<a class="button" href="' . esc_url( OB_EInvoice::download_url( $order->get_id(), 'ubl' ) ) . '">' . esc_html__( 'E-invoice UBL', 'orderbay' ) . '</a> ';
+			echo '<a class="button" href="' . esc_url( OB_EInvoice::download_url( $order->get_id(), 'cii' ) ) . '">' . esc_html__( 'E-invoice CII (Factur-X)', 'orderbay' ) . '</a> ';
+		}
 		echo '<span class="description" style="display:block;margin-top:4px;">' . esc_html__( 'PDF: browser Print → Save as PDF (primary). Optional host Dompdf/TCPDF when PDF engine = Auto.', 'orderbay' ) . '</span>';
+		if ( class_exists( 'OB_EInvoice' ) ) {
+			$einv_issues = OB_EInvoice::compliance_issues( OB_EInvoice::order_to_invoice_data( $order ) );
+			if ( $einv_issues ) {
+				echo '<span class="description" style="display:block;margin-top:4px;color:#b32d2e;">';
+				echo esc_html__( 'E-invoice XML is a draft — not fully compliant yet:', 'orderbay' ) . ' ' . esc_html( implode( ' ', $einv_issues ) );
+				echo '</span>';
+			}
+		}
 		echo '</p>';
 	}
 

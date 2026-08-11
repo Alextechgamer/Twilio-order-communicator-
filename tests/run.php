@@ -13,6 +13,7 @@ $root = dirname( __DIR__ );
 require $root . '/twilio-order-communicator/includes/class-toc-twilio.php';
 require $root . '/twilio-order-communicator/includes/class-toc-logger.php';
 require $root . '/license-server/src/Helpers.php';
+require $root . '/orderbay/includes/class-ob-einvoice.php';
 
 $pass  = 0;
 $fail  = 0;
@@ -84,6 +85,52 @@ if ( extension_loaded( 'pdo_sqlite' ) ) {
 	check( 'rate other bucket ok', $db->rate_hit( 'activate|2.2.2.2', 3, 3600 ), true );
 } else {
 	echo "SKIP: pdo_sqlite not loaded — license-server rate-limit test skipped\n";
+}
+
+/* ---- OrderBay e-invoice XML builders (pure; skipped if ext-dom absent) ---- */
+if ( extension_loaded( 'dom' ) ) {
+	$einv = array(
+		'invoice_number' => 'INV-42',
+		'issue_date'     => '2026-08-11',
+		'due_date'       => '',
+		'currency'       => 'EUR',
+		'type_code'      => '380',
+		'note'           => 'Thanks',
+		'seller'         => array( 'name' => 'Acme SARL', 'street' => '1 Rue X', 'street2' => '', 'city' => 'Paris', 'postcode' => '75001', 'country' => 'FR', 'vat' => 'FR12345678901', 'email' => 'a@x.fr' ),
+		'buyer'          => array( 'name' => 'John Buyer', 'street' => '2 Main', 'street2' => '', 'city' => 'Berlin', 'postcode' => '10115', 'country' => 'DE', 'vat' => '', 'email' => 'j@x.de' ),
+		'lines'          => array(
+			array( 'id' => '1', 'name' => 'Widget', 'qty' => 2.0, 'unit' => 'C62', 'unit_price' => 10.0, 'line_net' => 20.0, 'tax_percent' => 20.0, 'tax_category' => 'S' ),
+			array( 'id' => '2', 'name' => 'Sticker', 'qty' => 1.0, 'unit' => 'C62', 'unit_price' => 5.0, 'line_net' => 5.0, 'tax_percent' => 0.0, 'tax_category' => 'Z' ),
+		),
+		'tax_subtotals'  => array(
+			array( 'category' => 'S', 'percent' => 20.0, 'taxable' => 20.0, 'tax' => 4.0 ),
+			array( 'category' => 'Z', 'percent' => 0.0, 'taxable' => 5.0, 'tax' => 0.0 ),
+		),
+		'totals'         => array( 'line_extension' => 25.0, 'tax_exclusive' => 25.0, 'tax_total' => 4.0, 'tax_inclusive' => 29.0, 'payable' => 29.0, 'prepaid' => 0.0 ),
+	);
+
+	$ubl = OB_EInvoice::build_ubl( $einv );
+	check( 'ubl well-formed', false !== @simplexml_load_string( $ubl ), true );
+	check( 'ubl has invoice id', strpos( $ubl, '<cbc:ID>INV-42</cbc:ID>' ) !== false, true );
+	check( 'ubl seller name', strpos( $ubl, 'Acme SARL' ) !== false, true );
+	check( 'ubl buyer country', strpos( $ubl, '<cbc:IdentificationCode>DE</cbc:IdentificationCode>' ) !== false, true );
+	check( 'ubl payable reconciles', strpos( $ubl, 'PayableAmount currencyID="EUR">29.00' ) !== false, true );
+	check( 'ubl two tax subtotals', substr_count( $ubl, '<cac:TaxSubtotal>' ), 2 );
+
+	$cii = OB_EInvoice::build_cii( $einv );
+	check( 'cii well-formed', false !== @simplexml_load_string( $cii ), true );
+	check( 'cii root', strpos( $cii, 'rsm:CrossIndustryInvoice' ) !== false, true );
+	check( 'cii grand total', strpos( $cii, '<ram:GrandTotalAmount>29.00</ram:GrandTotalAmount>' ) !== false, true );
+	check( 'cii en16931 guideline', strpos( $cii, 'urn:cen.eu:en16931:2017' ) !== false, true );
+
+	// Compliance.
+	check( 'compliance complete', OB_EInvoice::compliance_issues( $einv ), array() );
+	$bad          = $einv;
+	$bad['seller']['vat'] = '';
+	$issues       = OB_EInvoice::compliance_issues( $bad );
+	check( 'compliance flags missing VAT', count( $issues ) >= 1, true );
+} else {
+	echo "SKIP: ext-dom not loaded — e-invoice XML tests skipped\n";
 }
 
 echo "PASS: {$pass}  FAIL: {$fail}\n";
