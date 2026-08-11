@@ -34,6 +34,11 @@ trait TOC_Admin_Dashboard {
 		$value = (string) $value;
 		// Normalize line endings inside cells.
 		$value = str_replace( array( "\r\n", "\r" ), "\n", $value );
+		// Neutralize spreadsheet formula injection: a cell beginning with = + - @ (or tab)
+		// can execute when opened in Excel/Sheets, and inbound SMS bodies are attacker-controlled.
+		if ( $value !== '' && in_array( $value[0], array( '=', '+', '-', '@', "\t" ), true ) ) {
+			$value = "'" . $value;
+		}
 		if ( strpbrk( $value, ",\"\n" ) !== false ) {
 			$value = '"' . str_replace( '"', '""', $value ) . '"';
 		}

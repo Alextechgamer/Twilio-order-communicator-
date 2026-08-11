@@ -412,14 +412,29 @@ class TOC_Checkout {
 		}
 	}
 
+	/**
+	 * Best-effort client IP for the consent audit trail (TCPA/GDPR record).
+	 *
+	 * Uses the server-set REMOTE_ADDR, which the client cannot forge. The
+	 * client-supplied X-Forwarded-For header is only honored when the site opts in via
+	 * the `toc_trust_proxy_ip` filter (i.e. it sits behind a trusted reverse proxy),
+	 * otherwise a visitor could spoof the recorded consent IP. The result is validated.
+	 *
+	 * @return string
+	 */
 	private function client_ip() {
-		if ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
-			$parts = explode( ',', sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) );
-			return trim( $parts[0] );
+		$ip = ! empty( $_SERVER['REMOTE_ADDR'] )
+			? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) )
+			: '';
+
+		if ( apply_filters( 'toc_trust_proxy_ip', false ) && ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
+			$parts     = explode( ',', sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) );
+			$candidate = trim( $parts[0] );
+			if ( filter_var( $candidate, FILTER_VALIDATE_IP ) ) {
+				$ip = $candidate;
+			}
 		}
-		if ( ! empty( $_SERVER['REMOTE_ADDR'] ) ) {
-			return sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) );
-		}
-		return '';
+
+		return filter_var( $ip, FILTER_VALIDATE_IP ) ? $ip : '';
 	}
 }

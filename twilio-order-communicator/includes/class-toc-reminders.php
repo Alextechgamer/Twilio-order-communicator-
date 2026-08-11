@@ -90,6 +90,11 @@ class TOC_Reminders {
 				if ( class_exists( 'TOC_Order_Meta' ) && TOC_Order_Meta::is_collected( $order_id ) ) {
 					return;
 				}
+				// Respect the Local Pickup filter, same as auto-notify and bulk — a
+				// ship-to-home order must never get a pickup reminder.
+				if ( $this->skip_for_local_pickup( $order ) ) {
+					return;
+				}
 				$this->schedule_for_order( $order_id );
 			}
 			return;
@@ -202,6 +207,14 @@ class TOC_Reminders {
 			return;
 		}
 
+		// Local Pickup filter (matches auto-notify / bulk): never remind a non-pickup order.
+		if ( $this->skip_for_local_pickup( $order ) ) {
+			$order->add_order_note(
+				__( 'Scheduled pickup reminder skipped: order is not Local Pickup (Local Pickup filter is on).', 'twilio-order-communicator' )
+			);
+			return;
+		}
+
 		// Quiet hours: re-defer to window end (same pattern as TOC_Auto).
 		if ( TOC_Auto::is_quiet_hours() ) {
 			$when = TOC_Auto::next_quiet_hours_end_timestamp();
@@ -296,5 +309,20 @@ class TOC_Reminders {
 			$order->update_meta_data( '_toc_last_reminder_at', time() );
 		}
 		$order->save();
+	}
+
+	/**
+	 * Whether the Local Pickup filter should suppress a reminder for this order.
+	 * True only when the filter is enabled AND the order is not a Local Pickup order —
+	 * the same rule TOC_Auto and bulk reminders apply.
+	 *
+	 * @param WC_Order $order Order object.
+	 * @return bool
+	 */
+	private function skip_for_local_pickup( $order ) {
+		if ( (int) get_option( 'toc_ready_require_local_pickup', 0 ) !== 1 ) {
+			return false;
+		}
+		return class_exists( 'TOC_Auto' ) && ! TOC_Auto::is_local_pickup( $order );
 	}
 }

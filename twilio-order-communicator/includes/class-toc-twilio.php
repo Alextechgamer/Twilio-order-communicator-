@@ -84,6 +84,18 @@ class TOC_Twilio {
 		return isset( $map[ $stored ] ) ? $map[ $stored ] : 'alice';
 	}
 
+	/**
+	 * Strict E.164 check (e.g. +15055551234): leading +, first digit 1-9, 8-15 digits total.
+	 * Used to validate the From number at config time and each recipient at send time so a
+	 * malformed number fails fast with a clear error instead of a silent Twilio rejection.
+	 *
+	 * @param string $number Candidate number.
+	 * @return bool
+	 */
+	public static function is_e164( $number ) {
+		return (bool) preg_match( '/^\+[1-9]\d{7,14}$/', (string) $number );
+	}
+
 	public function build_twiml_url( $message ) {
 		$token = wp_generate_password( 32, false, false );
 		set_transient( 'toc_twiml_' . $token, (string) $message, 15 * MINUTE_IN_SECONDS );
@@ -441,8 +453,8 @@ class TOC_Twilio {
 		}
 
 		$to = TOC_Logger::instance()->normalize_phone( $to );
-		if ( empty( $to ) ) {
-			return array( 'success' => false, 'error' => 'Invalid phone number.' );
+		if ( empty( $to ) || ! self::is_e164( $to ) ) {
+			return array( 'success' => false, 'error' => 'Invalid phone number (must be E.164, e.g. +15055551234).' );
 		}
 
 		if ( ! $force && $this->phone_is_opted_out( $to ) ) {
@@ -510,8 +522,8 @@ class TOC_Twilio {
 		}
 
 		$to = TOC_Logger::instance()->normalize_phone( $to );
-		if ( empty( $to ) ) {
-			return array( 'success' => false, 'error' => 'Invalid phone number.' );
+		if ( empty( $to ) || ! self::is_e164( $to ) ) {
+			return array( 'success' => false, 'error' => 'Invalid phone number (must be E.164, e.g. +15055551234).' );
 		}
 
 		$order = $order_id ? wc_get_order( $order_id ) : null;
