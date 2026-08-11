@@ -24,6 +24,36 @@ class SC_Print_Ready {
 		add_action( 'woocommerce_checkout_create_order_line_item', array( $this, 'maybe_generate_on_order' ), 20, 4 );
 		add_action( 'woocommerce_after_order_itemmeta', array( $this, 'admin_download_links' ), 15, 3 );
 		add_action( 'wp_ajax_sc_generate_print_file', array( $this, 'ajax_generate' ) );
+		add_filter( 'rest_attachment_query', array( $this, 'filter_rest_media_query' ), 10, 2 );
+	}
+
+	/**
+	 * Keep customer artwork (uploaded artwork + generated print/preview files) out of the
+	 * public REST media endpoint (/wp-json/wp/v2/media), which otherwise lets any visitor
+	 * enumerate and fetch them. Staff who manage orders still see everything.
+	 *
+	 * NOTE: this is a mitigation of the enumeration vector; storing these files privately
+	 * behind a capability-checked download proxy is the fuller fix (needs a WP runtime to
+	 * verify against the print-queue / proof-email / admin-preview flows).
+	 *
+	 * @param array $args WP_Query args assembled by the REST controller.
+	 * @return array
+	 */
+	public function filter_rest_media_query( $args ) {
+		if ( current_user_can( 'edit_shop_orders' ) || current_user_can( 'upload_files' ) ) {
+			return $args;
+		}
+		$exclude = array(
+			'relation' => 'AND',
+			array( 'key' => '_sc_uploaded', 'compare' => 'NOT EXISTS' ),
+			array( 'key' => '_sc_generated', 'compare' => 'NOT EXISTS' ),
+		);
+		if ( ! empty( $args['meta_query'] ) ) {
+			$args['meta_query'] = array( 'relation' => 'AND', $args['meta_query'], $exclude );
+		} else {
+			$args['meta_query'] = $exclude;
+		}
+		return $args;
 	}
 
 	/**
@@ -73,6 +103,23 @@ class SC_Print_Ready {
 		if ( is_array( $dim ) ) {
 			$meta['width']  = (int) $dim[0];
 			$meta['height'] = (int) $dim[1];
+
+			// Decompression-bomb guard: a small file can declare huge dimensions and OOM
+			// the server when GD allocates the canvas. Reject beyond a megapixel ceiling.
+			$megapixels = ( $meta['width'] * $meta['height'] ) / 1000000;
+			$max_mp     = (float) apply_filters(
+				'sc_max_megapixels',
+				isset( $rules['max_megapixels'] ) ? (float) $rules['max_megapixels'] : 40
+			);
+			if ( $max_mp > 0 && $megapixels > $max_mp ) {
+				$errors[] = sprintf(
+					/* translators: 1: image megapixels, 2: max megapixels */
+					__( 'Image is too large to process (%1$s MP; max %2$s MP). Reduce its pixel dimensions and re-upload.', 'storecanvas' ),
+					(string) round( $megapixels, 1 ),
+					(string) $max_mp
+				);
+			}
+
 			$long            = max( $meta['width'], $meta['height'] );
 			$min_px         = isset( $rules['min_source_px'] ) ? (int) $rules['min_source_px'] : 500;
 			if ( $long < $min_px ) {
@@ -309,6 +356,9 @@ class SC_Print_Ready {
 		}
 		$meta = wp_generate_attachment_metadata( $att_id, $move['file'] );
 		wp_update_attachment_metadata( $att_id, $meta );
+		// Mark as StoreCanvas-originated so design layers may reference it (see
+		// SC_Cart_Order::layer_attachment_allowed) without opening the whole media library.
+		update_post_meta( $att_id, '_sc_uploaded', 1 );
 		return (int) $att_id;
 	}
 
@@ -450,6 +500,9 @@ class SC_Print_Ready {
 		}
 		$meta = wp_generate_attachment_metadata( $att_id, $out );
 		wp_update_attachment_metadata( $att_id, $meta );
+		// Mark generated print/preview files so they can be excluded from the public REST
+		// media endpoint (see filter_rest_media_query) — they hold customer artwork.
+		update_post_meta( $att_id, '_sc_generated', 1 );
 		return (int) $att_id;
 	}
 
@@ -667,7 +720,12 @@ class SC_Print_Ready {
 			}
 			$art_id = 0;
 			if ( ! empty( $layer['attachment_id'] ) ) {
-				$art_id = (int) $layer['attachment_id'];
+				$candidate = (int) $layer['attachment_id'];
+				// Defense in depth: only composite attachments this design is entitled to
+				// reference (guards regeneration of any pre-hardening / tampered order meta).
+				if ( ! class_exists( 'SC_Cart_Order' ) || SC_Cart_Order::layer_attachment_allowed( $candidate ) ) {
+					$art_id = $candidate;
+				}
 			} elseif ( ! empty( $layer['clipart_id'] ) && class_exists( 'SC_Clipart' ) ) {
 				$cid = (int) $layer['clipart_id'];
 				$art_id = (int) get_post_meta( $cid, '_sc_clipart_attachment', true );
@@ -715,6 +773,28 @@ class SC_Print_Ready {
 			imagefilledrectangle( $art_resized, 0, 0, (int) $art_w, (int) $art_h, $transparent );
 			imagealphablending( $art_resized, true );
 			imagecopyresampled( $art_resized, $art, 0, 0, 0, 0, (int) $art_w, (int) $art_h, imagesx( $art ), imagesy( $art ) );
+
+			// Apply layer rotation about its centre so placement is preserved. No-op when
+			// rotation is ~0 (the common case), keeping existing composites unchanged.
+			$rotation = isset( $pl['rotation'] ) ? (float) $pl['rotation'] : 0.0;
+			if ( abs( $rotation ) > 0.01 && function_exists( 'imagerotate' ) ) {
+				$cx      = $px + $art_w / 2;
+				$cy      = $py + $art_h / 2;
+				$bg      = imagecolorallocatealpha( $art_resized, 0, 0, 0, 127 );
+				// GD rotates counter-clockwise for positive angles; negate to match the
+				// clockwise rotation shown in the on-screen customizer.
+				$rotated = imagerotate( $art_resized, -$rotation, $bg );
+				if ( $rotated ) {
+					imagesavealpha( $rotated, true );
+					imagedestroy( $art_resized );
+					$art_resized = $rotated;
+					$art_w       = imagesx( $art_resized );
+					$art_h       = imagesy( $art_resized );
+					$px          = $cx - $art_w / 2;
+					$py          = $cy - $art_h / 2;
+				}
+			}
+
 			imagecopy( $base, $art_resized, (int) $px, (int) $py, 0, 0, (int) $art_w, (int) $art_h );
 			imagedestroy( $art_resized );
 			imagedestroy( $art );
@@ -728,6 +808,12 @@ class SC_Print_Ready {
 	private function gd_load( $path ) {
 		$info = @getimagesize( $path );
 		if ( ! is_array( $info ) ) {
+			return false;
+		}
+		// Hard decompression-bomb guard at the GD choke point (covers base, artwork,
+		// layer and clipart loads): never allocate a canvas beyond the megapixel ceiling.
+		$max_mp = (float) apply_filters( 'sc_max_megapixels', 40 );
+		if ( $max_mp > 0 && ( (int) $info[0] * (int) $info[1] ) / 1000000 > $max_mp ) {
 			return false;
 		}
 		switch ( $info[2] ) {
@@ -881,6 +967,9 @@ class SC_Print_Ready {
 		}
 		$meta = wp_generate_attachment_metadata( $att_id, $out );
 		wp_update_attachment_metadata( $att_id, $meta );
+		// Mark generated print/preview files so they can be excluded from the public REST
+		// media endpoint (see filter_rest_media_query) — they hold customer artwork.
+		update_post_meta( $att_id, '_sc_generated', 1 );
 		return (int) $att_id;
 	}
 
@@ -979,6 +1068,9 @@ class SC_Print_Ready {
 		}
 		$meta = wp_generate_attachment_metadata( $att_id, $out );
 		wp_update_attachment_metadata( $att_id, $meta );
+		// Mark generated print/preview files so they can be excluded from the public REST
+		// media endpoint (see filter_rest_media_query) — they hold customer artwork.
+		update_post_meta( $att_id, '_sc_generated', 1 );
 		return (int) $att_id;
 	}
 

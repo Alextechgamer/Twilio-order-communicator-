@@ -2,7 +2,14 @@
 
 ## Cursor Cloud specific instructions
 
-This repo is a single **WordPress / WooCommerce plugin** (`twilio-order-communicator/`, "Twilio Order Communicator"). There is no build step and no automated test suite. The "application" you run to test changes is a local WordPress site with WooCommerce active and this plugin activated.
+This repo is a **monorepo** of three standalone WordPress / WooCommerce plugins —
+`twilio-order-communicator/` ("Twilio Order Communicator"), `storecanvas/`
+("StoreCanvas"), and `orderbay/` ("OrderBay") — plus a `license-server/` PHP + SQLite
+backend. **These instructions cover the `twilio-order-communicator/` plugin**, which is
+what the VM snapshot below is provisioned to run; the sibling plugins are activated the
+same way (symlink into `wp-content/plugins/` and activate). There is no build step and no
+automated test suite. The "application" you run to test changes is a local WordPress site
+with WooCommerce active and the plugin under test activated.
 
 ### What's already provisioned in the VM snapshot
 

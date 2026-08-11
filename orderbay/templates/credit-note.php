@@ -55,7 +55,7 @@ $paper = ( isset( $settings['paper'] ) && 'a4' === $settings['paper'] ) ? 'A4' :
 				<thead>
 					<tr>
 						<th><?php esc_html_e( 'Refund / item', 'orderbay' ); ?></th>
-						<th class="num"><?php esc_html_e( 'Amount', 'orderbay' ); ?></th>
+						<th class="num"><?php esc_html_e( 'Amount (excl. tax)', 'orderbay' ); ?></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -91,8 +91,20 @@ $paper = ( isset( $settings['paper'] ) && 'a4' === $settings['paper'] ) ? 'A4' :
 		<?php endif; ?>
 
 		<div class="totals">
-			<?php esc_html_e( 'Total credited', 'orderbay' ); ?>:
-			<?php echo wp_kses_post( wc_price( $total_refunded, array( 'currency' => $order->get_currency() ) ) ); ?>
+			<?php
+			// Itemize refunded tax and shipping so the net line amounts above reconcile
+			// with the gross total credited (required for a compliant VAT credit note).
+			$ob_tax_refunded      = abs( (float) $order->get_total_tax_refunded() );
+			$ob_shipping_refunded = abs( (float) $order->get_total_shipping_refunded() );
+			if ( $ob_shipping_refunded > 0 ) {
+				echo '<div>' . esc_html__( 'Shipping refunded', 'orderbay' ) . ': ' . wp_kses_post( wc_price( $ob_shipping_refunded, array( 'currency' => $order->get_currency() ) ) ) . '</div>';
+			}
+			if ( $ob_tax_refunded > 0 ) {
+				echo '<div>' . esc_html__( 'Tax refunded', 'orderbay' ) . ': ' . wp_kses_post( wc_price( $ob_tax_refunded, array( 'currency' => $order->get_currency() ) ) ) . '</div>';
+			}
+			?>
+			<div><strong><?php esc_html_e( 'Total credited', 'orderbay' ); ?>:
+			<?php echo wp_kses_post( wc_price( $total_refunded, array( 'currency' => $order->get_currency() ) ) ); ?></strong></div>
 		</div>
 		<?php if ( ! empty( $settings['footer_text'] ) ) : ?>
 			<div class="footer"><?php echo esc_html( $settings['footer_text'] ); ?></div>

@@ -1,0 +1,51 @@
+name: Lint
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  # Hard gate: every PHP file must parse. Fast, no dependencies.
+  php-syntax:
+    name: PHP syntax (php -l)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: [ '8.1', '8.3' ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+      - name: Lint all PHP files
+        run: |
+          set -e
+          find . \( -path ./vendor -o -path ./node_modules \) -prune -o -name '*.php' -print0 \
+            | xargs -0 -n1 -P4 php -l
+      - name: Unit tests (no dependencies)
+        run: php tests/run.php
+
+  # Advisory: WordPress Coding Standards + PHPCompatibility. Not a hard gate yet
+  # (see tasks.md G8) — the report is printed for humans but never fails the build,
+  # so the historical docblock/Yoda/alignment debt does not block merges.
+  phpcs:
+    name: PHPCS (advisory)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer
+      - name: Install tooling
+        run: composer install --no-interaction --no-progress
+      - name: Run PHPCS (advisory — style report, does not fail the build)
+        run: vendor/bin/phpcs --standard=phpcs.xml.dist -p --report=full || true

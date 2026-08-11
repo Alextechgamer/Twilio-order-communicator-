@@ -134,6 +134,14 @@ class OB_SLA {
 				'return'       => 'objects',
 				'orderby'      => 'date',
 				'order'        => 'ASC',
+				// Exclude orders already SLA-aged so the 50-row window keeps advancing
+				// instead of re-selecting the same flagged orders forever (a hard stall).
+				'meta_query'   => array(
+					array(
+						'key'     => OB_Plugin::META_SLA_AGED,
+						'compare' => 'NOT EXISTS',
+					),
+				),
 			)
 		);
 		if ( ! is_array( $orders ) ) {
@@ -143,11 +151,11 @@ class OB_SLA {
 			if ( ! $order instanceof WC_Order ) {
 				continue;
 			}
-			// Once-guard: already attention OR already SLA-aged.
+			// Already flagged for attention (e.g. manually): stamp SLA-aged so it drops out
+			// of future aging queries and never clogs the window.
 			if ( $order->get_meta( OB_Plugin::META_ATTENTION ) ) {
-				continue;
-			}
-			if ( $order->get_meta( OB_Plugin::META_SLA_AGED ) ) {
+				$order->update_meta_data( OB_Plugin::META_SLA_AGED, current_time( 'mysql' ) );
+				$order->save();
 				continue;
 			}
 			$order->update_meta_data( OB_Plugin::META_ATTENTION, '1' );

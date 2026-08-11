@@ -97,6 +97,15 @@ function ob_deactivate() {
 }
 add_action( 'plugins_loaded', 'ob_init' );
 
+// Load translations so bundled /languages/*.mo files are actually used (there was no
+// load_plugin_textdomain call, so custom translations never loaded). On init per WP 6.7+.
+add_action(
+	'init',
+	function () {
+		load_plugin_textdomain( 'orderbay', false, dirname( OB_PLUGIN_BASENAME ) . '/languages' );
+	}
+);
+
 add_action( 'before_woocommerce_init', function () {
 	if ( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) ) {
 		\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', OB_PLUGIN_FILE, true );

@@ -39,8 +39,10 @@ try {
 	$api = new TOC_License_API( $db, $config );
 	$api->handle( $method, $path );
 } catch ( Throwable $e ) {
+	// Log server-side; never leak internal detail (paths, config, stack) to clients.
+	error_log( 'TOC License Server error: ' . $e->getMessage() );
 	http_response_code( 500 );
 	header( 'Content-Type: application/json' );
-	echo json_encode( array( 'success' => false, 'error' => 'Server error', 'detail' => $e->getMessage() ) );
+	echo json_encode( array( 'success' => false, 'error' => 'Server error' ) );
 	exit;
 }

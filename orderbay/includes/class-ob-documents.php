@@ -132,7 +132,8 @@ class OB_Documents {
 		echo '<tr><th>' . esc_html__( 'QR codes', 'orderbay' ) . '</th><td>';
 		echo '<input type="hidden" name="' . esc_attr( OB_Plugin::OPT_DOCS ) . '[qr_enabled]" value="0" />';
 		echo '<label><input type="checkbox" name="' . esc_attr( OB_Plugin::OPT_DOCS ) . '[qr_enabled]" value="1" ' . checked( ( $s['qr_enabled'] ?? '0' ), '1', false ) . ' /> ';
-		echo esc_html__( 'Show order QR on invoice + packing slip (default off; pure PHP SVG, no Composer)', 'orderbay' ) . '</label></td></tr>';
+		echo esc_html__( 'Show order QR on invoice + packing slip (default off; pure PHP SVG, no Composer)', 'orderbay' ) . '</label>';
+		echo '<p class="description" style="color:#b32d2e;">' . esc_html__( 'Experimental: the built-in QR encoder may not scan reliably on all readers yet. Test with your scanner before relying on it; the Code 128 barcode above is production-ready.', 'orderbay' ) . '</p></td></tr>';
 		echo '<tr><th>' . esc_html__( 'Delivery note prices', 'orderbay' ) . '</th><td>';
 		echo '<input type="hidden" name="' . esc_attr( OB_Plugin::OPT_DOCS ) . '[delivery_prices]" value="0" />';
 		echo '<label><input type="checkbox" name="' . esc_attr( OB_Plugin::OPT_DOCS ) . '[delivery_prices]" value="1" ' . checked( ( $s['delivery_prices'] ?? '0' ), '1', false ) . ' /> ';

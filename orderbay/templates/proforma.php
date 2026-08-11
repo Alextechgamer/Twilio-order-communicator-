@@ -110,6 +110,9 @@ $paper = ( isset( $settings['paper'] ) && 'a4' === $settings['paper'] ) ? 'A4' :
 			<?php if ( (float) $order->get_total_tax() > 0 ) : ?>
 				<div class="row"><span><?php esc_html_e( 'Tax', 'orderbay' ); ?></span><span><?php echo wp_kses_post( wc_price( $order->get_total_tax(), array( 'currency' => $order->get_currency() ) ) ); ?></span></div>
 			<?php endif; ?>
+			<?php foreach ( $order->get_fees() as $fee_item ) : ?>
+				<div class="row"><span><?php echo esc_html( $fee_item->get_name() ); ?></span><span><?php echo wp_kses_post( wc_price( (float) $fee_item->get_total(), array( 'currency' => $order->get_currency() ) ) ); ?></span></div>
+			<?php endforeach; ?>
 			<div class="row grand"><span><?php esc_html_e( 'Estimated total', 'orderbay' ); ?></span><span><?php echo wp_kses_post( $order->get_formatted_order_total() ); ?></span></div>
 		</div>
 		<div class="notes"><?php esc_html_e( 'Proforma only — amounts may change before final invoice. Payment not acknowledged by this document.', 'orderbay' ); ?></div>

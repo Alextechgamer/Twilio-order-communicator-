@@ -146,9 +146,10 @@ class OB_Dashboard {
 		if ( is_object( $result ) && isset( $result->total ) ) {
 			return (int) $result->total;
 		}
-		// Fallback without paginate.
+		// Fallback without paginate — bound the scan so a large store cannot OOM the
+		// dashboard (was limit=-1, loading every matching order ID into memory).
 		unset( $args['paginate'] );
-		$args['limit'] = -1;
+		$args['limit']  = 1000;
 		$args['return'] = 'ids';
 		$ids = wc_get_orders( $args );
 		return is_array( $ids ) ? count( $ids ) : 0;

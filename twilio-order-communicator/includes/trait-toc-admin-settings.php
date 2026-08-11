@@ -9,9 +9,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 trait TOC_Admin_Settings {
 
 	public function register_settings() {
+		// The Settings form posts to options.php, which requires `manage_options` by
+		// default. Grant save access to whoever holds the plugin's own manage cap
+		// (e.g. shop_manager via the role matrix), matching who can view the page.
+		add_filter(
+			'option_page_capability_toc_settings',
+			static function () {
+				return TOC_Caps::manage();
+			}
+		);
+
 		$text_fields = array(
 			'toc_account_sid'               => 'sanitize_text_field',
-			'toc_from_number'               => 'sanitize_text_field',
+			'toc_from_number'               => array( $this, 'sanitize_from_number' ),
 			'toc_voice'                     => array( $this, 'sanitize_voice' ),
 			'toc_sms_consent_meta'          => 'sanitize_key',
 			'toc_pickup_match'              => array( $this, 'sanitize_pickup_match' ),
@@ -148,6 +158,34 @@ trait TOC_Admin_Settings {
 		}
 		$email = sanitize_email( $value );
 		return is_email( $email ) ? $email : '';
+	}
+
+	/**
+	 * The Twilio From number must be strict E.164 (e.g. +15055551234). Tolerate common
+	 * separators on input; on an invalid value keep the previously saved number and flag
+	 * an error rather than persisting something Twilio will reject on every send.
+	 *
+	 * @param mixed $value Raw input.
+	 * @return string
+	 */
+	public function sanitize_from_number( $value ) {
+		if ( TOC_Twilio::instance()->credential_is_constant( 'from' ) ) {
+			return (string) get_option( 'toc_from_number', '' );
+		}
+		$value = is_string( $value ) ? trim( $value ) : '';
+		if ( $value === '' ) {
+			return '';
+		}
+		$compact = preg_replace( '/[\s().-]/', '', $value );
+		if ( TOC_Twilio::is_e164( $compact ) ) {
+			return $compact;
+		}
+		add_settings_error(
+			'toc_from_number',
+			'toc_from_number_invalid',
+			__( 'From Number must be in E.164 format, e.g. +15055551234. Your previous value was kept.', 'twilio-order-communicator' )
+		);
+		return (string) get_option( 'toc_from_number', '' );
 	}
 
 	public function sanitize_voice( $value ) {

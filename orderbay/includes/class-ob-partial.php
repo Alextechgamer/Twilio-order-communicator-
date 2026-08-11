@@ -71,6 +71,8 @@ class OB_Partial {
 		echo $status ? esc_html( $status ) : esc_html__( 'open', 'orderbay' );
 		echo ' &nbsp; <a class="button" href="' . esc_url( $url ) . '">' . esc_html__( 'Mark fully fulfilled', 'orderbay' ) . '</a>';
 		echo '</p>';
+		// Own nonce for the per-line qty save (rendered inside the order-edit form).
+		wp_nonce_field( 'ob_partial_save', 'ob_partial_nonce' );
 	}
 
 	public function save_legacy( $order_id, $post = null ) {
@@ -78,6 +80,9 @@ class OB_Partial {
 			return;
 		}
 		if ( ! isset( $_POST['ob_qty_fulfilled'] ) || ! is_array( $_POST['ob_qty_fulfilled'] ) ) { // phpcs:ignore
+			return;
+		}
+		if ( ! $this->verify_save_nonce() ) {
 			return;
 		}
 		$order = wc_get_order( $order_id );
@@ -94,6 +99,9 @@ class OB_Partial {
 			return;
 		}
 		if ( ! isset( $_POST['ob_qty_fulfilled'] ) || ! is_array( $_POST['ob_qty_fulfilled'] ) ) { // phpcs:ignore
+			return;
+		}
+		if ( ! $this->verify_save_nonce() ) {
 			return;
 		}
 		$order = wc_get_order( $order_id );
@@ -181,9 +189,21 @@ class OB_Partial {
 			$item->save();
 		}
 		self::refresh_status( $order );
-		$edit = get_edit_post_link( $order_id, 'raw' );
-		wp_safe_redirect( $edit ? $edit : admin_url( 'post.php?post=' . $order_id . '&action=edit' ) );
+		// HPOS-safe edit URL (post.php?post= is invalid for orders stored in HPOS tables).
+		wp_safe_redirect( $order->get_edit_order_url() );
 		exit;
+	}
+
+	/**
+	 * Verify the plugin's own save nonce (rendered by helper_ui inside the order form).
+	 * WooCommerce also gates the order save with its own nonce; this adds an explicit,
+	 * plugin-owned check so the qty write cannot ride on an unrelated order save.
+	 *
+	 * @return bool
+	 */
+	private function verify_save_nonce() {
+		return isset( $_POST['ob_partial_nonce'] )
+			&& wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ob_partial_nonce'] ) ), 'ob_partial_save' );
 	}
 
 	/**

@@ -154,8 +154,8 @@ class OB_Notes {
 		if ( $note ) {
 			$order->add_order_note( $note, false, true );
 		}
-		$edit = get_edit_post_link( $order_id, 'raw' );
-		wp_safe_redirect( $edit ? $edit : admin_url( 'post.php?post=' . $order_id . '&action=edit' ) );
+		// HPOS-safe edit URL (post.php?post= is invalid for HPOS-stored orders).
+		wp_safe_redirect( $order->get_edit_order_url() );
 		exit;
 	}
 }
