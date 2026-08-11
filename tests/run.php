@@ -14,6 +14,8 @@ require $root . '/twilio-order-communicator/includes/class-toc-twilio.php';
 require $root . '/twilio-order-communicator/includes/class-toc-logger.php';
 require $root . '/license-server/src/Helpers.php';
 require $root . '/orderbay/includes/class-ob-einvoice.php';
+require $root . '/storecanvas/includes/class-sc-print-ready.php';
+require $root . '/storecanvas/includes/class-sc-export.php';
 
 $pass  = 0;
 $fail  = 0;
@@ -58,11 +60,31 @@ check( 'falsy no', $twilio->is_falsy_consent( 'no' ), true );
 check( 'falsy yes', $twilio->is_falsy_consent( 'yes' ), false );
 check( 'falsy empty', $twilio->is_falsy_consent( '' ), false );
 
-/* ---- TOC_Logger::normalize_phone ---- */
+/* ---- TOC_Logger::normalize_phone (pins the international-normalization fix) ---- */
 $logger = TOC_Logger::instance();
+// Default store country (US, +1).
+$GLOBALS['toc_test_options'] = array();
 check( 'phone US formatted', $logger->normalize_phone( '(505) 555-1234' ), '+15055551234' );
+check( 'phone US with cc', $logger->normalize_phone( '1 (505) 555-1234' ), '+15055551234' );
 check( 'phone already e164', $logger->normalize_phone( '+447911123456' ), '+447911123456' );
 check( 'phone junk', $logger->normalize_phone( 'not a phone' ), '' );
+check( 'phone bare plus', $logger->normalize_phone( '+' ), '' );
+// "00" international access prefix behaves like "+" regardless of store country.
+check( 'phone 00 intl prefix', $logger->normalize_phone( '00 44 7911 123456' ), '+447911123456' );
+// Deterministic: the same input always maps to the same key (opt-out safety).
+check( 'phone deterministic', $logger->normalize_phone( '07911 123456' ), $logger->normalize_phone( '07911123456' ) );
+
+// UK store (+44): a single leading "0" is the national trunk prefix, not a NANP number.
+$GLOBALS['toc_test_options'] = array( 'woocommerce_default_country' => 'GB' );
+check( 'phone UK mobile trunk-0', $logger->normalize_phone( '07911 123456' ), '+447911123456' );
+check( 'phone UK landline trunk-0', $logger->normalize_phone( '020 7946 0018' ), '+442079460018' );
+check( 'phone UK national no-trunk', $logger->normalize_phone( '7911123456' ), '+447911123456' );
+check( 'phone UK country default', $logger->default_country_code(), '44' );
+
+// Store base country "US:CA" (country:state form) still resolves to +1.
+$GLOBALS['toc_test_options'] = array( 'woocommerce_default_country' => 'US:CA' );
+check( 'phone US:state formatted', $logger->normalize_phone( '(505) 555-1234' ), '+15055551234' );
+$GLOBALS['toc_test_options'] = array();
 
 /* ---- license signed downloads ---- */
 $secret = 'unit-test-secret';
@@ -123,6 +145,9 @@ if ( extension_loaded( 'dom' ) ) {
 	check( 'cii grand total', strpos( $cii, '<ram:GrandTotalAmount>29.00</ram:GrandTotalAmount>' ) !== false, true );
 	check( 'cii en16931 guideline', strpos( $cii, 'urn:cen.eu:en16931:2017' ) !== false, true );
 
+	// Factur-X degrades gracefully when the optional library is absent.
+	check( 'facturx unavailable without library', OB_EInvoice::facturx_available(), false );
+
 	// Compliance.
 	check( 'compliance complete', OB_EInvoice::compliance_issues( $einv ), array() );
 	$bad          = $einv;
@@ -132,6 +157,36 @@ if ( extension_loaded( 'dom' ) ) {
 } else {
 	echo "SKIP: ext-dom not loaded — e-invoice XML tests skipped\n";
 }
+
+/* ---- StoreCanvas print output: pHYs DPI + SVG + minimal PDF (pure) ---- */
+$png_1x1 = base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M8AAAMBAQDJ/pLvAAAAAElFTkSuQmCC' );
+$dpi_png = SC_Print_Ready::png_with_dpi( $png_1x1, 300 );
+check( 'phys inserted', strpos( $dpi_png, 'pHYs' ) !== false, true );
+check( 'png signature intact', strncmp( $dpi_png, "\x89PNG\r\n\x1a\n", 8 ) === 0, true );
+check( 'png iend present', strpos( $dpi_png, 'IEND' ) !== false, true );
+$ppu = 0;
+$pp  = strpos( $dpi_png, 'pHYs' );
+if ( false !== $pp ) {
+	$u   = unpack( 'Nx/Ny/Cunit', substr( $dpi_png, $pp + 4, 9 ) );
+	$ppu = $u['x'];
+}
+check( 'phys decodes to 300 dpi', (int) round( $ppu * 0.0254 ), 300 );
+check( 'png_with_dpi rejects non-png', SC_Print_Ready::png_with_dpi( 'not a png', 300 ), '' );
+
+if ( extension_loaded( 'dom' ) ) {
+	$svg = SC_Export::svg_wrap( $png_1x1, 'image/png', 900, 600, 300, array( 'bleed_mm' => 3.0 ) );
+	check( 'svg well-formed', false !== @simplexml_load_string( $svg ), true );
+	check( 'svg embeds image', strpos( $svg, '<image' ) !== false, true );
+	check( 'svg physical width', strpos( $svg, 'width="76.2mm"' ) !== false, true );
+	check( 'svg has bleed rect', strpos( $svg, '<rect' ) !== false, true );
+}
+
+$pdf = SC_Export::pdf_single_image_jpeg( 'JPEGBYTES', 900, 600, 300 );
+check( 'pdf header', strncmp( $pdf, '%PDF-', 5 ) === 0, true );
+check( 'pdf xref', strpos( $pdf, "\nxref\n" ) !== false, true );
+check( 'pdf trailer', strpos( $pdf, 'trailer' ) !== false, true );
+check( 'pdf xobject image', strpos( $pdf, '/XObject' ) !== false, true );
+check( 'pdf eof', substr( trim( $pdf ), -5 ) === '%%EOF', true );
 
 echo "PASS: {$pass}  FAIL: {$fail}\n";
 foreach ( $fails as $f ) {

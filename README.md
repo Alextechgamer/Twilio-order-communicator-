@@ -2,15 +2,15 @@
 
 WordPress / WooCommerce plugin for SMS and voice calls via **your own Twilio account**. Order communication is driven by custom statuses (**Ready for Pickup** and **Shipped**), with consent-aware SMS, quiet hours, bulk reminders, and order chat history.
 
-**Current version: 1.14.1** (plugin header / `TOC_VERSION`)
+**Current version: 1.14.2** (plugin header / `TOC_VERSION`)
 
 This monorepo also contains independent plugins:
 
 | Plugin | Path | Current |
 |--------|------|---------|
-| Twilio Order Communicator | `twilio-order-communicator/` | 1.14.1 |
-| StoreCanvas | `storecanvas/` | 1.2.1 |
-| Orderbay | `orderbay/` | 1.2.0 |
+| Twilio Order Communicator | `twilio-order-communicator/` | 1.14.2 |
+| StoreCanvas | `storecanvas/` | 1.3.0 |
+| Orderbay | `orderbay/` | 1.3.0 |
 
 ## Install
 
@@ -35,6 +35,12 @@ Seller docs: [`RELEASE.md`](./RELEASE.md) (build + deploy + keys) · [`license-s
 Release **zips are not stored in git** (see `.gitignore`). Build with the steps in [`RELEASE.md`](./RELEASE.md), or download assets from [GitHub Releases](https://github.com/Alextechgamer/Twilio-order-communicator-/releases) when published.
 
 Latest source is always on `main` under `twilio-order-communicator/`.
+
+## What's in 1.14.2
+
+| Area | Notes |
+|------|--------|
+| TOC | International phone normalization: national trunk `0` (e.g. UK `07911…` → `+447911…`) and `00` international prefix handled correctly; default calling code follows `woocommerce_default_country` (filterable via `toc_default_country_code`); deterministic so opt-out keys stay consistent |
 
 ## What's in 1.14.1
 

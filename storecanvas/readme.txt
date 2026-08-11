@@ -3,7 +3,7 @@ Contributors: alextechgamer
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.2.1
+Stable tag: 1.3.0
 License: GPLv2 or later
 
 Self-hosted WooCommerce personalization: product options, live mockup, print-ready, library, guest save.
@@ -15,6 +15,11 @@ Product options parity with common add-ons plugins plus live mockup and print co
 Independent of Twilio Order Communicator and Orderbay.
 
 == Changelog ==
+
+= 1.3.0 =
+* New: true print resolution — generated PNG composites now carry a pHYs DPI chunk (default 300, filter sc_output_dpi) instead of defaulting to 72
+* New: per-composite SVG export (print-dimensioned, embeds the image, bleed guide) and a minimal single-image PDF export from the order screen
+* Note: PDF export is RGB/flattened (not CMYK/PDF-X); true vector-text export is a later step
 
 = 1.2.1 =
 * Security: fix a no-op client-side escaper that allowed stored/DOM XSS from saved-design content; add server-side design-payload sanitization

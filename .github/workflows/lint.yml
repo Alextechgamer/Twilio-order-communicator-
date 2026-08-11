@@ -45,7 +45,14 @@ jobs:
           php-version: '8.3'
           coverage: none
           tools: composer
+      # Advisory tooling install: transient registry/SSL/network failures on the
+      # runner must not turn this non-gating job red, so never let it exit non-zero.
       - name: Install tooling
-        run: composer install --no-interaction --no-progress
+        run: composer install --no-interaction --no-progress || true
       - name: Run PHPCS (advisory — style report, does not fail the build)
-        run: vendor/bin/phpcs --standard=phpcs.xml.dist -p --report=full || true
+        run: |
+          if [ -x vendor/bin/phpcs ]; then
+            vendor/bin/phpcs --standard=phpcs.xml.dist -p --report=full || true
+          else
+            echo "PHPCS tooling unavailable (composer install did not complete) — skipping advisory style report."
+          fi

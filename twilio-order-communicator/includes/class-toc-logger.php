@@ -625,7 +625,12 @@ class TOC_Logger {
 	}
 
 	/**
-	 * Normalize to E.164-ish. Default country code is filterable (US +1 by default).
+	 * Normalize to E.164. Handles the "+", "00" international prefix and a single
+	 * national trunk "0"; the default country code follows the WooCommerce store
+	 * base country and is filterable. Returns '' when there is nothing to dial.
+	 *
+	 * Because this value is also used to build opt-out / consent storage keys, it
+	 * must be deterministic: the same input always maps to the same E.164 string.
 	 */
 	public function normalize_phone( $phone ) {
 		$phone = preg_replace( '/[^0-9+]/', '', (string) $phone );
@@ -633,27 +638,85 @@ class TOC_Logger {
 			return '';
 		}
 
+		// Already international.
 		if ( strpos( $phone, '+' ) === 0 ) {
 			return $phone;
 		}
 
+		// "00" is the international access prefix in most of the world → same as "+".
+		if ( strpos( $phone, '00' ) === 0 ) {
+			$rest = ltrim( substr( $phone, 2 ), '0' );
+			return '' === $rest ? '' : '+' . $rest;
+		}
+
+		$cc = $this->default_country_code();
+
+		// A single leading "0" is the national trunk prefix (e.g. UK 07911 123456):
+		// drop exactly the leading zero(s) and prepend the country calling code.
+		if ( strpos( $phone, '0' ) === 0 ) {
+			$national = ltrim( $phone, '0' );
+			return '' === $national ? '' : '+' . $cc . $national;
+		}
+
+		// No leading zero. If it already begins with the country code and is long
+		// enough to be a full national number, treat it as already qualified.
+		if ( strpos( $phone, $cc ) === 0 && strlen( $phone ) >= strlen( $cc ) + 7 ) {
+			return '+' . $phone;
+		}
+
+		return '+' . $cc . $phone;
+	}
+
+	/**
+	 * Default country calling code (digits only) used when a number has no leading "+".
+	 * Derives from the WooCommerce store base country, overridable via filter.
+	 *
+	 * @return string Digits only, e.g. '1' for US/CA, '44' for the UK. Never empty.
+	 */
+	public function default_country_code() {
+		$store = (string) get_option( 'woocommerce_default_country', '' );
+		$iso   = strtoupper( substr( $store, 0, 2 ) );
+		$map   = $this->calling_code_map();
+		$cc    = isset( $map[ $iso ] ) ? $map[ $iso ] : '1';
+
 		/**
-		 * Default country calling code used when a number has no leading +.
+		 * Default country calling code used when a number has no leading "+".
 		 *
 		 * @param string $code Digits only, e.g. '1' for US/CA.
 		 */
-		$cc = apply_filters( 'toc_default_country_code', '1' );
+		$cc = apply_filters( 'toc_default_country_code', $cc );
 		$cc = preg_replace( '/\D/', '', (string) $cc );
-		if ( $cc === '' ) {
-			$cc = '1';
-		}
+		return '' === $cc ? '1' : $cc;
+	}
 
-		$digits = ltrim( $phone, '0' );
-		if ( strpos( $digits, $cc ) === 0 && strlen( $digits ) >= strlen( $cc ) + 7 ) {
-			return '+' . $digits;
-		}
-
-		return '+' . $cc . $digits;
+	/**
+	 * ISO 3166-1 alpha-2 → E.164 country calling code (digits only).
+	 * Covers common e-commerce markets; extend via the `toc_default_country_code`
+	 * filter for anything not listed.
+	 *
+	 * @return array<string,string>
+	 */
+	public function calling_code_map() {
+		return array(
+			'US' => '1',  'CA' => '1',  'PR' => '1',  'DO' => '1',
+			'GB' => '44', 'IE' => '353','FR' => '33', 'DE' => '49', 'ES' => '34',
+			'IT' => '39', 'NL' => '31', 'BE' => '32', 'LU' => '352','PT' => '351',
+			'AT' => '43', 'CH' => '41', 'DK' => '45', 'SE' => '46', 'NO' => '47',
+			'FI' => '358','IS' => '354','PL' => '48', 'CZ' => '420','SK' => '421',
+			'HU' => '36', 'RO' => '40', 'BG' => '359','GR' => '30', 'HR' => '385',
+			'SI' => '386','RS' => '381','EE' => '372','LV' => '371','LT' => '370',
+			'UA' => '380','RU' => '7',  'TR' => '90', 'IL' => '972','SA' => '966',
+			'AE' => '971','QA' => '974','KW' => '965','BH' => '973','OM' => '968',
+			'JO' => '962','LB' => '961','EG' => '20', 'MA' => '212','DZ' => '213',
+			'TN' => '216','ZA' => '27', 'NG' => '234','KE' => '254','GH' => '233',
+			'AU' => '61', 'NZ' => '64', 'JP' => '81', 'KR' => '82', 'CN' => '86',
+			'HK' => '852','TW' => '886','SG' => '65', 'MY' => '60', 'TH' => '66',
+			'ID' => '62', 'PH' => '63', 'VN' => '84', 'IN' => '91', 'PK' => '92',
+			'BD' => '880','LK' => '94', 'MX' => '52', 'BR' => '55', 'AR' => '54',
+			'CL' => '56', 'CO' => '57', 'PE' => '51', 'VE' => '58', 'EC' => '593',
+			'UY' => '598','PY' => '595','BO' => '591','CR' => '506','PA' => '507',
+			'GT' => '502',
+		);
 	}
 
 	public function digits_only( $phone ) {

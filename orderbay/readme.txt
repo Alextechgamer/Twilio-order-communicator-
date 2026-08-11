@@ -3,12 +3,17 @@ Contributors: alextechgamer
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.2.0
+Stable tag: 1.3.0
 License: GPLv2 or later
 
 Self-hosted WooCommerce ops toolkit: documents, fulfillment, RMA, digests, search.
 
 == Changelog ==
+
+= 1.3.0 =
+* New: optional Factur-X PDF assembly — when a PDF engine (Dompdf/TCPDF) and the horstoeko/zugferd library are present, a "Factur-X PDF" button embeds the CII XML into the invoice PDF
+* Reuses the CII builder from 1.2.0; output must pass a Factur-X/ZUGFeRD validator before production
+* Peppol network transmission is out of scope (export the XML/PDF for upload to a PDP/AP)
 
 = 1.2.0 =
 * New (beta): e-invoice XML export — UBL 2.1 (Peppol BIS Billing 3.0) and CII (Factur-X EN16931) from the order screen

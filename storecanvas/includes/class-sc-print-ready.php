@@ -481,6 +481,7 @@ class SC_Print_Ready {
 		$fname  = 'sc-print-' . $product_id . '-' . sanitize_file_name( $view_id ) . '-' . wp_generate_password( 6, false ) . '.png';
 		$out    = trailingslashit( $upload['path'] ) . $fname;
 		imagepng( $base, $out, 6 );
+		self::png_set_dpi( $out, self::output_dpi() );
 		imagedestroy( $base );
 
 		if ( ! file_exists( $out ) ) {
@@ -950,6 +951,7 @@ class SC_Print_Ready {
 		$fname  = 'sc-preview-' . absint( $product_id ) . '-' . $attachment_id . '-' . wp_generate_password( 4, false ) . '.png';
 		$out    = trailingslashit( $upload['path'] ) . $fname;
 		imagepng( $dst, $out, 6 );
+		self::png_set_dpi( $out, self::output_dpi() );
 		imagedestroy( $dst );
 		if ( ! file_exists( $out ) ) {
 			return new WP_Error( 'sc_write', 'write failed' );
@@ -1051,6 +1053,7 @@ class SC_Print_Ready {
 		$fname  = 'sc-print-' . $product_id . '-' . sanitize_file_name( $view_id ) . '-' . wp_generate_password( 6, false ) . '.png';
 		$out    = trailingslashit( $upload['path'] ) . $fname;
 		imagepng( $base, $out, 6 );
+		self::png_set_dpi( $out, self::output_dpi() );
 		imagedestroy( $base );
 		if ( ! file_exists( $out ) ) {
 			return new WP_Error( 'sc_write', __( 'Could not write print file.', 'storecanvas' ) );
@@ -1093,9 +1096,15 @@ class SC_Print_Ready {
 		}
 		if ( is_array( $files ) ) {
 			foreach ( $files as $vid => $fid ) {
-				$url = wp_get_attachment_url( (int) $fid );
+				$fid = (int) $fid;
+				$url = wp_get_attachment_url( $fid );
 				if ( $url ) {
-					echo '<li><a href="' . esc_url( $url ) . '" target="_blank">' . esc_html( sprintf( __( 'Print composite (%s)', 'storecanvas' ), $vid ) ) . '</a></li>';
+					echo '<li><a href="' . esc_url( $url ) . '" target="_blank">' . esc_html( sprintf( __( 'Print composite (%s)', 'storecanvas' ), $vid ) ) . '</a>';
+					if ( class_exists( 'SC_Export' ) ) {
+						echo ' — <a href="' . esc_url( SC_Export::download_url( $fid, 'svg' ) ) . '">' . esc_html__( 'SVG', 'storecanvas' ) . '</a>';
+						echo ' · <a href="' . esc_url( SC_Export::download_url( $fid, 'pdf' ) ) . '">' . esc_html__( 'PDF', 'storecanvas' ) . '</a>';
+					}
+					echo '</li>';
 				}
 			}
 		}
@@ -1118,5 +1127,77 @@ class SC_Print_Ready {
 			wp_send_json_error( array( 'message' => $att->get_error_message() ) );
 		}
 		wp_send_json_success( array( 'attachment_id' => $att, 'url' => wp_get_attachment_url( $att ) ) );
+	}
+
+	/**
+	 * Intended print resolution (DPI) stamped into generated PNGs. Filterable — GD writes
+	 * no pHYs chunk, so files otherwise default to 72 DPI and print shops treat them as
+	 * screen resolution.
+	 *
+	 * @return int
+	 */
+	public static function output_dpi() {
+		$dpi = (int) apply_filters( 'sc_output_dpi', 300 );
+		return $dpi > 0 ? $dpi : 300;
+	}
+
+	/**
+	 * Stamp a PNG file on disk with a physical resolution (pHYs chunk).
+	 *
+	 * @param string $path PNG path.
+	 * @param int    $dpi  Dots per inch.
+	 * @return bool
+	 */
+	public static function png_set_dpi( $path, $dpi ) {
+		$png = @file_get_contents( $path );
+		if ( false === $png ) {
+			return false;
+		}
+		$out = self::png_with_dpi( $png, (int) $dpi );
+		if ( '' === $out ) {
+			return false;
+		}
+		return false !== @file_put_contents( $path, $out );
+	}
+
+	/**
+	 * Return PNG bytes with a pHYs (physical pixel dimensions) chunk set to $dpi. Any
+	 * existing pHYs is replaced; the chunk is inserted immediately after IHDR. Returns ''
+	 * if the input is not a PNG. Pure byte manipulation (unit-testable, no GD).
+	 *
+	 * @param string $png PNG bytes.
+	 * @param int    $dpi Dots per inch.
+	 * @return string
+	 */
+	public static function png_with_dpi( $png, $dpi ) {
+		$dpi = (int) $dpi;
+		if ( $dpi <= 0 || strncmp( (string) $png, "\x89PNG\r\n\x1a\n", 8 ) !== 0 ) {
+			return '';
+		}
+		$ppu   = (int) round( $dpi / 0.0254 ); // pixels per metre.
+		$data  = pack( 'NNC', $ppu, $ppu, 1 );
+		$phys  = pack( 'N', 9 ) . 'pHYs' . $data . pack( 'N', crc32( 'pHYs' . $data ) );
+		$out   = substr( $png, 0, 8 );
+		$pos   = 8;
+		$len   = strlen( $png );
+		$added = false;
+		while ( $pos + 8 <= $len ) {
+			$clen  = unpack( 'N', substr( $png, $pos, 4 ) )[1];
+			$type  = substr( $png, $pos + 4, 4 );
+			$whole = substr( $png, $pos, 12 + $clen );
+			$pos  += 12 + $clen;
+			if ( 'pHYs' === $type ) {
+				continue; // Drop any existing pHYs.
+			}
+			$out .= $whole;
+			if ( 'IHDR' === $type && ! $added ) {
+				$out  .= $phys;
+				$added = true;
+			}
+			if ( 'IEND' === $type ) {
+				break;
+			}
+		}
+		return $out;
 	}
 }
