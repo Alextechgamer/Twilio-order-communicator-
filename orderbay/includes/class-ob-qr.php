@@ -24,6 +24,72 @@ class OB_QR {
 	}
 
 	/**
+	 * Whether a vetted QR library is installed. When present it renders every symbol (correct by
+	 * construction, any length); the bundled encoder is only an experimental short-payload fallback.
+	 *
+	 * @return bool
+	 */
+	public static function library_available() {
+		return class_exists( '\chillerlan\QRCode\QRCode' ) || class_exists( '\Endroid\QrCode\QrCode' );
+	}
+
+	/**
+	 * Smallest built-in version (1–3) whose EC-M byte capacity holds a payload, or 0 if it exceeds
+	 * the bundled encoder's capacity. Prevents the old silent truncation that produced dead QR for
+	 * order URLs (~47 bytes) by always forcing Version 3.
+	 *
+	 * @param int $len Payload length in bytes.
+	 * @return int 1|2|3, or 0 when too long for the built-in encoder.
+	 */
+	public static function pick_version( $len ) {
+		$len = (int) $len;
+		if ( $len <= 0 ) {
+			return 0;
+		}
+		if ( $len <= 14 ) {
+			return 1;
+		}
+		if ( $len <= 26 ) {
+			return 2;
+		}
+		if ( $len <= 42 ) {
+			return 3;
+		}
+		return 0;
+	}
+
+	/**
+	 * Render a QR SVG through an installed vetted library. Returns '' if none is usable.
+	 *
+	 * @param string $text      Payload.
+	 * @param int    $module_px Module size.
+	 * @return string
+	 */
+	private static function svg_via_library( $text, $module_px ) {
+		$scale = max( 1, (int) $module_px );
+		try {
+			if ( class_exists( '\chillerlan\QRCode\QRCode' ) && class_exists( '\chillerlan\QRCode\QROptions' ) ) {
+				$opts = new \chillerlan\QRCode\QROptions(
+					array(
+						'outputType' => \chillerlan\QRCode\QRCode::OUTPUT_MARKUP_SVG,
+						'eccLevel'   => \chillerlan\QRCode\QRCode::ECC_M,
+						'scale'      => $scale,
+					)
+				);
+				return (string) ( new \chillerlan\QRCode\QRCode( $opts ) )->render( $text );
+			}
+			if ( class_exists( '\Endroid\QrCode\QrCode' ) && class_exists( '\Endroid\QrCode\Writer\SvgWriter' ) ) {
+				$qr     = \Endroid\QrCode\QrCode::create( $text );
+				$writer = new \Endroid\QrCode\Writer\SvgWriter();
+				return (string) $writer->write( $qr )->getString();
+			}
+		} catch ( \Throwable $e ) {
+			return '';
+		}
+		return '';
+	}
+
+	/**
 	 * Payload for an order: prefer My Account view URL, else order number text.
 	 *
 	 * @param WC_Order $order Order.
@@ -69,10 +135,24 @@ class OB_QR {
 	 */
 	public static function svg( $text, $module_px = 3 ) {
 		$text = (string) $text;
-		if ( '' === $text || strlen( $text ) > 80 ) {
-			// Cap length for V3 capacity.
-			$text = substr( $text, 0, 80 );
+		if ( '' === $text ) {
+			return '';
 		}
+
+		// Prefer a vetted library when installed — it renders any payload correctly.
+		if ( self::library_available() ) {
+			$lib = self::svg_via_library( $text, $module_px );
+			if ( '' !== $lib ) {
+				return $lib;
+			}
+		}
+
+		// Built-in fallback: only encode payloads that fit the reliable V1–V3 capacity. Never
+		// truncate — a truncated symbol is an unscannable (dead) QR, so fail soft instead.
+		if ( 0 === self::pick_version( strlen( $text ) ) ) {
+			return '';
+		}
+
 		$matrix = self::encode_matrix( $text );
 		if ( ! $matrix ) {
 			return '';
@@ -115,17 +195,11 @@ class OB_QR {
 		$bytes = array_values( unpack( 'C*', $text ) );
 		$len   = count( $bytes );
 
-		// Capacity (bytes) approx EC-M: V1=14, V2=26, V3=42 (byte mode rough).
-		if ( $len <= 14 ) {
-			$ver = 1;
-		} elseif ( $len <= 26 ) {
-			$ver = 2;
-		} elseif ( $len <= 42 ) {
-			$ver = 3;
-		} else {
-			$ver = 3;
-			$bytes = array_slice( $bytes, 0, 42 );
-			$len   = 42;
+		// Capacity (bytes) EC-M: V1=14, V2=26, V3=42. Reject over-capacity instead of truncating
+		// to a fixed V3 (which produced dead QR for order URLs).
+		$ver = self::pick_version( $len );
+		if ( 0 === $ver ) {
+			return null;
 		}
 
 		$size = 17 + 4 * $ver; // 21, 25, 29

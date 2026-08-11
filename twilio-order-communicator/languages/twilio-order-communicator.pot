@@ -1,0 +1,1840 @@
+# Copyright (C) 2026 Twilio Order Communicator
+# This file is distributed under the same license as the Twilio Order Communicator plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: Twilio Order Communicator\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-08-11 23:27+0000\n"
+"X-Domain: twilio-order-communicator\n"
+
+#: includes/trait-toc-admin-bulk.php:53
+msgid " (consent currently disabled in Settings)"
+msgstr ""
+
+#: includes/trait-toc-admin-dashboard.php:218
+msgid "%d result"
+msgid_plural "%d results"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/trait-toc-admin-tools.php:20
+msgid "%s may send transactional SMS and/or place automated voice calls about your order status (for example Ready for Pickup or Shipped) using our telephony provider, Twilio. Message and data rates may apply. Message frequency varies. Reply STOP to opt out of SMS, HELP for help. Consent is not a condition of purchase. Voice calls do not require SMS consent. Phone numbers and message content are processed by Twilio on our behalf according to Twilio's privacy policy."
+msgstr ""
+
+#: includes/class-toc-webhooks.php:447
+msgid "%s: For help, reply to this number or contact the store. Reply STOP to opt out of SMS."
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:89
+msgid "(assign in Settings → Role permissions). Filters"
+msgstr ""
+
+#: includes/class-toc-order-meta.php:306
+msgid "(forced)"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:177
+msgid "1. Twilio credentials"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:200
+msgid "2. Connection test"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:213
+msgid "3. Incoming SMS webhook"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:230
+msgid "4. Checkout SMS consent"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:251
+msgid "5. Automatic notifications"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:65
+msgid "<strong>%1$s</strong> — finish setup in under five minutes: %2$sStart setup wizard%3$s"
+msgstr ""
+
+#: twilio-order-communicator.php:232
+msgid "<strong>%s</strong> requires WooCommerce to be active."
+msgstr ""
+
+#: includes/trait-toc-admin-license.php:18
+msgid "A license unlocks premium plugin updates from your update server. SMS, voice, chat, and auto-notify always use your own Twilio account and keep working without an active license."
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:275
+msgid "A token is already saved. Leave blank to keep it, or paste a new token to replace it."
+msgstr ""
+
+#: includes/class-toc-onboarding.php:180
+#: includes/trait-toc-admin-settings.php:258
+msgid "Account SID"
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:81
+msgid "Account SID / Auth Token / From Number"
+msgstr ""
+
+#: includes/class-toc-admin.php:147
+#: includes/trait-toc-admin-license.php:111
+msgid "Activate"
+msgstr ""
+
+#: includes/class-toc-admin.php:143
+msgid "Activating…"
+msgstr ""
+
+#: includes/class-toc-license.php:223
+msgid "Activation failed."
+msgstr ""
+
+#: includes/trait-toc-admin-license.php:88
+msgid "Activations:"
+msgstr ""
+
+#: includes/class-toc-license.php:533
+msgid "Active"
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:35
+msgid "Admins can still preview TwiML while logged in:"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:614
+msgid "Alert email"
+msgstr ""
+
+#: includes/trait-toc-admin-dashboard.php:196
+msgid "All"
+msgstr ""
+
+#: includes/trait-toc-admin-dashboard.php:201
+msgid "All statuses"
+msgstr ""
+
+#: includes/trait-toc-admin-bulk.php:66
+msgid "All time"
+msgstr ""
+
+#: includes/trait-toc-admin-dashboard.php:191
+msgid "All types"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:702
+#: includes/trait-toc-admin-settings.php:709
+msgid "Allow"
+msgstr ""
+
+#: includes/trait-toc-admin-license.php:116
+msgid "Also clear saved key on deactivate"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:257
+#: includes/class-toc-onboarding.php:263
+msgid "Also send SMS (requires consent)"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:366
+#: includes/trait-toc-admin-settings.php:407
+msgid "Also send an SMS (consent required)"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:367
+msgid "Also used by scheduled pickup reminders."
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:698
+msgid "Always on for Administrator"
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:65
+msgid "An order can receive both notifications (Ready for Pickup first, later Shipped)."
+msgstr ""
+
+#: includes/class-toc-webhooks.php:341
+msgid "An outbound SMS was reported as %1$s for order #%2$s."
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:587
+msgid "Append footer"
+msgstr ""
+
+#: includes/trait-toc-admin-bulk.php:81
+msgid "Apply filters"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:184
+#: includes/trait-toc-admin-settings.php:268
+msgid "Auth Token"
+msgstr ""
+
+#: includes/class-toc-auto.php:394
+msgid "Auto SMS not sent (%1$s): %2$s"
+msgstr ""
+
+#: includes/class-toc-auto.php:386
+msgid "Auto SMS sent (%s)."
+msgstr ""
+
+#: includes/class-toc-auto.php:404
+msgid "Auto SMS skipped (%s): SMS toggle is disabled in Order Communicator → Settings."
+msgstr ""
+
+#: includes/class-toc-auto.php:330
+msgid "Auto notification deferred (quiet hours, %1$s). Scheduled for %2$s."
+msgstr ""
+
+#: includes/class-toc-auto.php:343
+msgid "Auto notification skipped (%s): no phone number."
+msgstr ""
+
+#: includes/class-toc-auto.php:265
+msgid "Auto notification skipped (%s): order is marked as collected."
+msgstr ""
+
+#: includes/class-toc-auto.php:298
+msgid "Auto notification skipped (%s): voice and SMS are both disabled."
+msgstr ""
+
+#: includes/class-toc-auto.php:311
+msgid "Auto notification skipped (Ready for Pickup): shipping method does not look like Local Pickup."
+msgstr ""
+
+#: includes/class-toc-onboarding.php:172
+msgid "Auto notify"
+msgstr ""
+
+#: includes/class-toc-auto.php:372
+msgid "Auto voice call failed (%1$s): %2$s"
+msgstr ""
+
+#: includes/class-toc-auto.php:363
+msgid "Auto voice call placed (%1$s). SID: %2$s"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:350
+msgid "Auto-notify when an order enters the mapped Ready for Pickup status"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:392
+msgid "Auto-notify when an order enters the mapped Shipped status"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:341
+msgid "Automatic Notifications"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:590
+msgid "Automatically append a compliance footer to outbound SMS"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:478
+msgid "Automatically remind customers whose orders are still in Ready for Pickup after a delay. Uses the Pickup Reminder template, quiet hours, SMS consent, and the Ready for Pickup voice/SMS channel toggles above. Never gated by license."
+msgstr ""
+
+#: includes/class-toc-onboarding.php:207
+#: includes/class-toc-onboarding.php:224
+#: includes/class-toc-onboarding.php:245
+#: includes/class-toc-onboarding.php:279
+msgid "Back"
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:85
+msgid "Block automatic/bulk SMS unless the customer opted in."
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:431
+#: includes/trait-toc-admin-settings.php:452
+msgid "Body"
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:33
+msgid "Built-in TwiML Endpoint"
+msgstr ""
+
+#: includes/trait-toc-admin-bulk.php:43
+msgid "Bulk Pickup Reminders"
+msgstr ""
+
+#: includes/class-toc-admin.php:189
+msgid "Bulk Reminders"
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:70
+msgid "Bulk Reminders target orders currently in the mapped Ready for Pickup status (uses the Reminder template)."
+msgstr ""
+
+#: includes/class-toc-order-meta.php:250
+msgid "Call"
+msgstr ""
+
+#: includes/trait-toc-admin-bulk.php:106
+msgid "Call + SMS when consented"
+msgstr ""
+
+#: includes/trait-toc-admin-dashboard.php:175
+msgid "Calls today"
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:89
+msgid "Capabilities"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:721
+msgid "Capabilities: %1$s (manage) and %2$s (send). Advanced sites can still override the required capability string with the toc_manage_settings / toc_send_sms filters."
+msgstr ""
+
+#: includes/class-toc-statuses.php:124
+msgid "Change status to Ready for Pickup"
+msgstr ""
+
+#: includes/class-toc-statuses.php:125
+msgid "Change status to Shipped"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:516
+msgid "Checkbox label"
+msgstr ""
+
+#: includes/class-toc-admin.php:145
+msgid "Checking…"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:501
+msgid "Checkout checkbox"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:325
+msgid "Choose which WooCommerce statuses trigger Ready for Pickup and Shipped notifications. Defaults are the statuses registered by this plugin."
+msgstr ""
+
+#: includes/class-toc-order-meta.php:196
+msgid "Collected"
+msgstr ""
+
+#: includes/class-toc-order-meta.php:193
+msgid "Collected %s"
+msgstr ""
+
+#: includes/class-toc-order-meta.php:86
+msgid "Collected flag cleared (Order Communicator)."
+msgstr ""
+
+#: includes/class-toc-onboarding.php:165
+msgid "Connect your own Twilio account, verify webhooks, and turn on Ready for Pickup / Shipped notifications."
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:24
+msgid "Connection Test"
+msgstr ""
+
+#: includes/trait-toc-admin-ajax.php:168
+msgid "Connection test successful."
+msgstr ""
+
+#: includes/class-toc-onboarding.php:171
+msgid "Consent"
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:87
+msgid "Consent meta key"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:208
+#: includes/class-toc-onboarding.php:225
+msgid "Continue"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:663
+msgid "Control which WordPress roles can open Order Communicator admin pages, and which can send SMS or place calls from orders. Messaging is never gated by license — these are WordPress capabilities only."
+msgstr ""
+
+#: includes/class-toc-admin.php:131
+msgid "Conversation resolved"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:219
+msgid "Copy"
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:56
+msgid "Copy this paragraph into your store Privacy Policy (customize as needed). You bring your own Twilio account; Twilio processes messages on your behalf."
+msgstr ""
+
+#: includes/class-toc-admin.php:129
+msgid "Could not mark resolved"
+msgstr ""
+
+#: includes/trait-toc-admin-dashboard.php:72
+msgid "Could not open output stream."
+msgstr ""
+
+#: includes/class-toc-license.php:317
+msgid "Could not reach license server."
+msgstr ""
+
+#: includes/trait-toc-admin-ajax.php:164
+msgid "Credential check failed."
+msgstr ""
+
+#: includes/class-toc-onboarding.php:168
+msgid "Credentials"
+msgstr ""
+
+#: includes/class-toc-twilio.php:477
+msgid "Credentials missing. Save Account SID, Auth Token and From Number first."
+msgstr ""
+
+#: includes/class-toc-order-meta.php:256
+#: includes/trait-toc-admin-bulk.php:122
+msgid "Customer"
+msgstr ""
+
+#: includes/class-toc-order-meta.php:135
+msgid "Customer Communications"
+msgstr ""
+
+#: includes/class-toc-twilio.php:541
+msgid "Customer has not consented to SMS."
+msgstr ""
+
+#: includes/class-toc-admin.php:125
+msgid "Customer has not opted in to SMS. Send anyway?"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:512
+msgid "Customer must check the box to place the order"
+msgstr ""
+
+#: includes/class-toc-webhooks.php:437
+msgid "Customer opted out of SMS (STOP)."
+msgstr ""
+
+#: includes/class-toc-webhooks.php:462
+msgid "Customer re-subscribed to SMS (START)."
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:412
+msgid "Customer status emails"
+msgstr ""
+
+#: includes/trait-toc-admin-license.php:102
+msgid "Customer:"
+msgstr ""
+
+#: includes/class-toc-admin.php:188
+msgid "Dashboard"
+msgstr ""
+
+#: includes/trait-toc-admin-dashboard.php:240
+msgid "Date"
+msgstr ""
+
+#: includes/class-toc-admin.php:148
+#: includes/trait-toc-admin-license.php:113
+msgid "Deactivate"
+msgstr ""
+
+#: includes/class-toc-admin.php:144
+msgid "Deactivating…"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:610
+msgid "Deduplicated per MessageSid so Twilio retries do not send multiple emails. Order notes are always written regardless of this setting."
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:493
+msgid "Default 24. Range 1–720 (30 days)."
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:88
+msgid "Default text for Ready for Pickup, Shipped, reminders, and Issue / Contact."
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:535
+msgid "Default:"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:463
+msgid "Defer auto notifications during quiet hours"
+msgstr ""
+
+#: includes/class-toc-auto.php:416
+msgid "Deferred auto notification completed after quiet hours (%s)."
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:489
+msgid "Delay"
+msgstr ""
+
+#: includes/trait-toc-admin-bulk.php:109
+msgid "Delay between each order"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:351
+msgid "Delete that meta to allow a re-send."
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:393
+msgid "Delete that meta to allow a re-send. An order can receive both Ready for Pickup and Shipped notifications."
+msgstr ""
+
+#: includes/trait-toc-admin-dashboard.php:182
+msgid "Delivered rate"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:602
+msgid "Delivery failure alerts"
+msgstr ""
+
+#: includes/trait-toc-admin-dashboard.php:186
+msgid "Delivery rates are over the last 30 days and rely on Twilio delivery StatusCallbacks; a message with no callback yet counts as sent but not delivered."
+msgstr ""
+
+#: includes/trait-toc-admin-license.php:84
+msgid "Details"
+msgstr ""
+
+#: includes/trait-toc-admin-dashboard.php:244
+msgid "Dir"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:71
+msgid "Dismiss"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:173
+msgid "Done"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:288
+msgid "E.164 format required (e.g. +15055551234)"
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:64
+msgid "Each status has independent Enable / Voice / SMS toggles and its own message template."
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:69
+msgid "Each status notifies once: <code>_toc_notified_ready_for_pickup_at</code> / <code>_toc_notified_shipped_at</code>. Clear the relevant meta to re-fire."
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:609
+msgid "Email staff when an SMS is failed or undelivered"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:422
+msgid "Email the customer when the order enters Ready for Pickup"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:443
+msgid "Email the customer when the order enters Shipped"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:347
+#: includes/trait-toc-admin-settings.php:389
+#: includes/trait-toc-admin-settings.php:419
+#: includes/trait-toc-admin-settings.php:440
+#: includes/trait-toc-admin-settings.php:481
+#: includes/trait-toc-admin-settings.php:606
+msgid "Enable"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:255
+#: includes/class-toc-onboarding.php:261
+msgid "Enable auto notifications"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:235
+msgid "Enable checkout SMS consent checkbox"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:267
+msgid "Enable quiet hours (defer auto notify)"
+msgstr ""
+
+#: includes/class-toc-license.php:198
+msgid "Enter a license key."
+msgstr ""
+
+#: includes/class-toc-admin.php:122
+msgid "Enter a message"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:534
+msgid "Enter the order meta key written by your SMS consent checkbox — TOC’s built-in box or a third-party one. Truthy values: yes / 1 / on / true / checked."
+msgstr ""
+
+#: includes/class-toc-license.php:536
+msgid "Error / unreachable"
+msgstr ""
+
+#: includes/class-toc-admin.php:127
+msgid "Error:"
+msgstr ""
+
+#: includes/class-toc-webhooks.php:257
+msgid "Error: %s"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:536
+msgid "Examples:"
+msgstr ""
+
+#: includes/class-toc-license.php:534
+msgid "Expired"
+msgstr ""
+
+#: includes/trait-toc-admin-license.php:99
+msgid "Expires:"
+msgstr ""
+
+#: includes/trait-toc-admin-dashboard.php:210
+msgid "Export CSV"
+msgstr ""
+
+#: includes/class-toc-order-meta.php:312
+#: includes/class-toc-order-meta.php:344
+msgid "Failed"
+msgstr ""
+
+#: includes/trait-toc-admin-dashboard.php:183
+msgid "Failed rate"
+msgstr ""
+
+#: includes/trait-toc-admin-dashboard.php:208
+msgid "Filter"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:288
+msgid "Finish setup"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:595
+msgid "Footer text"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:465
+msgid "From"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:190
+#: includes/trait-toc-admin-settings.php:281
+msgid "From Number"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:186
+msgid "From Number must be in E.164 format, e.g. +15055551234. Your previous value was kept."
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:574
+msgid "HELP reply"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:217
+#: includes/trait-toc-admin-tools.php:47
+msgid "HTTP POST"
+msgstr ""
+
+#: includes/trait-toc-admin-bulk.php:75
+msgid "Hide if reminded < 24h ago"
+msgstr ""
+
+#: includes/trait-toc-admin-bulk.php:76
+msgid "Hide if reminded < 48h ago"
+msgstr ""
+
+#: includes/trait-toc-admin-bulk.php:78
+msgid "Hide if reminded < 7 days ago"
+msgstr ""
+
+#: includes/trait-toc-admin-bulk.php:77
+msgid "Hide if reminded < 72h ago"
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:61
+msgid "How Automatic Notifications Work"
+msgstr ""
+
+#: includes/class-toc-checkout.php:45
+msgid "I agree to receive SMS updates about my order (msg & data rates may apply). Reply STOP to opt out."
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:538
+msgid "If the key is wrong, automatic and bulk SMS may be blocked even when the customer opted in. See Tools & Docs for webhook and consent notes."
+msgstr ""
+
+#: includes/trait-toc-admin-dashboard.php:264
+msgid "In"
+msgstr ""
+
+#: includes/trait-toc-admin-bulk.php:64
+msgid "In Ready status (modified within)"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:214
+#: includes/trait-toc-admin-tools.php:42
+msgid "In Twilio Console → Phone Numbers → your number → Messaging → “A MESSAGE COMES IN”:"
+msgstr ""
+
+#: includes/class-toc-license.php:532
+msgid "Inactive"
+msgstr ""
+
+#: includes/trait-toc-admin-dashboard.php:198
+msgid "Inbound"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:566
+msgid "Inbound SMS keywords (STOP / HELP / START)"
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:41
+msgid "Incoming SMS Webhook"
+msgstr ""
+
+#: includes/class-toc-webhooks.php:472
+msgid "Incoming SMS: \"%s\""
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:342
+msgid "Independent controls for each status. Uses your own Twilio account — message and call costs are billed by Twilio."
+msgstr ""
+
+#: includes/trait-toc-admin-license.php:104
+msgid "Instance ID:"
+msgstr ""
+
+#: includes/class-toc-license.php:535
+msgid "Invalid"
+msgstr ""
+
+#: includes/class-toc-twilio.php:532 includes/class-toc-twilio.php:601
+msgid "Invalid phone number (must be E.164, e.g. +15055551234)."
+msgstr ""
+
+#: includes/class-toc-caps.php:130
+msgid "Invalid role matrix."
+msgstr ""
+
+#: includes/class-toc-order-meta.php:228
+#: includes/trait-toc-admin-settings.php:561
+msgid "Issue / Contact"
+msgstr ""
+
+#: includes/trait-toc-admin-license.php:103
+msgid "Last check:"
+msgstr ""
+
+#: includes/trait-toc-admin-bulk.php:126
+msgid "Last reminder"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:576
+msgid "Leave blank to use a default with your store name."
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:617
+msgid "Leave blank to use the WordPress admin email."
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:46
+msgid "Legacy alias (still supported):"
+msgstr ""
+
+#: includes/class-toc-admin.php:192 includes/trait-toc-admin-license.php:16
+msgid "License"
+msgstr ""
+
+#: includes/class-toc-license.php:234
+msgid "License activated."
+msgstr ""
+
+#: includes/class-toc-license.php:275
+msgid "License deactivated for this site."
+msgstr ""
+
+#: includes/class-toc-license.php:340
+msgid "License is active."
+msgstr ""
+
+#: includes/class-toc-license.php:329
+msgid "License is not valid."
+msgstr ""
+
+#: includes/trait-toc-admin-license.php:44
+msgid "License key"
+msgstr ""
+
+#: includes/trait-toc-admin-license.php:79
+msgid "License server"
+msgstr ""
+
+#: includes/trait-toc-admin-license.php:68
+msgid "License server URL"
+msgstr ""
+
+#: includes/class-toc-license.php:201
+msgid "License server URL is not configured (TOC_LICENSE_SERVER_URL)."
+msgstr ""
+
+#: includes/class-toc-license.php:290
+msgid "License server URL is not configured."
+msgstr ""
+
+#: includes/class-toc-admin.php:172
+msgid "License server URL saved."
+msgstr ""
+
+#: includes/trait-toc-admin-license.php:87
+msgid "Licensed site:"
+msgstr ""
+
+#: includes/class-toc-admin.php:153
+#: includes/trait-toc-admin-license.php:100
+msgid "Lifetime / none set"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:371
+#: includes/trait-toc-admin-tools.php:84
+msgid "Local Pickup filter"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:380
+msgid "Loose (legacy): any title containing \"pickup\""
+msgstr ""
+
+#: includes/class-toc-license.php:562
+msgid "Manage license"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:673
+msgid "Manage plugin"
+msgstr ""
+
+#: includes/class-toc-admin.php:130
+#: includes/trait-toc-admin-dashboard.php:279
+msgid "Mark Resolved"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:286
+msgid "Mark a test order as Ready for Pickup (or Shipped) to verify auto notify. Check order notes if SMS is skipped."
+msgstr ""
+
+#: includes/class-toc-order-meta.php:112
+msgid "Mark as collected (Order Communicator)"
+msgstr ""
+
+#: includes/class-toc-order-meta.php:212
+msgid "Mark conversation resolved"
+msgstr ""
+
+#: includes/class-toc-order-meta.php:261
+msgid "Mark resolved"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:414
+#: includes/trait-toc-admin-settings.php:545
+msgid "Merge tags:"
+msgstr ""
+
+#: includes/trait-toc-admin-bulk.php:98
+#: includes/trait-toc-admin-dashboard.php:245
+msgid "Message"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:544
+msgid "Message Templates"
+msgstr ""
+
+#: includes/class-toc-order-meta.php:281
+#: includes/class-toc-order-meta.php:326
+msgid "Message and phone required."
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:88
+msgid "Message templates"
+msgstr ""
+
+#: includes/class-toc-webhooks.php:360
+msgid "Message:"
+msgstr ""
+
+#: includes/class-toc-webhooks.php:358
+msgid "MessageSid:"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:423
+#: includes/trait-toc-admin-settings.php:444
+msgid "Meta"
+msgstr ""
+
+#: includes/trait-toc-admin-ajax.php:28
+msgid "Missing ID"
+msgstr ""
+
+#: includes/trait-toc-admin-ajax.php:51
+msgid "Missing data"
+msgstr ""
+
+#: includes/trait-toc-admin-dashboard.php:311
+msgid "Next"
+msgstr ""
+
+#: includes/trait-toc-admin-bulk.php:155
+msgid "No"
+msgstr ""
+
+#: includes/trait-toc-admin-dashboard.php:236
+msgid "No communications found."
+msgstr ""
+
+#: includes/class-toc-caps.php:135
+msgid "No editable roles found."
+msgstr ""
+
+#: includes/class-toc-license.php:287
+msgid "No license key saved."
+msgstr ""
+
+#: includes/trait-toc-admin-license.php:24
+msgid "No license server URL is configured yet. Set TOC_LICENSE_SERVER_URL in wp-config.php (recommended) or save a server URL below."
+msgstr ""
+
+#: includes/trait-toc-admin-bulk.php:90
+msgid "No matching “%s” orders in this window."
+msgstr ""
+
+#: includes/class-toc-order-meta.php:217
+#: includes/class-toc-order-meta.php:358
+msgid "No messages or calls yet."
+msgstr ""
+
+#: includes/trait-toc-admin-ajax.php:79
+msgid "No phone number"
+msgstr ""
+
+#: includes/class-toc-admin.php:123
+msgid "No phone number on this order"
+msgstr ""
+
+#: includes/class-toc-order-meta.php:186
+msgid "No phone on file"
+msgstr ""
+
+#: includes/class-toc-order-meta.php:261
+msgid "OK"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:485
+msgid "One Action Scheduler job per order. Cancelled if the order leaves Ready for Pickup. Skips if _toc_last_reminder_at is still recent (same delay window)."
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:374
+msgid "Only auto-notify Ready for Pickup if shipping method looks like Local Pickup"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:289
+msgid "Open Settings"
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:37
+msgid "Open that URL while logged into wp-admin as a shop manager. You should see XML with a <code>&lt;Say&gt;</code> element."
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:86
+msgid "Optional compliance footer appended to outbound SMS."
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:413
+msgid "Optional email to the customer when an order enters the mapped Ready for Pickup or Shipped status. Independent of voice/SMS auto-notify. Sent once per order (clear the order meta to re-send). Uses wp_mail with your store From address. Quiet hours do not apply. Never gated by license."
+msgstr ""
+
+#: includes/trait-toc-admin-license.php:73
+msgid "Optional fallback when TOC_LICENSE_SERVER_URL is not defined. Prefer the wp-config constant in production."
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:84
+msgid "Optional secondary check for Ready for Pickup auto-notify only."
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:375
+msgid "Optional secondary filter. Primary trigger is order status. Off by default for new installs."
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:66
+msgid "Optional: restrict Ready for Pickup auto-notify to orders whose shipping method looks like Local Pickup (off by default on new installs)."
+msgstr ""
+
+#: includes/trait-toc-admin-bulk.php:121
+#: includes/trait-toc-admin-dashboard.php:241
+msgid "Order"
+msgstr ""
+
+#: includes/class-toc-admin.php:93 includes/class-toc-admin.php:94
+msgid "Order Communicator"
+msgstr ""
+
+#: includes/class-toc-webhooks.php:349
+msgid "Order ID:"
+msgstr ""
+
+#: includes/class-toc-updater.php:126
+msgid "Order SMS and voice via your own Twilio account."
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:324
+msgid "Order Status Mapping"
+msgstr ""
+
+#: includes/trait-toc-admin-ajax.php:65
+msgid "Order is marked as collected"
+msgstr ""
+
+#: includes/class-toc-order-meta.php:63
+msgid "Order marked as collected (Order Communicator). Auto-notify and pickup reminders are suppressed."
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:87
+msgid "Order meta field that stores the opt-in (default <code>_toc_sms_consent</code>)."
+msgstr ""
+
+#: includes/trait-toc-admin-ajax.php:56
+msgid "Order not found"
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:71
+msgid "Order notes always explain if Auto SMS was skipped (setting off, no consent, Twilio error)."
+msgstr ""
+
+#: includes/class-toc-webhooks.php:347
+msgid "Order:"
+msgstr ""
+
+#: includes/trait-toc-admin-bulk.php:49
+msgid "Orders currently in “%s” with a phone number. Voice calls never require SMS consent. SMS is only sent when the customer has consented"
+msgstr ""
+
+#: includes/trait-toc-admin-bulk.php:55
+msgid "Orders marked as collected are excluded."
+msgstr ""
+
+#: includes/trait-toc-admin-dashboard.php:265
+msgid "Out"
+msgstr ""
+
+#: includes/trait-toc-admin-dashboard.php:197
+msgid "Outbound"
+msgstr ""
+
+#: includes/trait-toc-admin-dashboard.php:226
+msgid "Page %1$d of %2$d"
+msgstr ""
+
+#: includes/trait-toc-admin-license.php:60
+msgid "Paste your license key, then Activate. The full key is never shown in the page after save."
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:83
+msgid "Per-status enable, voice, and SMS controls."
+msgstr ""
+
+#: includes/class-toc-admin.php:162 includes/class-toc-admin.php:52
+#: includes/class-toc-license.php:466 includes/class-toc-license.php:483
+#: includes/class-toc-license.php:493 includes/class-toc-onboarding.php:101
+#: includes/class-toc-onboarding.php:78
+#: includes/class-toc-onboarding.php:87
+#: includes/class-toc-order-meta.php:272
+#: includes/class-toc-order-meta.php:318
+#: includes/class-toc-order-meta.php:350
+#: includes/trait-toc-admin-ajax.php:15
+#: includes/trait-toc-admin-ajax.php:158
+#: includes/trait-toc-admin-ajax.php:35
+#: includes/trait-toc-admin-dashboard.php:53
+msgid "Permission denied"
+msgstr ""
+
+#: includes/trait-toc-admin-bulk.php:123
+#: includes/trait-toc-admin-dashboard.php:242
+msgid "Phone"
+msgstr ""
+
+#: includes/class-toc-twilio.php:536
+msgid "Phone number has opted out (STOP)."
+msgstr ""
+
+#: includes/class-toc-order-meta.php:186
+#: includes/class-toc-webhooks.php:352
+msgid "Phone:"
+msgstr ""
+
+#: includes/class-toc-order-meta.php:227
+#: includes/trait-toc-admin-settings.php:556
+msgid "Pickup Reminder"
+msgstr ""
+
+#: includes/class-toc-order-meta.php:198
+msgid "Pickup complete — auto-notify and scheduled reminders are suppressed"
+msgstr ""
+
+#: includes/class-toc-order-meta.php:233
+msgid "Place Call"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:358
+#: includes/trait-toc-admin-settings.php:400
+msgid "Place a voice call"
+msgstr ""
+
+#: includes/class-toc-admin.php:126
+msgid "Place a voice call with the current message?"
+msgstr ""
+
+#: includes/class-toc-checkout.php:83
+msgid "Please agree to receive SMS updates about your order, or contact the store for alternatives."
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:45
+msgid "Preferred REST URL:"
+msgstr ""
+
+#: includes/trait-toc-admin-dashboard.php:308
+msgid "Previous"
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:63
+msgid "Primary trigger is order status (mapped Ready for Pickup and/or Shipped), not shipping method."
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:55
+msgid "Privacy Policy helper"
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:79
+msgid "Purpose"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:270
+msgid "Quiet from"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:460
+msgid "Quiet hours"
+msgstr ""
+
+#: includes/class-toc-admin.php:149
+#: includes/trait-toc-admin-license.php:112
+msgid "Re-check"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:567
+msgid "Re-subscribe keywords are START and UNSTOP only (not YES), so casual customer replies do not re-opt-in by accident."
+msgstr ""
+
+#: includes/class-toc-auto.php:182 includes/class-toc-auto.php:563
+#: includes/class-toc-onboarding.php:253
+#: includes/class-toc-order-meta.php:225
+#: includes/trait-toc-admin-settings.php:344
+#: includes/trait-toc-admin-settings.php:548
+msgid "Ready for Pickup"
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:83
+msgid "Ready for Pickup / Shipped toggles"
+msgstr ""
+
+#: includes/class-toc-statuses.php:59
+msgid "Ready for Pickup <span class=\"count\">(%s)</span>"
+msgid_plural "Ready for Pickup <span class=\"count\">(%s)</span>"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/trait-toc-admin-settings.php:416
+msgid "Ready for Pickup email"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:328
+msgid "Ready for Pickup status"
+msgstr ""
+
+#: includes/trait-toc-admin-bulk.php:72
+msgid "Recently reminded"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:379
+msgid "Recommended: method ID or title contains \"local pickup\""
+msgstr ""
+
+#: includes/trait-toc-admin-dashboard.php:184
+msgid "Reply rate"
+msgstr ""
+
+#: includes/class-toc-admin.php:128
+msgid "Request failed"
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:49
+msgid "Requests are validated with Twilio’s <code>X-Twilio-Signature</code> header. Unsigned requests are rejected (403). STOP / HELP / START keywords are handled automatically and logged in order chat."
+msgstr ""
+
+#: includes/class-toc-onboarding.php:222
+msgid "Requests are validated with X-Twilio-Signature. STOP / HELP / START are handled automatically."
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:85
+msgid "Require SMS consent"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:509
+msgid "Require at checkout"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:241
+msgid "Require consent before automatic/bulk SMS"
+msgstr ""
+
+#: includes/trait-toc-admin-dashboard.php:209
+msgid "Reset"
+msgstr ""
+
+#: includes/class-toc-admin.php:132
+#: includes/trait-toc-admin-dashboard.php:203
+#: includes/trait-toc-admin-dashboard.php:247
+#: includes/trait-toc-admin-dashboard.php:277
+msgid "Resolved"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:671
+msgid "Role"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:661
+msgid "Role permissions"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:655
+msgid "Role permissions saved."
+msgstr ""
+
+#: includes/class-toc-admin.php:139 includes/class-toc-onboarding.php:203
+#: includes/trait-toc-admin-tools.php:27
+msgid "Run Connection Test"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:351
+#: includes/trait-toc-admin-settings.php:393
+msgid "Runs once per order (meta"
+msgstr ""
+
+#: includes/class-toc-order-meta.php:250
+#: includes/trait-toc-admin-dashboard.php:192
+#: includes/trait-toc-admin-dashboard.php:262
+#: includes/trait-toc-admin-settings.php:363
+#: includes/trait-toc-admin-settings.php:404
+msgid "SMS"
+msgstr ""
+
+#: includes/class-toc-webhooks.php:252
+msgid "SMS %1$s (SID: %2$s)%3$s"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:584
+msgid "SMS Footer"
+msgstr ""
+
+#: includes/class-toc-order-meta.php:201
+msgid "SMS STOP / opted out"
+msgstr ""
+
+#: includes/class-toc-admin.php:141
+msgid "SMS blocked by consent"
+msgstr ""
+
+#: includes/trait-toc-admin-bulk.php:125
+msgid "SMS consent"
+msgstr ""
+
+#: includes/class-toc-order-meta.php:205
+msgid "SMS consent: No"
+msgstr ""
+
+#: includes/class-toc-order-meta.php:207
+msgid "SMS consent: Unknown"
+msgstr ""
+
+#: includes/class-toc-order-meta.php:203
+msgid "SMS consent: Yes"
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:51
+msgid "SMS delivery status callbacks are attached automatically on each outbound message (<code>%s</code>) — no extra Twilio console setup needed."
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:86
+msgid "SMS footer"
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:68
+msgid "SMS is only sent automatically if the customer has consented (when Require consent is on) and has not texted STOP."
+msgstr ""
+
+#: includes/trait-toc-admin-bulk.php:105
+msgid "SMS only"
+msgstr ""
+
+#: includes/trait-toc-admin-dashboard.php:181
+msgid "SMS sent (30d)"
+msgstr ""
+
+#: includes/class-toc-order-meta.php:304
+msgid "SMS sent: \"%1$s\"%2$s"
+msgstr ""
+
+#: includes/trait-toc-admin-dashboard.php:174
+msgid "SMS today"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:579
+msgid "START reply"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:570
+msgid "STOP reply"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:195
+#: includes/class-toc-onboarding.php:246
+#: includes/class-toc-onboarding.php:280
+msgid "Save & continue"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:728
+msgid "Save role permissions"
+msgstr ""
+
+#: includes/class-toc-admin.php:150 includes/trait-toc-admin-license.php:74
+msgid "Save server URL"
+msgstr ""
+
+#: includes/trait-toc-admin-license.php:55
+msgid "Saved key: %s — leave blank to keep it, or paste a new key to replace."
+msgstr ""
+
+#: includes/class-toc-admin.php:146
+msgid "Saving…"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:484
+msgid "Schedule a reminder when an order enters Ready for Pickup"
+msgstr ""
+
+#: includes/class-toc-reminders.php:301
+msgid "Scheduled pickup reminder SMS not sent: %s"
+msgstr ""
+
+#: includes/class-toc-reminders.php:295
+msgid "Scheduled pickup reminder SMS sent."
+msgstr ""
+
+#: includes/class-toc-reminders.php:225
+msgid "Scheduled pickup reminder deferred (quiet hours). Rescheduled for %s."
+msgstr ""
+
+#: includes/class-toc-reminders.php:258
+msgid "Scheduled pickup reminder skipped: Ready for Pickup voice and SMS are both disabled in Settings."
+msgstr ""
+
+#: includes/class-toc-reminders.php:238
+msgid "Scheduled pickup reminder skipped: a reminder was sent too recently."
+msgstr ""
+
+#: includes/class-toc-reminders.php:247
+msgid "Scheduled pickup reminder skipped: no phone number."
+msgstr ""
+
+#: includes/class-toc-reminders.php:200
+msgid "Scheduled pickup reminder skipped: order is marked as collected."
+msgstr ""
+
+#: includes/class-toc-reminders.php:213
+msgid "Scheduled pickup reminder skipped: order is not Local Pickup (Local Pickup filter is on)."
+msgstr ""
+
+#: includes/class-toc-reminders.php:282
+msgid "Scheduled pickup reminder voice call failed: %s"
+msgstr ""
+
+#: includes/class-toc-reminders.php:274
+msgid "Scheduled pickup reminder voice call placed. SID: %s"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:477
+msgid "Scheduled pickup reminders"
+msgstr ""
+
+#: includes/trait-toc-admin-dashboard.php:207
+msgid "Search…"
+msgstr ""
+
+#: includes/class-toc-admin.php:133
+msgid "Select at least one order"
+msgstr ""
+
+#: includes/class-toc-order-meta.php:232
+msgid "Send SMS"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:677
+msgid "Send SMS & calls"
+msgstr ""
+
+#: includes/class-toc-admin.php:142
+msgid "Send anyway?"
+msgstr ""
+
+#: includes/trait-toc-admin-bulk.php:102
+msgid "Send as"
+msgstr ""
+
+#: includes/class-toc-admin.php:135 includes/trait-toc-admin-bulk.php:165
+msgid "Send to Selected"
+msgstr ""
+
+#: includes/class-toc-admin.php:134
+msgid "Sending…"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:433
+msgid "Sent with the WooCommerce email template when available (plain text is auto-wrapped). Light HTML is allowed. Quiet hours do not apply."
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:454
+msgid "Sent with the WooCommerce email template when available. Quiet hours do not apply."
+msgstr ""
+
+#: includes/class-toc-admin.php:165
+msgid "Server URL is locked by TOC_LICENSE_SERVER_URL."
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:271
+msgid "Set via TOC_AUTH_TOKEN"
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:79
+msgid "Setting"
+msgstr ""
+
+#: includes/class-toc-admin.php:190
+msgid "Settings"
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:77
+msgid "Settings Reference"
+msgstr ""
+
+#: includes/class-toc-admin.php:191
+msgid "Setup"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:164
+msgid "Setup wizard"
+msgstr ""
+
+#: includes/class-toc-auto.php:195 includes/class-toc-auto.php:580
+#: includes/class-toc-onboarding.php:259
+#: includes/class-toc-order-meta.php:226
+#: includes/trait-toc-admin-settings.php:386
+#: includes/trait-toc-admin-settings.php:552
+msgid "Shipped"
+msgstr ""
+
+#: includes/class-toc-statuses.php:68
+msgid "Shipped <span class=\"count\">(%s)</span>"
+msgid_plural "Shipped <span class=\"count\">(%s)</span>"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/trait-toc-admin-settings.php:437
+msgid "Shipped email"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:334
+msgid "Shipped status"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:231
+msgid "Show a built-in opt-in checkbox on WooCommerce checkout (classic and block). Stores consent + timestamp/IP on the order."
+msgstr ""
+
+#: includes/trait-toc-admin-bulk.php:74
+msgid "Show all"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:504
+msgid "Show built-in SMS consent checkbox on checkout"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:591
+msgid "Skipped when the message already mentions STOP and opt out. Voice calls are not affected."
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:254
+msgid "Some credentials are set via wp-config.php constants (TOC_ACCOUNT_SID / TOC_AUTH_TOKEN / TOC_FROM_NUMBER) and cannot be changed here."
+msgstr ""
+
+#: includes/trait-toc-admin-dashboard.php:246
+#: includes/trait-toc-admin-license.php:31
+msgid "Status"
+msgstr ""
+
+#: includes/trait-toc-admin-bulk.php:124
+msgid "Status date"
+msgstr ""
+
+#: includes/class-toc-auto.php:542
+msgid "Status email failed (%s): mailer returned false."
+msgstr ""
+
+#: includes/class-toc-auto.php:533
+msgid "Status email sent (%1$s) to %2$s."
+msgstr ""
+
+#: includes/class-toc-auto.php:487
+msgid "Status email skipped (%s): no billing email on the order."
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:82
+msgid "Status mapping"
+msgstr ""
+
+#: includes/class-toc-webhooks.php:354
+msgid "Status:"
+msgstr ""
+
+#: includes/class-toc-admin.php:136 includes/trait-toc-admin-bulk.php:166
+msgid "Stop"
+msgstr ""
+
+#: includes/class-toc-admin.php:137
+msgid "Stopping…"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:276
+msgid "Store timezone"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:378
+msgid "Strict: shipping method ID = local_pickup only"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:427
+#: includes/trait-toc-admin-settings.php:448
+msgid "Subject"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:169
+msgid "Test"
+msgstr ""
+
+#: includes/class-toc-admin.php:138
+msgid "Testing…"
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:50
+msgid "The preferred URL is built with WordPress rest_url(), so it stays correct for plain permalinks, subdirectory installs, and reverse proxies (when Webhook base URL is set in Settings)."
+msgstr ""
+
+#: includes/trait-toc-admin-bulk.php:57
+msgid "The time window filters by last modified (when the order entered/changed Ready), not by original order created date — so older orders newly marked Ready still appear."
+msgstr ""
+
+#: includes/class-toc-webhooks.php:363
+msgid "This alert was sent by Twilio Order Communicator. Messaging is not blocked by license state."
+msgstr ""
+
+#: includes/class-toc-admin.php:124
+msgid "This phone has opted out (STOP). Send SMS anyway?"
+msgstr ""
+
+#: includes/class-toc-admin.php:193
+msgid "Tools & Docs"
+msgstr ""
+
+#: includes/trait-toc-admin-dashboard.php:177
+msgid "Total"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:252
+msgid "Triggered by order status (Ready for Pickup / Shipped), not shipping method. Uses your Twilio account."
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:242
+msgid "Twilio Credentials"
+msgstr ""
+
+#: includes/class-toc-webhooks.php:356
+msgid "Twilio ErrorCode:"
+msgstr ""
+
+#: includes/trait-toc-admin-ajax.php:181
+msgid "Twilio OK, but TwiML endpoint did not return valid XML. Response code: %s"
+msgstr ""
+
+#: includes/trait-toc-admin-ajax.php:173
+msgid "Twilio OK, but TwiML endpoint unreachable: %s"
+msgstr ""
+
+#: includes/class-toc-admin.php:186
+msgid "Twilio Order Communicator"
+msgstr ""
+
+#: includes/class-toc-license.php:558
+msgid "Twilio Order Communicator license status: %s. Messaging still works; premium plugin updates are paused until the license is active."
+msgstr ""
+
+#: includes/class-toc-twilio.php:192 includes/class-toc-twilio.php:527
+#: includes/class-toc-twilio.php:596
+msgid "Twilio credentials not configured."
+msgstr ""
+
+#: includes/trait-toc-admin-ajax.php:186
+msgid "Twilio credentials verified%s and the built-in TwiML endpoint is working."
+msgstr ""
+
+#: includes/class-toc-order-meta.php:210
+msgid "Twilio not configured"
+msgstr ""
+
+#: includes/class-toc-twilio.php:487
+msgid "Twilio rejected credentials: %s"
+msgstr ""
+
+#: includes/class-toc-twilio.php:493
+msgid "Twilio rejected credentials: unexpected response."
+msgstr ""
+
+#: includes/trait-toc-admin-dashboard.php:243
+msgid "Type"
+msgstr ""
+
+#: includes/class-toc-order-meta.php:230
+msgid "Type a custom message…"
+msgstr ""
+
+#: includes/class-toc-order-meta.php:147
+msgid "Unable to load order."
+msgstr ""
+
+#: includes/class-toc-admin.php:140
+msgid "Unknown"
+msgstr ""
+
+#: includes/class-toc-twilio.php:567 includes/class-toc-twilio.php:572
+#: includes/class-toc-twilio.php:626 includes/class-toc-twilio.php:631
+msgid "Unknown Twilio error"
+msgstr ""
+
+#: includes/class-toc-order-meta.php:110
+msgid "Unmark collected (Order Communicator)"
+msgstr ""
+
+#: includes/trait-toc-admin-dashboard.php:176
+#: includes/trait-toc-admin-dashboard.php:202
+msgid "Unresolved"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:468
+msgid "Until"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:243
+msgid "Use your own Twilio account. This plugin does not provide or resell SMS, voice, or calling services — Twilio bills you directly."
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:558
+msgid "Used by Bulk Reminders and scheduled pickup reminders for orders still in Ready for Pickup."
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:472
+msgid "Uses the WordPress timezone (%s). Overnight windows like 21:00–08:00 are supported. Deferred with Action Scheduler when available. Applies to Ready for Pickup, Shipped, and scheduled pickup reminders."
+msgstr ""
+
+#: includes/class-toc-onboarding.php:201
+msgid "Verifies Account SID + Auth Token with Twilio and checks the built-in TwiML endpoint."
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:25
+msgid "Verifies your Twilio Account SID + Auth Token against the Twilio API, and checks that the built-in TwiML endpoint responds."
+msgstr ""
+
+#: includes/trait-toc-admin-dashboard.php:193
+#: includes/trait-toc-admin-dashboard.php:261
+msgid "Voice"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:256
+#: includes/class-toc-onboarding.php:262
+#: includes/trait-toc-admin-settings.php:355
+#: includes/trait-toc-admin-settings.php:397
+msgid "Voice call"
+msgstr ""
+
+#: includes/trait-toc-admin-bulk.php:104
+msgid "Voice call only"
+msgstr ""
+
+#: includes/class-toc-order-meta.php:337
+msgid "Voice call placed (SID: %s)"
+msgstr ""
+
+#: includes/class-toc-webhooks.php:218
+msgid "Voice call status: %1$s (SID: %2$s)"
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:67
+msgid "Voice calls do not require SMS consent."
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:359
+msgid "Voice calls do not require SMS consent. Also used by scheduled pickup reminders."
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:34
+msgid "Voice calls use a short-lived tokenized TwiML URL generated per call (the spoken text is <strong>not</strong> put in the query string). No separate page or Code Snippet is required."
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:319
+msgid "Voice used by the built-in TwiML endpoint. Alice / Man / Woman work on all accounts. Polly voices require Amazon Polly support on your Twilio account; the plugin maps stored values (e.g. polly.joanna) to Twilio’s Polly.Joanna form automatically."
+msgstr ""
+
+#: includes/trait-toc-admin-bulk.php:111
+msgid "Wait between each order so Twilio and your site are not flooded. Recommended 5–15s for calls."
+msgstr ""
+
+#: includes/class-toc-onboarding.php:170
+#: includes/class-toc-onboarding.php:216
+#: includes/trait-toc-admin-tools.php:44
+msgid "Webhook"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:603
+msgid "When Twilio reports an outbound SMS as failed or undelivered (StatusCallback), optionally email staff. SMS/voice sending is never gated by license."
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:82
+msgid "Which WooCommerce statuses trigger Ready for Pickup / Shipped logic."
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:674
+msgid "Who can open Order Communicator admin pages"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:678
+msgid "Who can send SMS / place calls from orders"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:505
+msgid "Works with classic checkout and WooCommerce block checkout (8.9+). Stores consent, timestamp, and IP on the order."
+msgstr ""
+
+#: includes/trait-toc-admin-bulk.php:153
+msgid "Yes"
+msgstr ""
+
+#: includes/class-toc-order-meta.php:256
+msgid "You"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:285
+msgid "You are ready"
+msgstr ""
+
+#: includes/class-toc-webhooks.php:457
+msgid "You have been re-subscribed to SMS messages. Reply STOP to opt out."
+msgstr ""
+
+#: includes/class-toc-webhooks.php:432
+msgid "You have been unsubscribed from SMS messages. Reply START to re-subscribe. Msg&data rates may apply."
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:72
+msgid "You must use your own Twilio Account SID, Auth Token, and From Number. This plugin does not provide messaging services."
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:81
+msgid "Your Twilio credentials (bring your own account). Optional wp-config constants: TOC_ACCOUNT_SID, TOC_AUTH_TOKEN, TOC_FROM_NUMBER."
+msgstr ""
+
+#: includes/class-toc-webhooks.php:320
+msgid "[%1$s] SMS %2$s — order #%3$s"
+msgstr ""
+
+#: includes/trait-toc-admin-bulk.php:105
+msgid "consent required"
+msgstr ""
+
+#: includes/trait-toc-admin-bulk.php:68
+msgid "days"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:492
+msgid "hours after entering Ready for Pickup"
+msgstr ""
+
+#: includes/trait-toc-admin-bulk.php:115
+msgid "order(s) listed"
+msgstr ""
+
+#: includes/class-toc-admin.php:151 includes/trait-toc-admin-license.php:37
+msgid "premium updates enabled"
+msgstr ""
+
+#: includes/class-toc-admin.php:152 includes/trait-toc-admin-license.php:39
+msgid "premium updates paused"
+msgstr ""
+
+#: includes/class-toc-checkout.php:69
+msgid "required"
+msgstr ""
+
+#: includes/class-toc-order-meta.php:259
+msgid "resolved"
+msgstr ""
+
+#: includes/trait-toc-admin-bulk.php:110
+msgid "seconds"
+msgstr ""
+
+#: includes/trait-toc-admin-tools.php:89
+msgid "still override the required string."
+msgstr ""
+
+#: includes/class-toc-twilio.php:487
+msgid "unknown"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:273
+msgid "until"
+msgstr ""
+
+#: includes/class-toc-onboarding.php:186
+msgid "•••••••• (leave blank to keep)"
+msgstr ""
+
+#: includes/class-toc-statuses.php:104 includes/class-toc-statuses.php:109
+#: includes/class-toc-statuses.php:195 includes/class-toc-statuses.php:57
+msgctxt "Order status"
+msgid "Ready for Pickup"
+msgstr ""
+
+#: includes/class-toc-statuses.php:105 includes/class-toc-statuses.php:112
+#: includes/class-toc-statuses.php:196 includes/class-toc-statuses.php:66
+msgctxt "Order status"
+msgid "Shipped"
+msgstr ""
+

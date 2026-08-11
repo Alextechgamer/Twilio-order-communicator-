@@ -189,7 +189,7 @@ class TOC_Twilio {
 				'success' => false,
 				'code'    => 0,
 				'data'    => array(),
-				'error'   => 'Twilio credentials not configured.',
+				'error'   => __( 'Twilio credentials not configured.', 'twilio-order-communicator' ),
 			);
 		}
 
@@ -257,6 +257,7 @@ class TOC_Twilio {
 	 * Replace template merge tags.
 	 * {order_number} {order_id} {customer_first_name} {customer_last_name}
 	 * {customer_full_name} {store_name} {phone} {order_total} {billing_email}
+	 * {tracking} {tracking_url}
 	 */
 	public function merge_tags( $message, $order = null ) {
 		$message = (string) $message;
@@ -276,6 +277,8 @@ class TOC_Twilio {
 			'{phone}'               => '',
 			'{order_total}'         => '',
 			'{billing_email}'       => '',
+			'{tracking}'            => '',
+			'{tracking_url}'        => '',
 		);
 
 		if ( $order instanceof WC_Order ) {
@@ -287,9 +290,76 @@ class TOC_Twilio {
 			$replacements['{phone}']               = (string) $order->get_billing_phone();
 			$replacements['{order_total}']         = wp_strip_all_tags( $order->get_formatted_order_total() );
 			$replacements['{billing_email}']       = (string) $order->get_billing_email();
+
+			$tracking                       = $this->tracking_for( $order );
+			$replacements['{tracking}']     = $tracking['number'];
+			$replacements['{tracking_url}'] = $tracking['url'];
 		}
 
 		return str_ireplace( array_keys( $replacements ), array_values( $replacements ), $message );
+	}
+
+	/**
+	 * Resolve a tracking number + URL for an order from common sources (order meta).
+	 *
+	 * @param WC_Order $order Order.
+	 * @return array{number:string,url:string}
+	 */
+	private function tracking_for( $order ) {
+		$t = self::tracking_from_meta(
+			(string) $order->get_meta( '_ob_tracking_number' ),
+			(string) $order->get_meta( '_ob_tracking_url' ),
+			$order->get_meta( '_wc_shipment_tracking_items' )
+		);
+
+		/**
+		 * Filter the resolved tracking number/URL used by the {tracking} / {tracking_url} tags.
+		 *
+		 * @param array    $t     array{number:string,url:string}.
+		 * @param WC_Order $order Order.
+		 */
+		$t = apply_filters( 'toc_order_tracking', $t, $order );
+
+		return array(
+			'number' => isset( $t['number'] ) ? (string) $t['number'] : '',
+			'url'    => isset( $t['url'] ) ? (string) $t['url'] : '',
+		);
+	}
+
+	/**
+	 * Pure precedence resolver for tracking data (unit-testable, no WooCommerce runtime).
+	 * OrderBay meta wins; otherwise the first WooCommerce Shipment Tracking item with a number.
+	 *
+	 * @param string $ob_number OrderBay tracking number.
+	 * @param string $ob_url    OrderBay tracking URL.
+	 * @param mixed  $wc_items  WooCommerce Shipment Tracking items array (or non-array → ignored).
+	 * @return array{number:string,url:string}
+	 */
+	public static function tracking_from_meta( $ob_number, $ob_url, $wc_items ) {
+		$number = trim( (string) $ob_number );
+		$url    = trim( (string) $ob_url );
+
+		if ( '' === $number && is_array( $wc_items ) ) {
+			foreach ( $wc_items as $item ) {
+				if ( ! is_array( $item ) ) {
+					continue;
+				}
+				$n = trim( (string) ( $item['tracking_number'] ?? '' ) );
+				if ( '' === $n ) {
+					continue;
+				}
+				$number = $n;
+				if ( '' === $url ) {
+					$url = trim( (string) ( $item['custom_tracking_link'] ?? ( $item['formatted_tracking_link'] ?? '' ) ) );
+				}
+				break;
+			}
+		}
+
+		return array(
+			'number' => $number,
+			'url'    => $url,
+		);
 	}
 
 	public function validate_twilio_signature() {
@@ -404,7 +474,7 @@ class TOC_Twilio {
 
 	public function test_credentials() {
 		if ( ! $this->is_configured() ) {
-			return array( 'success' => false, 'error' => 'Credentials missing. Save Account SID, Auth Token and From Number first.' );
+			return array( 'success' => false, 'error' => __( 'Credentials missing. Save Account SID, Auth Token and From Number first.', 'twilio-order-communicator' ) );
 		}
 
 		$creds = $this->get_credentials();
@@ -413,13 +483,14 @@ class TOC_Twilio {
 		if ( empty( $result['success'] ) ) {
 			return array(
 				'success' => false,
-				'error'   => 'Twilio rejected credentials: ' . ( $result['error'] ?? 'unknown' ),
+				/* translators: %s: error detail from Twilio. */
+				'error'   => sprintf( __( 'Twilio rejected credentials: %s', 'twilio-order-communicator' ), $result['error'] ?? __( 'unknown', 'twilio-order-communicator' ) ),
 			);
 		}
 
 		$data = $result['data'];
 		if ( empty( $data['sid'] ) ) {
-			return array( 'success' => false, 'error' => 'Twilio rejected credentials: unexpected response.' );
+			return array( 'success' => false, 'error' => __( 'Twilio rejected credentials: unexpected response.', 'twilio-order-communicator' ) );
 		}
 
 		return array(
@@ -453,21 +524,21 @@ class TOC_Twilio {
 	public function send_sms( $to, $body, $order_id = 0, $force = false ) {
 		$creds = $this->get_credentials();
 		if ( ! $this->is_configured() ) {
-			return array( 'success' => false, 'error' => 'Twilio credentials not configured.' );
+			return array( 'success' => false, 'error' => __( 'Twilio credentials not configured.', 'twilio-order-communicator' ) );
 		}
 
 		$to = TOC_Logger::instance()->normalize_phone( $to );
 		if ( empty( $to ) || ! self::is_e164( $to ) ) {
-			return array( 'success' => false, 'error' => 'Invalid phone number (must be E.164, e.g. +15055551234).' );
+			return array( 'success' => false, 'error' => __( 'Invalid phone number (must be E.164, e.g. +15055551234).', 'twilio-order-communicator' ) );
 		}
 
 		if ( ! $force && $this->phone_is_opted_out( $to ) ) {
-			return array( 'success' => false, 'error' => 'Phone number has opted out (STOP).' );
+			return array( 'success' => false, 'error' => __( 'Phone number has opted out (STOP).', 'twilio-order-communicator' ) );
 		}
 
 		if ( ! $force && get_option( 'toc_require_sms_consent', 1 ) ) {
 			if ( $order_id && ! $this->customer_consented_sms( $order_id ) ) {
-				return array( 'success' => false, 'error' => 'Customer has not consented to SMS.' );
+				return array( 'success' => false, 'error' => __( 'Customer has not consented to SMS.', 'twilio-order-communicator' ) );
 			}
 		}
 
@@ -493,12 +564,12 @@ class TOC_Twilio {
 		);
 
 		if ( empty( $result['success'] ) ) {
-			return array( 'success' => false, 'error' => $result['error'] ?? 'Unknown Twilio error' );
+			return array( 'success' => false, 'error' => $result['error'] ?? __( 'Unknown Twilio error', 'twilio-order-communicator' ) );
 		}
 
 		$data = $result['data'];
 		if ( empty( $data['sid'] ) ) {
-			return array( 'success' => false, 'error' => 'Unknown Twilio error' );
+			return array( 'success' => false, 'error' => __( 'Unknown Twilio error', 'twilio-order-communicator' ) );
 		}
 
 		TOC_Logger::instance()->log(
@@ -522,12 +593,12 @@ class TOC_Twilio {
 	public function make_call( $to, $message, $order_id = 0 ) {
 		$creds = $this->get_credentials();
 		if ( ! $this->is_configured() ) {
-			return array( 'success' => false, 'error' => 'Twilio credentials not configured.' );
+			return array( 'success' => false, 'error' => __( 'Twilio credentials not configured.', 'twilio-order-communicator' ) );
 		}
 
 		$to = TOC_Logger::instance()->normalize_phone( $to );
 		if ( empty( $to ) || ! self::is_e164( $to ) ) {
-			return array( 'success' => false, 'error' => 'Invalid phone number (must be E.164, e.g. +15055551234).' );
+			return array( 'success' => false, 'error' => __( 'Invalid phone number (must be E.164, e.g. +15055551234).', 'twilio-order-communicator' ) );
 		}
 
 		$order = $order_id ? wc_get_order( $order_id ) : null;
@@ -552,12 +623,12 @@ class TOC_Twilio {
 		);
 
 		if ( empty( $result['success'] ) ) {
-			return array( 'success' => false, 'error' => $result['error'] ?? 'Unknown Twilio error' );
+			return array( 'success' => false, 'error' => $result['error'] ?? __( 'Unknown Twilio error', 'twilio-order-communicator' ) );
 		}
 
 		$data = $result['data'];
 		if ( empty( $data['sid'] ) ) {
-			return array( 'success' => false, 'error' => 'Unknown Twilio error' );
+			return array( 'success' => false, 'error' => __( 'Unknown Twilio error', 'twilio-order-communicator' ) );
 		}
 
 		TOC_Logger::instance()->log(

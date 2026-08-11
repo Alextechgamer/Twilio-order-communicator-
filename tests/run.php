@@ -16,11 +16,13 @@ require $root . '/license-server/src/Helpers.php';
 require $root . '/orderbay/includes/class-ob-einvoice.php';
 require $root . '/orderbay/includes/class-ob-invoicing.php';
 require $root . '/orderbay/includes/class-ob-documents.php';
+require $root . '/orderbay/includes/class-ob-qr.php';
 require $root . '/storecanvas/includes/class-sc-print-ready.php';
 require $root . '/storecanvas/includes/class-sc-export.php';
 require $root . '/storecanvas/includes/class-sc-cart-order.php';
 require $root . '/storecanvas/includes/class-sc-product-options.php';
 require $root . '/storecanvas/includes/class-sc-fpd-import.php';
+require $root . '/storecanvas/includes/class-sc-templates.php';
 
 $pass  = 0;
 $fail  = 0;
@@ -64,6 +66,14 @@ check( 'consent no', $twilio->is_truthy_consent( 'no' ), false );
 check( 'falsy no', $twilio->is_falsy_consent( 'no' ), true );
 check( 'falsy yes', $twilio->is_falsy_consent( 'yes' ), false );
 check( 'falsy empty', $twilio->is_falsy_consent( '' ), false );
+
+/* ---- TOC_Twilio::tracking_from_meta (pins the {tracking} merge tag precedence) ---- */
+check( 'tracking OB wins', TOC_Twilio::tracking_from_meta( '1Z999', 'https://t/1Z999', array( array( 'tracking_number' => 'WC1' ) ) ), array( 'number' => '1Z999', 'url' => 'https://t/1Z999' ) );
+check( 'tracking WC fallback', TOC_Twilio::tracking_from_meta( '', '', array( array( 'tracking_number' => 'WC1', 'custom_tracking_link' => 'https://c/WC1' ) ) ), array( 'number' => 'WC1', 'url' => 'https://c/WC1' ) );
+check( 'tracking WC formatted link', TOC_Twilio::tracking_from_meta( '', '', array( array( 'tracking_number' => 'WC2', 'formatted_tracking_link' => 'https://f/WC2' ) ) ), array( 'number' => 'WC2', 'url' => 'https://f/WC2' ) );
+check( 'tracking OB number keeps OB url empty ok', TOC_Twilio::tracking_from_meta( 'OB9', '', 'not-an-array' ), array( 'number' => 'OB9', 'url' => '' ) );
+check( 'tracking none', TOC_Twilio::tracking_from_meta( '', '', array() ), array( 'number' => '', 'url' => '' ) );
+check( 'tracking skips empty WC items', TOC_Twilio::tracking_from_meta( '', '', array( array( 'tracking_number' => '' ), array( 'tracking_number' => 'WC3' ) ) ), array( 'number' => 'WC3', 'url' => '' ) );
 
 /* ---- TOC_Logger::normalize_phone (pins the international-normalization fix) ---- */
 $logger = TOC_Logger::instance();
@@ -163,6 +173,33 @@ if ( extension_loaded( 'dom' ) ) {
 	echo "SKIP: ext-dom not loaded — e-invoice XML tests skipped\n";
 }
 
+/* ---- StoreCanvas prebuilt templates (pure) ---- */
+$sc_tpls = SC_Templates::templates();
+check( 'tpl has 4 presets', count( $sc_tpls ), 4 );
+check( 'tpl keys', array_keys( $sc_tpls ) === array( 'tee', 'mug', 'sticker', 'sign' ), true );
+$tpl_wellformed = true;
+foreach ( $sc_tpls as $k => $tpl ) {
+	if ( 1 !== ( $tpl['customizer']['enabled'] ?? 0 ) ) { $tpl_wellformed = false; }
+	if ( count( $tpl['customizer']['views'] ) < 1 ) { $tpl_wellformed = false; }
+	if ( count( $tpl['customizer']['areas'] ) < 1 ) { $tpl_wellformed = false; }
+	foreach ( $tpl['customizer']['areas'] as $a ) {
+		foreach ( array( 'x', 'y', 'w', 'h' ) as $dim ) {
+			if ( $a[ $dim ] < 0 || $a[ $dim ] > 100 ) { $tpl_wellformed = false; }
+		}
+		// every area references a real view id
+		$view_ids = array_map( function ( $v ) { return $v['id']; }, $tpl['customizer']['views'] );
+		if ( ! in_array( $a['view_id'], $view_ids, true ) ) { $tpl_wellformed = false; }
+	}
+	foreach ( $tpl['options']['fields'] as $f ) {
+		if ( empty( $f['id'] ) || empty( $f['type'] ) ) { $tpl_wellformed = false; }
+		if ( 'select' === $f['type'] && empty( $f['choices'] ) ) { $tpl_wellformed = false; }
+	}
+}
+check( 'tpl all well-formed', $tpl_wellformed, true );
+check( 'tpl apply tee', SC_Templates::apply( 'tee' )['customizer']['enabled'], 1 );
+check( 'tpl apply tee has options', count( SC_Templates::apply( 'tee' )['options']['fields'] ) >= 1, true );
+check( 'tpl apply unknown null', SC_Templates::apply( 'bogus' ), null );
+
 /* ---- StoreCanvas FPD importer mapping (pure; modeled FPD schema) ---- */
 $fpd = array(
 	'title' => 'Classic Tee',
@@ -261,6 +298,18 @@ check( 'tpl strips traversal', OB_Documents::template_candidates( '../../evil.ph
 	'/th/child/orderbay/evil.php',
 	'/plug/templates/evil.php',
 ) );
+
+/* ---- OrderBay QR version selection (pure; pins the no-truncation fix) ---- */
+check( 'qr v1 boundary', OB_QR::pick_version( 14 ), 1 );
+check( 'qr v2 boundary', OB_QR::pick_version( 26 ), 2 );
+check( 'qr v3 boundary', OB_QR::pick_version( 42 ), 3 );
+check( 'qr v2 mid', OB_QR::pick_version( 20 ), 2 );
+check( 'qr over capacity skips', OB_QR::pick_version( 43 ), 0 );
+check( 'qr order-url length skips built-in', OB_QR::pick_version( 47 ), 0 );
+check( 'qr empty skips', OB_QR::pick_version( 0 ), 0 );
+check( 'qr library absent here', OB_QR::library_available(), false );
+check( 'qr svg empty payload', OB_QR::svg( '' ), '' );
+check( 'qr svg long payload no library skips', OB_QR::svg( str_repeat( 'x', 47 ) ), '' );
 
 /* ---- OrderBay per-rate tax rows (pure; pins the tax-breakdown feature) ---- */
 $tax_obj = array(

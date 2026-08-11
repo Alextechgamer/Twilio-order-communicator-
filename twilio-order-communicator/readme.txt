@@ -4,7 +4,7 @@ Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
 WC requires at least: 7.0
-Stable tag: 1.15.0
+Stable tag: 1.16.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -85,6 +85,15 @@ No. The plugin includes its own tokenized TwiML endpoint.
 They text START or UNSTOP. Plain "YES" is intentionally not treated as re-subscribe.
 
 == Changelog ==
+
+= 1.16.0 =
+* New: {tracking} and {tracking_url} merge tags for SMS, voice and email templates
+* Tracking resolves from OrderBay tracking meta, then WooCommerce Shipment Tracking, then the toc_order_tracking filter (no hard dependency on any one plugin)
+* Existing message templates are unchanged — add the tags where you want them (e.g. the Shipped template)
+
+= 1.15.1 =
+* i18n: wrap the previously English-only Twilio error/status and AJAX response strings (class-toc-twilio.php, admin AJAX) in the text domain
+* i18n: ship a translation template (languages/twilio-order-communicator.pot)
 
 = 1.15.0 =
 * New: delivery analytics on the dashboard — SMS sent (30d), delivered rate, failed rate and reply rate, from Twilio StatusCallbacks

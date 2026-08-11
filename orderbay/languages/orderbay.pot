@@ -1,0 +1,1611 @@
+# Copyright (C) 2026 Orderbay
+# This file is distributed under the same license as the Orderbay plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: Orderbay\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-08-11 23:27+0000\n"
+"X-Domain: orderbay\n"
+
+#: templates/delivery-note.php:43
+msgid "%d delivery note(s)"
+msgstr ""
+
+#: templates/invoice.php:50
+msgid "%d document(s) · paper: %s"
+msgstr ""
+
+#: templates/shipping-label.php:46
+msgid "%d label(s) · ~4×6 layout"
+msgstr ""
+
+#: templates/pick-list.php:35
+msgid "%d order(s): %s"
+msgstr ""
+
+#: templates/packing-slip.php:45
+msgid "%d packing slip(s)"
+msgstr ""
+
+#: templates/proforma.php:57
+msgid "%d proforma(s)"
+msgstr ""
+
+#: includes/class-ob-documents.php:216
+msgid "%s counter reset"
+msgstr ""
+
+#: includes/class-ob-documents.php:213
+msgid "%s number format"
+msgstr ""
+
+#: includes/class-ob-catalog.php:185
+msgid "(Copy)"
+msgstr ""
+
+#: includes/class-ob-digest.php:252
+msgid "--- Needs attention (open) ---"
+msgstr ""
+
+#: includes/class-ob-documents.php:141
+msgid "A QR library is installed — order QR codes are rendered through it (scannable for full order URLs)."
+msgstr ""
+
+#: includes/class-ob-dashboard.php:101
+msgid "Add a logo URL and From name/address under Documents so invoices look complete."
+msgstr ""
+
+#: includes/class-ob-notes.php:127
+msgid "Add private note"
+msgstr ""
+
+#: includes/class-ob-sla.php:208
+msgid "Add private note when flagging (once)"
+msgstr ""
+
+#: includes/class-ob-notifications.php:214
+msgid "Add rule…"
+msgstr ""
+
+#: includes/class-ob-notifications.php:223
+msgid "Admin"
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:331
+msgid "Allow customers to open a packing slip for their own orders (default off)"
+msgstr ""
+
+#: includes/class-ob-rma.php:135
+msgid "Allow logged-in customers to request RMA on My Account (default off)"
+msgstr ""
+
+#: templates/credit-note.php:58
+msgid "Amount (excl. tax)"
+msgstr ""
+
+#: includes/class-ob-export.php:85
+msgid "Any"
+msgstr ""
+
+#: includes/class-ob-rma.php:199
+msgid "Approved"
+msgstr ""
+
+#: includes/class-ob-order-ops.php:169 includes/class-ob-order-ops.php:174
+msgid "Attention"
+msgstr ""
+
+#: includes/class-ob-order-ops.php:231
+msgid "Attention (all)"
+msgstr ""
+
+#: includes/class-ob-rma.php:128
+msgid "Auto attention"
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:334
+msgid "Auto needs-attention"
+msgstr ""
+
+#: includes/class-ob-documents.php:152
+msgid "Auto: Dompdf/TCPDF if already installed on host"
+msgstr ""
+
+#: includes/class-ob-documents.php:132
+msgid "Barcodes"
+msgstr ""
+
+#: templates/credit-note.php:51 templates/invoice.php:78
+#: templates/proforma.php:83
+msgid "Bill to"
+msgstr ""
+
+#: templates/pick-list.php:42
+msgid "Bin"
+msgstr ""
+
+#: includes/class-ob-catalog.php:243
+msgid "Bin / location (Orderbay)"
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:322 includes/class-ob-notes.php:93
+#: includes/class-ob-notifications.php:201
+msgid "Body"
+msgstr ""
+
+#: includes/class-ob-documents.php:151
+msgid "Browser only (Print → Save as PDF)"
+msgstr ""
+
+#: includes/class-ob-einvoice.php:376
+msgid "Buyer country code is missing or invalid."
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:365
+#: includes/class-ob-fulfillment.php:714
+msgid "Carrier"
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:302
+msgid "Carrier tracking URL templates"
+msgstr ""
+
+#: includes/class-ob-rma.php:201
+msgid "Closed"
+msgstr ""
+
+#: includes/class-ob-documents.php:135
+msgid "Code 128 SVG on invoice / packing / labels (default off)"
+msgstr ""
+
+#: includes/class-ob-documents.php:123
+msgid "Company VAT / Tax ID"
+msgstr ""
+
+#: includes/class-ob-catalog.php:206
+msgid "Could not duplicate product."
+msgstr ""
+
+#: includes/class-ob-export.php:141
+msgid "Could not open output stream."
+msgstr ""
+
+#: includes/class-ob-einvoice.php:93
+msgid "Could not render the base invoice PDF."
+msgstr ""
+
+#: includes/class-ob-documents.php:189 templates/credit-note.php:16
+#: templates/credit-note.php:45
+msgid "Credit note"
+msgstr ""
+
+#: includes/class-ob-invoicing.php:354
+msgid "Credit note #"
+msgstr ""
+
+#: templates/credit-note.php:45
+msgid "Credit note %s"
+msgstr ""
+
+#: includes/class-ob-documents.php:187
+msgid "Credit note prefix"
+msgstr ""
+
+#: includes/class-ob-dashboard.php:91
+msgid "Custom art (StoreCanvas)"
+msgstr ""
+
+#: includes/class-ob-notifications.php:199
+#: includes/class-ob-notifications.php:224
+msgid "Custom email"
+msgstr ""
+
+#: includes/class-ob-notifications.php:222
+msgid "Customer"
+msgstr ""
+
+#: includes/class-ob-rma.php:132
+msgid "Customer RMA requests"
+msgstr ""
+
+#: includes/class-ob-rma.php:420
+msgid "Customer RMA requests are disabled."
+msgstr ""
+
+#: includes/class-ob-dashboard.php:112
+msgid "Customer RMA, barcodes, staff digests, tracking email, and customer packing slip stay off until you enable them. Bulk print / pick list / CSV need the edit_shop_orders capability."
+msgstr ""
+
+#: templates/delivery-note.php:88 templates/invoice.php:139
+#: templates/packing-slip.php:154
+msgid "Customer note"
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:327
+msgid "Customer packing slip"
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:674
+msgid "Customer packing slips are disabled."
+msgstr ""
+
+#: includes/class-ob-documents.php:400
+msgid "DN"
+msgstr ""
+
+#: includes/class-ob-digest.php:310
+msgid "Daily"
+msgstr ""
+
+#: includes/class-ob-plugin.php:118 includes/class-ob-plugin.php:119
+msgid "Dashboard"
+msgstr ""
+
+#: includes/class-ob-export.php:93
+msgid "Days back"
+msgstr ""
+
+#: includes/class-ob-notifications.php:203
+msgid "Delete"
+msgstr ""
+
+#: includes/class-ob-documents.php:363 templates/delivery-note.php:23
+msgid "Delivery note"
+msgstr ""
+
+#: includes/class-ob-documents.php:145
+msgid "Delivery note prices"
+msgstr ""
+
+#: templates/delivery-note.php:51
+msgid "Delivery note — Order #%s"
+msgstr ""
+
+#: includes/class-ob-documents.php:156
+msgid "Detected on this host: %s. Download PDF button appears when engine is Auto."
+msgstr ""
+
+#: templates/invoice.php:131
+msgid "Discount"
+msgstr ""
+
+#: includes/class-ob-documents.php:110
+msgid "Document appearance"
+msgstr ""
+
+#: includes/class-ob-dashboard.php:116
+msgid "Document settings (invoice / packing slip)"
+msgstr ""
+
+#: includes/class-ob-plugin.php:126 includes/class-ob-plugin.php:127
+msgid "Documents"
+msgstr ""
+
+#: templates/packing-slip.php:91
+msgid "Done"
+msgstr ""
+
+#: includes/class-ob-invoicing.php:491
+msgid "Download / print invoice"
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:649
+msgid "Download / print packing slip"
+msgstr ""
+
+#: includes/class-ob-export.php:98
+msgid "Download CSV"
+msgstr ""
+
+#: includes/class-ob-documents.php:371
+msgid "Download PDF (host engine)"
+msgstr ""
+
+#: includes/class-ob-documents.php:165
+msgid "Download UBL (Peppol BIS 3.0) or CII (Factur-X EN16931) invoice XML from the order screen. EN16931 baseline — validate against an official validator before relying on it. A \"Factur-X PDF\" button also appears when a PDF engine (Dompdf/TCPDF) and the horstoeko/zugferd library are installed on the host; its output must pass a Factur-X validator. Peppol network transmission is not included."
+msgstr ""
+
+#: includes/class-ob-export.php:80
+msgid "Download recent orders as CSV (order_id, number, date, status, total, customer, email, phone, needs_attention, tags)."
+msgstr ""
+
+#: includes/class-ob-catalog.php:134
+msgid "Duplicate (Orderbay)"
+msgstr ""
+
+#: includes/class-ob-documents.php:375
+msgid "E-invoice CII (Factur-X)"
+msgstr ""
+
+#: includes/class-ob-documents.php:374
+msgid "E-invoice UBL"
+msgstr ""
+
+#: includes/class-ob-documents.php:385
+msgid "E-invoice XML is a draft — not fully compliant yet:"
+msgstr ""
+
+#: includes/class-ob-documents.php:164
+msgid "E-invoicing (UBL / Factur-X)"
+msgstr ""
+
+#: includes/class-ob-rma.php:136
+msgid "Eligible order statuses"
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:316
+msgid "Email customer when tracking is first saved"
+msgstr ""
+
+#: includes/class-ob-plugin.php:166 includes/class-ob-plugin.php:167
+msgid "Email rules"
+msgstr ""
+
+#: includes/class-ob-dashboard.php:121
+msgid "Email rules & low stock"
+msgstr ""
+
+#: includes/class-ob-notifications.php:248
+msgid "Email when stock hits threshold (daily throttle per product)"
+msgstr ""
+
+#: includes/class-ob-notifications.php:245 includes/class-ob-sla.php:193
+msgid "Enable"
+msgstr ""
+
+#: includes/class-ob-digest.php:305
+msgid "Enable digest"
+msgstr ""
+
+#: includes/class-ob-digest.php:321
+msgid "Enabled but not yet scheduled — save again or wait for admin_init."
+msgstr ""
+
+#: templates/proforma.php:127
+msgid "Estimated total"
+msgstr ""
+
+#: includes/class-ob-plugin.php:182 includes/class-ob-plugin.php:183
+msgid "Export CSV"
+msgstr ""
+
+#: includes/class-ob-export.php:63
+msgid "Export Orderbay CSV"
+msgstr ""
+
+#: includes/class-ob-dashboard.php:123
+msgid "Export orders CSV"
+msgstr ""
+
+#: includes/class-ob-documents.php:377
+msgid "Factur-X PDF"
+msgstr ""
+
+#: includes/class-ob-einvoice.php:110
+msgid "Factur-X assembly failed: "
+msgstr ""
+
+#: includes/class-ob-einvoice.php:114
+msgid "Factur-X assembly produced no output."
+msgstr ""
+
+#: includes/class-ob-einvoice.php:81
+msgid "Factur-X needs a PDF engine (Dompdf/TCPDF) and the horstoeko/zugferd library on this host."
+msgstr ""
+
+#: includes/class-ob-documents.php:116
+msgid "Footer text"
+msgstr ""
+
+#: includes/class-ob-documents.php:127
+msgid "For e-invoicing. Blank = WooCommerce store country."
+msgstr ""
+
+#: includes/class-ob-catalog.php:140 includes/class-ob-dashboard.php:43
+#: includes/class-ob-digest.php:296 includes/class-ob-documents.php:102
+#: includes/class-ob-documents.php:460 includes/class-ob-documents.php:574
+#: includes/class-ob-documents.php:644 includes/class-ob-einvoice.php:143
+#: includes/class-ob-einvoice.php:75 includes/class-ob-export.php:104
+#: includes/class-ob-export.php:75 includes/class-ob-fulfillment.php:289
+#: includes/class-ob-fulfillment.php:537
+#: includes/class-ob-invoicing.php:386 includes/class-ob-invoicing.php:402
+#: includes/class-ob-notes.php:133 includes/class-ob-notes.php:82
+#: includes/class-ob-notifications.php:135
+#: includes/class-ob-notifications.php:166
+#: includes/class-ob-partial.php:176 includes/class-ob-rma.php:114
+#: includes/class-ob-rma.php:308 includes/class-ob-rma.php:324
+#: includes/class-ob-sla.php:184
+msgid "Forbidden"
+msgstr ""
+
+#: includes/class-ob-documents.php:179
+msgid "Format tokens: {PREFIX} {YYYY} {YY} {MM} {DD} {SEQ} {SEQ:5} (zero-padded). Default {PREFIX}{SEQ} keeps existing numbers. A sequence token is always enforced. Yearly/monthly reset restarts the counter at 1 each period."
+msgstr ""
+
+#: includes/class-ob-digest.php:309
+msgid "Frequency"
+msgstr ""
+
+#: templates/credit-note.php:50 templates/delivery-note.php:54
+#: templates/invoice.php:73 templates/proforma.php:80
+#: templates/shipping-label.php:54
+msgid "From"
+msgstr ""
+
+#: includes/class-ob-documents.php:114
+msgid "From name / address"
+msgstr ""
+
+#: includes/class-ob-partial.php:30
+msgid "Fulfilled"
+msgstr ""
+
+#: includes/class-ob-partial.php:70 includes/class-ob-plugin.php:134
+#: includes/class-ob-plugin.php:135
+msgid "Fulfillment"
+msgstr ""
+
+#: includes/class-ob-dashboard.php:117
+msgid "Fulfillment (tracking / auto-attention / pick list)"
+msgstr ""
+
+#: includes/class-ob-dashboard.php:99
+msgid "Getting started — documents"
+msgstr ""
+
+#: templates/packing-slip.php:151
+msgid "Gift message"
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:193
+msgid "Hi {customer_first_name},\n\nYour order {order_number} from {store_name} is on its way.\n\nTracking number: {tracking_number}\nTracking link: {tracking_url}\n\nThank you!"
+msgstr ""
+
+#: includes/class-ob-sla.php:189
+msgid "Hourly WP-Cron job. Default off. Flags aging orders with needs-attention once (does not clear)."
+msgstr ""
+
+#: includes/class-ob-sla.php:197
+msgid "Hours threshold"
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:304
+msgid "ID"
+msgstr ""
+
+#: includes/class-ob-documents.php:184
+msgid "Immutable once assigned per order (_ob_proforma_number)."
+msgstr ""
+
+#: templates/rma-slip.php:85
+msgid "Include this slip with your return. Refunds are processed separately."
+msgstr ""
+
+#: includes/class-ob-notes.php:121
+msgid "Insert note template"
+msgstr ""
+
+#: includes/class-ob-documents.php:397
+msgid "Inv"
+msgstr ""
+
+#: includes/class-ob-rma.php:424
+msgid "Invalid RMA request."
+msgstr ""
+
+#: includes/class-ob-invoicing.php:521
+msgid "Invalid invoice request."
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:682
+msgid "Invalid packing slip request."
+msgstr ""
+
+#: includes/class-ob-documents.php:183 includes/class-ob-documents.php:360
+#: includes/class-ob-invoicing.php:479 templates/invoice.php:16
+msgid "Invoice"
+msgstr ""
+
+#: includes/class-ob-documents.php:353 includes/class-ob-invoicing.php:350
+msgid "Invoice #"
+msgstr ""
+
+#: templates/invoice.php:60
+msgid "Invoice %1$s — Order #%2$s"
+msgstr ""
+
+#: includes/class-ob-einvoice.php:373
+msgid "Invoice currency is missing."
+msgstr ""
+
+#: includes/class-ob-einvoice.php:379
+msgid "Invoice has no lines."
+msgstr ""
+
+#: templates/invoice.php:61
+msgid "Invoice number"
+msgstr ""
+
+#: includes/class-ob-documents.php:181
+msgid "Invoice prefix"
+msgstr ""
+
+#: includes/class-ob-einvoice.php:387
+msgid "Invoice totals do not reconcile (line extension + tax ≠ tax-inclusive amount)."
+msgstr ""
+
+#: templates/invoice.php:60
+msgid "Invoice — Order #%s"
+msgstr ""
+
+#: includes/class-ob-documents.php:178
+msgid "Invoice, proforma & credit note numbers"
+msgstr ""
+
+#: includes/class-ob-rma.php:214
+msgid "Issue RMA number"
+msgstr ""
+
+#: templates/delivery-note.php:61 templates/invoice.php:90
+#: templates/packing-slip.php:88 templates/proforma.php:88
+#: templates/rma-slip.php:62
+msgid "Item"
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:304
+msgid "Label"
+msgstr ""
+
+#: includes/class-ob-digest.php:325
+msgid "Last sent: %s"
+msgstr ""
+
+#: includes/class-ob-documents.php:401
+msgid "Lbl"
+msgstr ""
+
+#: includes/class-ob-notifications.php:242
+msgid "Leave the last row status empty to skip. Check Remove to delete a rule on save. Once-per-rule-per-order meta _ob_emailed_rule_{id}_at prevents re-send spam when status is re-applied."
+msgstr ""
+
+#: templates/packing-slip.php:91
+msgid "Left"
+msgstr ""
+
+#: includes/class-ob-export.php:95
+msgid "Limit"
+msgstr ""
+
+#: includes/class-ob-documents.php:112
+msgid "Logo URL"
+msgstr ""
+
+#: includes/class-ob-notifications.php:244
+msgid "Low stock alerts"
+msgstr ""
+
+#: includes/class-ob-digest.php:177
+msgid "Low-stock products (≤%d): %d\n"
+msgstr ""
+
+#: includes/class-ob-partial.php:72
+msgid "Mark fully fulfilled"
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:324
+msgid "Merge tags: {order_number} {customer_first_name} {store_name} {tracking_number} {tracking_url}"
+msgstr ""
+
+#: includes/class-ob-documents.php:221
+msgid "Monthly (restart at 1 each month)"
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:328
+msgid "My Account packing slip"
+msgstr ""
+
+#: includes/class-ob-dashboard.php:89 includes/class-ob-order-ops.php:101
+#: includes/class-ob-order-ops.php:232 includes/class-ob-order-ops.php:98
+msgid "Needs attention"
+msgstr ""
+
+#: includes/class-ob-export.php:91
+msgid "Needs attention only"
+msgstr ""
+
+#: includes/class-ob-digest.php:176
+msgid "Needs attention: %d\n"
+msgstr ""
+
+#: includes/class-ob-documents.php:219
+msgid "Never (continuous)"
+msgstr ""
+
+#: includes/class-ob-digest.php:174
+msgid "New orders (since %s): %d\n"
+msgstr ""
+
+#: includes/class-ob-rma.php:126
+msgid "Next RMA sequence"
+msgstr ""
+
+#: includes/class-ob-documents.php:188
+msgid "Next credit #"
+msgstr ""
+
+#: includes/class-ob-documents.php:182
+msgid "Next invoice #"
+msgstr ""
+
+#: includes/class-ob-documents.php:185
+msgid "Next proforma #"
+msgstr ""
+
+#: includes/class-ob-sla.php:213
+msgid "Next run (UTC): %s"
+msgstr ""
+
+#: includes/class-ob-digest.php:319
+msgid "Next scheduled run (UTC timestamp): %s"
+msgstr ""
+
+#: includes/class-ob-documents.php:158
+msgid "No Dompdf/TCPDF detected. Orderbay does not bundle PDF libraries."
+msgstr ""
+
+#: includes/class-ob-documents.php:654
+msgid "No Dompdf/TCPDF on this host. Use browser Print → Save as PDF."
+msgstr ""
+
+#: includes/class-ob-documents.php:143
+msgid "No QR library installed: the built-in encoder is experimental and only handles short payloads (up to ~42 bytes) — a long order URL is skipped rather than rendered as an unscannable code. Install chillerlan/php-qrcode (or endroid/qr-code) via Composer for reliable QR, or test the built-in with your scanner. The Code 128 barcode above is production-ready."
+msgstr ""
+
+#: templates/credit-note.php:90
+msgid "No WooCommerce refunds recorded on this order. Credit note number issued for staff records."
+msgstr ""
+
+#: templates/pick-list.php:51
+msgid "No line items in selection."
+msgstr ""
+
+#: templates/rma-slip.php:69
+msgid "No line items on this order."
+msgstr ""
+
+#: includes/class-ob-documents.php:592
+msgid "No orders selected."
+msgstr ""
+
+#: templates/delivery-note.php:44 templates/proforma.php:60
+#: templates/shipping-label.php:48
+msgid "No orders to print."
+msgstr ""
+
+#: includes/class-ob-invoicing.php:413
+msgid "No refunds and no credit note number on this order."
+msgstr ""
+
+#: includes/class-ob-digest.php:254 includes/class-ob-rma.php:197
+msgid "None"
+msgstr ""
+
+#: includes/class-ob-invoicing.php:351
+msgid "Not assigned yet (assigned on first print)"
+msgstr ""
+
+#: includes/class-ob-order-ops.php:233
+msgid "Not flagged"
+msgstr ""
+
+#: includes/class-ob-rma.php:210
+msgid "Not issued"
+msgstr ""
+
+#: includes/class-ob-dashboard.php:120 includes/class-ob-plugin.php:158
+#: includes/class-ob-plugin.php:159
+msgid "Note templates"
+msgstr ""
+
+#: includes/class-ob-notifications.php:251
+msgid "Notify email"
+msgstr ""
+
+#: includes/class-ob-notifications.php:196
+msgid "On"
+msgstr ""
+
+#: includes/class-ob-dashboard.php:107
+msgid "Open Documents"
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:377
+msgid "Open track link"
+msgstr ""
+
+#: includes/class-ob-digest.php:301
+msgid "Optional daily/weekly summary via WP-Cron (default off). Plain text wp_mail. Uses Action Scheduler if WC provides it for cron, otherwise WP-Cron. Time-of-day follows site timezone / cron tick — not a precise wall-clock scheduler."
+msgstr ""
+
+#: includes/class-ob-dashboard.php:103
+msgid "Optional: add a logo URL under Documents for branded invoices."
+msgstr ""
+
+#: templates/shipping-label.php:67
+msgid "Order"
+msgstr ""
+
+#: templates/credit-note.php:47 templates/rma-slip.php:47
+msgid "Order #%s"
+msgstr ""
+
+#: includes/class-ob-qr.php:125
+msgid "Order QR"
+msgstr ""
+
+#: includes/class-ob-documents.php:475 includes/class-ob-documents.php:659
+#: includes/class-ob-einvoice.php:154 includes/class-ob-einvoice.php:85
+#: includes/class-ob-invoicing.php:392 includes/class-ob-invoicing.php:408
+#: includes/class-ob-notes.php:139 includes/class-ob-partial.php:182
+#: includes/class-ob-rma.php:314 includes/class-ob-rma.php:330
+msgid "Order not found"
+msgstr ""
+
+#: includes/class-ob-sla.php:205
+msgid "Order note"
+msgstr ""
+
+#: includes/class-ob-dashboard.php:29 includes/class-ob-dashboard.php:30
+#: includes/class-ob-order-ops.php:57 includes/class-ob-order-ops.php:82
+#: includes/class-ob-plugin.php:108 includes/class-ob-plugin.php:109
+msgid "Orderbay"
+msgstr ""
+
+#: includes/class-ob-rma.php:157 includes/class-ob-rma.php:178
+msgid "Orderbay RMA"
+msgstr ""
+
+#: includes/class-ob-rma.php:301
+msgid "Orderbay RMA number issued: %s"
+msgstr ""
+
+#: includes/class-ob-sla.php:188
+msgid "Orderbay SLA aging"
+msgstr ""
+
+#: includes/class-ob-sla.php:167
+msgid "Orderbay SLA: order older than %d hours in watched status — marked needs attention."
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:507
+msgid "Orderbay auto-attention: status %s."
+msgstr ""
+
+#: includes/class-ob-order-ops.php:345
+msgid "Orderbay bulk note."
+msgstr ""
+
+#: includes/class-ob-order-ops.php:335 includes/class-ob-order-ops.php:339
+msgid "Orderbay bulk status change."
+msgstr ""
+
+#: includes/class-ob-invoicing.php:269
+msgid "Orderbay credit note number issued: %s"
+msgstr ""
+
+#: includes/class-ob-dashboard.php:83
+msgid "Orderbay dashboard"
+msgstr ""
+
+#: includes/class-ob-documents.php:340
+msgid "Orderbay delivery note: %s"
+msgstr ""
+
+#: includes/class-ob-documents.php:106
+msgid "Orderbay documents"
+msgstr ""
+
+#: includes/class-ob-dashboard.php:128
+msgid "Orderbay does not send SMS or voice — that is Twilio Order Communicator. StoreCanvas art count appears only when StoreCanvas is active."
+msgstr ""
+
+#: includes/class-ob-notifications.php:184
+msgid "Orderbay email rules"
+msgstr ""
+
+#: includes/class-ob-notifications.php:328
+msgid "Orderbay email sent to %1$s (rule %2$s)."
+msgstr ""
+
+#: includes/class-ob-export.php:78
+msgid "Orderbay export"
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:297
+msgid "Orderbay fulfillment"
+msgstr ""
+
+#: includes/class-ob-invoicing.php:226
+msgid "Orderbay invoice number assigned: %s"
+msgstr ""
+
+#: includes/class-ob-documents.php:331
+msgid "Orderbay invoice: %s"
+msgstr ""
+
+#: includes/class-ob-notes.php:89
+msgid "Orderbay note templates"
+msgstr ""
+
+#: includes/class-ob-documents.php:334
+msgid "Orderbay packing: %s"
+msgstr ""
+
+#: includes/class-ob-invoicing.php:254
+msgid "Orderbay proforma number assigned: %s"
+msgstr ""
+
+#: includes/class-ob-documents.php:337
+msgid "Orderbay proforma: %s"
+msgstr ""
+
+#: orderbay.php:123
+msgid "Orderbay requires WooCommerce to be active."
+msgstr ""
+
+#: includes/class-ob-rma.php:117
+msgid "Orderbay returns / RMA"
+msgstr ""
+
+#: includes/class-ob-documents.php:343
+msgid "Orderbay shipping label: %s"
+msgstr ""
+
+#: includes/class-ob-digest.php:300
+msgid "Orderbay staff digest"
+msgstr ""
+
+#: includes/class-ob-digest.php:173
+msgid "Orderbay staff digest (%s)\n"
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:364
+msgid "Orderbay tracking"
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:478
+msgid "Orderbay tracking email sent to %s (not Twilio)."
+msgstr ""
+
+#: includes/class-ob-order-ops.php:305
+msgid "Orderbay: add private note…"
+msgstr ""
+
+#: includes/class-ob-order-ops.php:306
+msgid "Orderbay: add tag…"
+msgstr ""
+
+#: includes/class-ob-catalog.php:31
+msgid "Orderbay: adjust price by %…"
+msgstr ""
+
+#: includes/class-ob-catalog.php:229
+msgid "Orderbay: applied bulk change to %d product(s)."
+msgstr ""
+
+#: includes/class-ob-catalog.php:34
+msgid "Orderbay: assign category…"
+msgstr ""
+
+#: includes/class-ob-order-ops.php:304
+msgid "Orderbay: clear attention"
+msgstr ""
+
+#: includes/class-ob-rma.php:453
+msgid "Orderbay: customer submitted RMA request."
+msgstr ""
+
+#: includes/class-ob-invoicing.php:368
+msgid "Orderbay: issue credit note number"
+msgstr ""
+
+#: includes/class-ob-order-ops.php:303
+msgid "Orderbay: mark needs attention"
+msgstr ""
+
+#: includes/class-ob-rma.php:275
+msgid "Orderbay: needs attention (RMA requested)."
+msgstr ""
+
+#: includes/class-ob-rma.php:450
+msgid "Orderbay: needs attention (customer RMA request)."
+msgstr ""
+
+#: includes/class-ob-documents.php:695
+msgid "Orderbay: no orders selected for bulk print."
+msgstr ""
+
+#: includes/class-ob-invoicing.php:369
+msgid "Orderbay: print credit note"
+msgstr ""
+
+#: includes/class-ob-documents.php:325
+msgid "Orderbay: print delivery note"
+msgstr ""
+
+#: includes/class-ob-documents.php:322
+msgid "Orderbay: print invoice"
+msgstr ""
+
+#: includes/class-ob-documents.php:324
+msgid "Orderbay: print packing slip"
+msgstr ""
+
+#: includes/class-ob-documents.php:323
+msgid "Orderbay: print proforma"
+msgstr ""
+
+#: includes/class-ob-documents.php:326
+msgid "Orderbay: print shipping label"
+msgstr ""
+
+#: includes/class-ob-catalog.php:32
+msgid "Orderbay: set regular price…"
+msgstr ""
+
+#: includes/class-ob-order-ops.php:308
+msgid "Orderbay: set status → Completed"
+msgstr ""
+
+#: includes/class-ob-order-ops.php:307
+msgid "Orderbay: set status → Processing"
+msgstr ""
+
+#: includes/class-ob-catalog.php:33
+msgid "Orderbay: set stock qty…"
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:512
+msgid "Orderbay: warehouse pick list"
+msgstr ""
+
+#: templates/pick-list.php:46
+msgid "Orders"
+msgstr ""
+
+#: includes/class-ob-dashboard.php:124
+msgid "Orders list"
+msgstr ""
+
+#: includes/class-ob-dashboard.php:87
+msgid "Orders today"
+msgstr ""
+
+#: includes/class-ob-documents.php:195
+msgid "Override any document template without editing the plugin: copy a file from the plugin's templates/ folder into your theme at wp-content/themes/your-theme/orderbay/ (e.g. orderbay/invoice.php). Your copy survives plugin updates. The ob_before_document / ob_after_document actions and the ob_locate_template filter are also available."
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:332
+msgid "Owner-only + nonce. Independent of Twilio Order Communicator."
+msgstr ""
+
+#: includes/class-ob-documents.php:149
+msgid "PDF engine"
+msgstr ""
+
+#: includes/class-ob-documents.php:685
+msgid "PDF engine failed."
+msgstr ""
+
+#: includes/class-ob-documents.php:650
+msgid "PDF engine is set to browser-only."
+msgstr ""
+
+#: includes/class-ob-documents.php:380
+msgid "PDF: browser Print → Save as PDF (primary). Optional host Dompdf/TCPDF when PDF engine = Auto."
+msgstr ""
+
+#: templates/proforma.php:22 templates/proforma.php:65
+#: templates/proforma.php:71
+msgid "PROFORMA"
+msgstr ""
+
+#: includes/class-ob-documents.php:399
+msgid "Pack"
+msgstr ""
+
+#: includes/class-ob-documents.php:362
+#: includes/class-ob-fulfillment.php:634 templates/packing-slip.php:16
+msgid "Packing slip"
+msgstr ""
+
+#: includes/class-ob-documents.php:128
+msgid "Packing slip thumbnails"
+msgstr ""
+
+#: templates/packing-slip.php:54
+msgid "Packing slip — Order #%s"
+msgstr ""
+
+#: includes/class-ob-documents.php:118
+msgid "Paper size"
+msgstr ""
+
+#: includes/class-ob-catalog.php:49
+msgid "Percent was 0 — no products changed."
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:346 templates/pick-list.php:17
+msgid "Pick list"
+msgstr ""
+
+#: includes/class-ob-rma.php:442
+msgid "Please provide a reason."
+msgstr ""
+
+#: templates/invoice.php:124 templates/proforma.php:118
+msgid "Prices exclude tax"
+msgstr ""
+
+#: templates/invoice.php:124 templates/proforma.php:118
+msgid "Prices include tax"
+msgstr ""
+
+#: includes/class-ob-documents.php:107
+msgid "Primary path: open print view → browser Print / Save as PDF. No Dompdf/TCPDF bundled. Bulk print requires edit_shop_orders. Documents: invoice, proforma, packing slip, delivery note, shipping label."
+msgstr ""
+
+#: templates/credit-note.php:34 templates/delivery-note.php:42
+#: templates/invoice.php:49 templates/packing-slip.php:44
+#: templates/pick-list.php:32 templates/proforma.php:56
+#: templates/rma-slip.php:33 templates/shipping-label.php:45
+msgid "Print / Save as PDF"
+msgstr ""
+
+#: includes/class-ob-documents.php:527
+msgid "Print Orderbay delivery notes"
+msgstr ""
+
+#: includes/class-ob-documents.php:524
+msgid "Print Orderbay invoices"
+msgstr ""
+
+#: includes/class-ob-documents.php:526
+msgid "Print Orderbay packing slips"
+msgstr ""
+
+#: includes/class-ob-documents.php:525
+msgid "Print Orderbay proformas"
+msgstr ""
+
+#: includes/class-ob-documents.php:528
+msgid "Print Orderbay shipping labels"
+msgstr ""
+
+#: includes/class-ob-rma.php:215
+msgid "Print RMA slip"
+msgstr ""
+
+#: includes/class-ob-invoicing.php:362
+msgid "Print credit note"
+msgstr ""
+
+#: includes/class-ob-documents.php:398
+msgid "Pro"
+msgstr ""
+
+#: includes/class-ob-dashboard.php:88
+msgid "Processing / on-hold"
+msgstr ""
+
+#: includes/class-ob-digest.php:175
+msgid "Processing / on-hold: %d\n"
+msgstr ""
+
+#: templates/pick-list.php:44
+msgid "Product"
+msgstr ""
+
+#: includes/class-ob-catalog.php:146
+msgid "Product not found"
+msgstr ""
+
+#: includes/class-ob-notifications.php:397
+msgid "Product: %1$s\nSKU: %2$s\nStock: %3$s\nEdit: %4$s\n"
+msgstr ""
+
+#: includes/class-ob-dashboard.php:125
+msgid "Products (bulk price/stock/duplicate)"
+msgstr ""
+
+#: includes/class-ob-documents.php:186 includes/class-ob-documents.php:361
+msgid "Proforma"
+msgstr ""
+
+#: includes/class-ob-documents.php:356
+msgid "Proforma #"
+msgstr ""
+
+#: templates/proforma.php:73
+msgid "Proforma %1$s — Order #%2$s"
+msgstr ""
+
+#: templates/proforma.php:129
+msgid "Proforma only — amounts may change before final invoice. Payment not acknowledged by this document."
+msgstr ""
+
+#: includes/class-ob-documents.php:184
+msgid "Proforma prefix"
+msgstr ""
+
+#: templates/proforma.php:73
+msgid "Proforma — Order #%s"
+msgstr ""
+
+#: includes/class-ob-catalog.php:88
+msgid "Provide ob_cat_id (product_cat term ID)."
+msgstr ""
+
+#: includes/class-ob-catalog.php:57
+msgid "Provide ob_fixed_price in the request (use Orderbay admin JS or re-run with price)."
+msgstr ""
+
+#: includes/class-ob-catalog.php:72
+msgid "Provide ob_stock_qty."
+msgstr ""
+
+#: includes/class-ob-documents.php:136
+msgid "QR codes"
+msgstr ""
+
+#: templates/delivery-note.php:63 templates/invoice.php:92
+#: templates/packing-slip.php:90 templates/pick-list.php:45
+#: templates/proforma.php:90 templates/rma-slip.php:64
+msgid "Qty"
+msgstr ""
+
+#: includes/class-ob-dashboard.php:115
+msgid "Quick links"
+msgstr ""
+
+#: includes/class-ob-rma.php:209 includes/class-ob-rma.php:369
+msgid "RMA #"
+msgstr ""
+
+#: templates/rma-slip.php:45
+msgid "RMA %s"
+msgstr ""
+
+#: includes/class-ob-rma.php:124
+msgid "RMA prefix"
+msgstr ""
+
+#: templates/rma-slip.php:17 templates/rma-slip.php:45
+msgid "RMA slip"
+msgstr ""
+
+#: includes/class-ob-rma.php:194
+msgid "RMA status"
+msgstr ""
+
+#: includes/class-ob-rma.php:207 includes/class-ob-rma.php:372
+#: templates/rma-slip.php:57
+msgid "Reason"
+msgstr ""
+
+#: includes/class-ob-rma.php:395
+msgid "Reason for return"
+msgstr ""
+
+#: includes/class-ob-rma.php:200
+msgid "Received"
+msgstr ""
+
+#: includes/class-ob-digest.php:313 includes/class-ob-notifications.php:198
+msgid "Recipient"
+msgstr ""
+
+#: templates/credit-note.php:80
+msgid "Refund"
+msgstr ""
+
+#: templates/credit-note.php:57
+msgid "Refund / item"
+msgstr ""
+
+#: includes/class-ob-notifications.php:235
+msgid "Remove"
+msgstr ""
+
+#: includes/class-ob-rma.php:397
+msgid "Request return"
+msgstr ""
+
+#: includes/class-ob-rma.php:198
+msgid "Requested"
+msgstr ""
+
+#: includes/class-ob-export.php:79
+msgid "Requires the edit_shop_orders capability. Streams a CSV download of matching orders."
+msgstr ""
+
+#: includes/class-ob-rma.php:364
+msgid "Return / RMA"
+msgstr ""
+
+#: includes/class-ob-rma.php:122
+msgid "Return address"
+msgstr ""
+
+#: includes/class-ob-dashboard.php:118 includes/class-ob-plugin.php:142
+#: includes/class-ob-plugin.php:143
+msgid "Returns / RMA"
+msgstr ""
+
+#: includes/class-ob-rma.php:381 includes/class-ob-rma.php:438
+msgid "Returns are not available for this order status."
+msgstr ""
+
+#: includes/class-ob-notifications.php:202
+msgid "Rule ID"
+msgstr ""
+
+#: includes/class-ob-sla.php:196
+msgid "Run SLA aging (default off)"
+msgstr ""
+
+#: templates/delivery-note.php:62 templates/invoice.php:91
+#: templates/packing-slip.php:89 templates/pick-list.php:43
+#: templates/proforma.php:89 templates/rma-slip.php:63
+msgid "SKU"
+msgstr ""
+
+#: includes/class-ob-dashboard.php:119 includes/class-ob-plugin.php:150
+#: includes/class-ob-plugin.php:151
+msgid "SLA aging"
+msgstr ""
+
+#: includes/class-ob-dashboard.php:111
+msgid "Safe defaults"
+msgstr ""
+
+#: includes/class-ob-rma.php:144
+msgid "Save RMA settings"
+msgstr ""
+
+#: includes/class-ob-sla.php:210
+msgid "Save SLA settings"
+msgstr ""
+
+#: includes/class-ob-digest.php:316
+msgid "Save digest settings"
+msgstr ""
+
+#: includes/class-ob-documents.php:192
+msgid "Save document settings"
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:343
+msgid "Save fulfillment settings"
+msgstr ""
+
+#: includes/class-ob-notes.php:101
+msgid "Save note templates"
+msgstr ""
+
+#: includes/class-ob-notifications.php:255
+msgid "Save notification settings"
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:347
+msgid "Select orders on the Orders list → bulk action “Orderbay: warehouse pick list”. Groups lines by SKU for the selection."
+msgstr ""
+
+#: includes/class-ob-rma.php:118
+msgid "Self-hosted RMA meta and print slips only — no payment or refund automation. Use credit notes for refunds. Independent of Twilio Order Communicator."
+msgstr ""
+
+#: includes/class-ob-dashboard.php:84
+msgid "Self-hosted ops overview. Documents, order flags, email rules, and catalog tools live under Orderbay."
+msgstr ""
+
+#: includes/class-ob-einvoice.php:358
+msgid "Seller VAT / Tax ID is missing (set Company VAT / Tax ID in Documents settings)."
+msgstr ""
+
+#: includes/class-ob-documents.php:125
+msgid "Seller country (ISO)"
+msgstr ""
+
+#: includes/class-ob-einvoice.php:355
+msgid "Seller country code is missing or invalid."
+msgstr ""
+
+#: includes/class-ob-documents.php:174
+msgid "Seller details look complete for e-invoicing."
+msgstr ""
+
+#: includes/class-ob-documents.php:168
+msgid "Seller details needed for compliant e-invoices:"
+msgstr ""
+
+#: includes/class-ob-einvoice.php:349
+msgid "Seller name is missing (set From name/address in Documents settings)."
+msgstr ""
+
+#: includes/class-ob-einvoice.php:352
+msgid "Seller postal address is incomplete (set the WooCommerce store address)."
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:319
+msgid "Send once (default off)"
+msgstr ""
+
+#: includes/class-ob-digest.php:308
+msgid "Send staff digest emails"
+msgstr ""
+
+#: includes/class-ob-dashboard.php:105
+msgid "Set From name/address under Documents (used on invoices and packing slips)."
+msgstr ""
+
+#: includes/class-ob-rma.php:131
+msgid "Set needs-attention when RMA status becomes requested"
+msgstr ""
+
+#: includes/class-ob-notifications.php:186
+msgid "Settings saved."
+msgstr ""
+
+#: templates/rma-slip.php:55
+msgid "Ship return to"
+msgstr ""
+
+#: templates/delivery-note.php:55 templates/invoice.php:82
+#: templates/packing-slip.php:63 templates/proforma.php:84
+#: templates/shipping-label.php:56
+msgid "Ship to"
+msgstr ""
+
+#: includes/class-ob-einvoice.php:231 templates/invoice.php:114
+#: templates/proforma.php:108
+msgid "Shipping"
+msgstr ""
+
+#: includes/class-ob-documents.php:364
+msgid "Shipping label"
+msgstr ""
+
+#: templates/shipping-label.php:21
+msgid "Shipping labels"
+msgstr ""
+
+#: templates/credit-note.php:100
+msgid "Shipping refunded"
+msgstr ""
+
+#: includes/class-ob-documents.php:139
+msgid "Show order QR on invoice + packing slip (default off)"
+msgstr ""
+
+#: includes/class-ob-documents.php:148
+msgid "Show prices on delivery notes (default off)"
+msgstr ""
+
+#: includes/class-ob-documents.php:131
+msgid "Show product image column (default off)"
+msgstr ""
+
+#: includes/class-ob-catalog.php:245
+msgid "Shown on warehouse pick lists."
+msgstr ""
+
+#: includes/class-ob-dashboard.php:122 includes/class-ob-plugin.php:174
+#: includes/class-ob-plugin.php:175
+msgid "Staff digest"
+msgstr ""
+
+#: includes/class-ob-export.php:85 includes/class-ob-rma.php:367
+msgid "Status"
+msgstr ""
+
+#: includes/class-ob-notifications.php:194
+msgid "Status email rules"
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:320
+#: includes/class-ob-notifications.php:200
+msgid "Subject"
+msgstr ""
+
+#: templates/invoice.php:112 templates/proforma.php:106
+msgid "Subtotal"
+msgstr ""
+
+#: includes/class-ob-order-ops.php:170 includes/class-ob-order-ops.php:175
+msgid "Tags"
+msgstr ""
+
+#: includes/class-ob-order-ops.php:102
+msgid "Tags (comma-separated)"
+msgstr ""
+
+#: includes/class-ob-documents.php:253 templates/invoice.php:128
+#: templates/proforma.php:122
+msgid "Tax"
+msgstr ""
+
+#: templates/credit-note.php:103
+msgid "Tax refunded"
+msgstr ""
+
+#: includes/class-ob-documents.php:194
+msgid "Template customization"
+msgstr ""
+
+#: includes/class-ob-notes.php:144
+msgid "Template not found"
+msgstr ""
+
+#: includes/class-ob-plugin.php:83
+msgid "Thank you for your order."
+msgstr ""
+
+#: includes/class-ob-digest.php:180
+msgid "This email is independent of Twilio Order Communicator.\n"
+msgstr ""
+
+#: templates/proforma.php:74
+msgid "This is not a tax invoice and does not confirm payment."
+msgstr ""
+
+#: includes/class-ob-notifications.php:249
+msgid "Threshold"
+msgstr ""
+
+#: includes/class-ob-notes.php:93
+msgid "Title"
+msgstr ""
+
+#: templates/delivery-note.php:64 templates/invoice.php:136
+#: templates/invoice.php:93 templates/proforma.php:91
+msgid "Total"
+msgstr ""
+
+#: templates/credit-note.php:106
+msgid "Total credited"
+msgstr ""
+
+#: templates/delivery-note.php:84 templates/invoice.php:147
+#: templates/packing-slip.php:138
+msgid "Track"
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:718
+msgid "Track shipment"
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:712 templates/delivery-note.php:83
+#: templates/invoice.php:146 templates/packing-slip.php:135
+msgid "Tracking"
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:374
+msgid "Tracking URL (optional override)"
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:314
+msgid "Tracking email"
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:298
+msgid "Tracking emails use wp_mail only and are independent of Twilio Order Communicator (no SMS/voice). Default tracking email is off."
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:372
+#: includes/class-ob-fulfillment.php:716
+msgid "Tracking number"
+msgstr ""
+
+#: includes/class-ob-notifications.php:197
+msgid "Trigger status"
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:304
+msgid "URL template"
+msgstr ""
+
+#: includes/class-ob-catalog.php:181
+msgid "Unsupported product type for duplicate."
+msgstr ""
+
+#: includes/class-ob-notes.php:68
+msgid "Untitled"
+msgstr ""
+
+#: includes/class-ob-notes.php:90
+msgid "Up to 8 canned private order notes. Empty slots are ignored."
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:303
+msgid "Use {tracking} as the placeholder. Leave blank to skip auto-links for that carrier (no broken links). Manual Tracking URL on the order always wins."
+msgstr ""
+
+#: templates/invoice.php:153 templates/invoice.php:74
+msgid "VAT / Tax ID"
+msgstr ""
+
+#: templates/pick-list.php:33
+msgid "Warehouse pick list"
+msgstr ""
+
+#: includes/class-ob-sla.php:199
+msgid "Watched statuses"
+msgstr ""
+
+#: includes/class-ob-digest.php:311
+msgid "Weekly"
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:335
+msgid "When an order enters one of these statuses, set Needs attention. Empty / none selected = off. Attention is never auto-cleared."
+msgstr ""
+
+#: includes/class-ob-documents.php:220
+msgid "Yearly (restart at 1 each year)"
+msgstr ""
+
+#: includes/class-ob-export.php:92
+msgid "Yes"
+msgstr ""
+
+#: includes/class-ob-rma.php:428
+msgid "You cannot request a return for this order."
+msgstr ""
+
+#: includes/class-ob-invoicing.php:525
+msgid "You cannot view this invoice."
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:686
+msgid "You cannot view this packing slip."
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:192
+msgid "Your order {order_number} has shipped"
+msgstr ""
+
+#: includes/class-ob-rma.php:374
+msgid "Your return request is being reviewed. You cannot change the status here."
+msgstr ""
+
+#: includes/class-ob-notifications.php:391
+msgid "[%1$s] Low stock: %2$s (%3$s left)"
+msgstr ""
+
+#: includes/class-ob-digest.php:169
+msgid "[%1$s] Orderbay %2$s digest"
+msgstr ""
+
+#: includes/class-ob-digest.php:166
+msgid "day"
+msgstr ""
+
+#: includes/class-ob-partial.php:71
+msgid "open"
+msgstr ""
+
+#: includes/class-ob-digest.php:166
+msgid "week"
+msgstr ""
+
+#: includes/class-ob-notifications.php:188
+msgid "wp_mail only — completely independent of Twilio Order Communicator (no SMS/voice). All rules default off. Enabled rules require subject + body; custom recipient needs a valid email. Merge tags: {order_number} {customer_first_name} {customer_email} {store_name} {order_status} {order_total}"
+msgstr ""
+
+#: includes/class-ob-fulfillment.php:367
+msgid "— Select —"
+msgstr ""
+
