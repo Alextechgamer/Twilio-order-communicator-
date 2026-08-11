@@ -149,40 +149,51 @@ class OB_Invoicing {
 	}
 
 	/**
-	 * Atomic-ish counter allocate: lock via option update loop.
+	 * Allocate the next gapless sequence number for a document type.
 	 *
-	 * @param string $opt_prefix Option key for prefix.
-	 * @param string $opt_next Option key for next int.
+	 * Race-free: the previous read-modify-write on an option let two concurrent prints
+	 * read the same value and both return it (duplicate invoice numbers — a legal problem
+	 * for tax invoices). Here the counter is seeded if missing and then incremented
+	 * atomically in the database via LAST_INSERT_ID(), which is per-connection, so every
+	 * caller receives a distinct, consecutive number even under concurrency.
+	 *
+	 * @param string $opt_prefix     Option key for the prefix.
+	 * @param string $opt_next       Option key for the next integer.
 	 * @param string $default_prefix Fallback prefix.
 	 * @return string
 	 */
-	private static function allocate_number( $opt_prefix, $opt_next, $default_prefix ) {
+	public static function allocate_number( $opt_prefix, $opt_next, $default_prefix ) {
+		global $wpdb;
+
 		$prefix = get_option( $opt_prefix, $default_prefix );
 		if ( ! is_string( $prefix ) || '' === $prefix ) {
 			$prefix = $default_prefix;
 		}
-		// Simple atomic increment with retries.
-		$attempts = 0;
-		$seq      = 1;
-		while ( $attempts < 8 ) {
-			$attempts++;
-			$current = (int) get_option( $opt_next, 1 );
-			if ( $current < 1 ) {
-				$current = 1;
-			}
-			$seq = $current;
-			// Prefer autoload false for counters.
-			if ( false === get_option( $opt_next, false ) && 1 === $current ) {
-				add_option( $opt_next, $current + 1, '', 'no' );
-				break;
-			}
-			$updated = update_option( $opt_next, $current + 1, false );
-			// Re-read to detect races; if value moved past our write, retry.
-			$after = (int) get_option( $opt_next, $current + 1 );
-			if ( $after === $current + 1 || $updated ) {
-				break;
-			}
+
+		// Seed the counter row if it does not exist yet (atomic, idempotent).
+		$wpdb->query(
+			$wpdb->prepare(
+				"INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, '1', 'no')",
+				$opt_next
+			)
+		);
+		// Atomic increment; LAST_INSERT_ID() returns the value THIS connection just set.
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$wpdb->options} SET option_value = LAST_INSERT_ID(option_value + 1) WHERE option_name = %s",
+				$opt_next
+			)
+		);
+		$next = (int) $wpdb->get_var( 'SELECT LAST_INSERT_ID()' );
+		$seq  = $next - 1;
+		if ( $seq < 1 ) {
+			$seq = 1;
 		}
+
+		// The direct writes bypass the options cache — drop the stale entries.
+		wp_cache_delete( $opt_next, 'options' );
+		wp_cache_delete( 'notoptions', 'options' );
+
 		return $prefix . $seq;
 	}
 
@@ -241,7 +252,8 @@ class OB_Invoicing {
 			wp_die( esc_html__( 'Order not found', 'orderbay' ) );
 		}
 		self::ensure_credit_number( $order );
-		wp_safe_redirect( get_edit_post_link( $order_id, 'raw' ) ?: admin_url( 'post.php?post=' . $order_id . '&action=edit' ) );
+		// HPOS-safe edit URL (post.php?post= is invalid for HPOS-stored orders).
+		wp_safe_redirect( $order->get_edit_order_url() );
 		exit;
 	}
 

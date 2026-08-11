@@ -292,16 +292,8 @@ class OB_RMA {
 		if ( $existing ) {
 			return (string) $existing;
 		}
-		$prefix = get_option( OB_Plugin::OPT_RMA_PREFIX, 'RMA-' );
-		if ( ! is_string( $prefix ) || '' === $prefix ) {
-			$prefix = 'RMA-';
-		}
-		$current = (int) get_option( OB_Plugin::OPT_RMA_NEXT, 1 );
-		if ( $current < 1 ) {
-			$current = 1;
-		}
-		update_option( OB_Plugin::OPT_RMA_NEXT, $current + 1, false );
-		$number = $prefix . $current;
+		// Atomic, race-free allocation shared with invoice/credit/proforma numbering.
+		$number = OB_Invoicing::allocate_number( OB_Plugin::OPT_RMA_PREFIX, OB_Plugin::OPT_RMA_NEXT, 'RMA-' );
 		$order->update_meta_data( OB_Plugin::META_RMA_NUMBER, $number );
 		if ( ! $order->get_meta( OB_Plugin::META_RMA_STATUS ) || 'none' === $order->get_meta( OB_Plugin::META_RMA_STATUS ) ) {
 			$order->update_meta_data( OB_Plugin::META_RMA_STATUS, 'requested' );
@@ -322,8 +314,8 @@ class OB_RMA {
 			wp_die( esc_html__( 'Order not found', 'orderbay' ) );
 		}
 		self::ensure_rma_number( $order );
-		$edit = get_edit_post_link( $order_id, 'raw' );
-		wp_safe_redirect( $edit ? $edit : admin_url( 'post.php?post=' . $order_id . '&action=edit' ) );
+		// HPOS-safe edit URL (post.php?post= is invalid for HPOS-stored orders).
+		wp_safe_redirect( $order->get_edit_order_url() );
 		exit;
 	}
 
