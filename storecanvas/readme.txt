@@ -3,7 +3,7 @@ Contributors: alextechgamer
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.3.1
+Stable tag: 1.4.0
 License: GPLv2 or later
 
 Self-hosted WooCommerce personalization: product options, live mockup, print-ready, library, guest save.
@@ -15,6 +15,11 @@ Product options parity with common add-ons plugins plus live mockup and print co
 Independent of Twilio Order Communicator and Orderbay.
 
 == Changelog ==
+
+= 1.4.0 =
+* New: multi-rule conditional logic on option fields — AND/OR with operators (is, is_not, contains, not_contains, gt, gte, lt, lte, empty, not_empty, in), extending the previous single show_if equality
+* New: lookup-table pricing (price_type "lookup") — each choice carries its own price; multi-selects sum the selected choices; the live price preview mirrors the server
+* Note: advanced conditions and per-choice prices are authored via the field JSON config and are fully sanitized server-side
 
 = 1.3.1 =
 * Fix: percent-priced options now use the selected variation's price as the base instead of the parent product's, so variable products with per-variation prices are charged correctly

@@ -323,6 +323,11 @@ class SC_Cart_Order {
 			return 0.0;
 		}
 
+		// Lookup-table pricing: the price comes from the selected choice(s), not a single amount.
+		if ( 'lookup' === $type ) {
+			return self::lookup_price( $field['choices'] ?? array(), $value );
+		}
+
 		$amount = (float) ( $field['price'] ?? 0 );
 
 		// Base for percent pricing: the selected variation's own price when a variation is
@@ -356,6 +361,30 @@ class SC_Cart_Order {
 	 * @param mixed  $value  Submitted field value.
 	 * @return float
 	 */
+	/**
+	 * Sum the per-choice prices for the selected value(s) of a lookup-priced field (pure).
+	 *
+	 * @param array $choices Field choices, each optionally carrying a numeric 'price'.
+	 * @param mixed $value   Selected value (scalar or array for multi-selects).
+	 * @return float
+	 */
+	public static function lookup_price( $choices, $value ) {
+		if ( ! is_array( $choices ) ) {
+			return 0.0;
+		}
+		$selected = is_array( $value ) ? array_map( 'strval', $value ) : array( (string) $value );
+		$total    = 0.0;
+		foreach ( $choices as $c ) {
+			if ( ! is_array( $c ) || ! isset( $c['price'] ) ) {
+				continue;
+			}
+			if ( in_array( (string) ( $c['value'] ?? '' ), $selected, true ) ) {
+				$total += (float) $c['price'];
+			}
+		}
+		return $total;
+	}
+
 	public static function price_for( $type, $amount, $base, $value ) {
 		$amount = (float) $amount;
 		switch ( $type ) {

@@ -18,6 +18,7 @@ require $root . '/orderbay/includes/class-ob-invoicing.php';
 require $root . '/storecanvas/includes/class-sc-print-ready.php';
 require $root . '/storecanvas/includes/class-sc-export.php';
 require $root . '/storecanvas/includes/class-sc-cart-order.php';
+require $root . '/storecanvas/includes/class-sc-product-options.php';
 
 $pass  = 0;
 $fail  = 0;
@@ -159,6 +160,34 @@ if ( extension_loaded( 'dom' ) ) {
 } else {
 	echo "SKIP: ext-dom not loaded — e-invoice XML tests skipped\n";
 }
+
+/* ---- StoreCanvas conditional logic (pure; AND/OR + operators) ---- */
+$opts = array( 'size' => 'L', 'color' => 'red', 'qty' => '5', 'name' => 'Bob', 'tags' => array( 'a', 'b' ) );
+check( 'rule is', SC_Product_Options::rule_matches( 'is', 'L', 'L' ), true );
+check( 'rule is_not', SC_Product_Options::rule_matches( 'is_not', 'L', 'M' ), true );
+check( 'rule contains', SC_Product_Options::rule_matches( 'contains', 'ob', 'Bob' ), true );
+check( 'rule not_contains', SC_Product_Options::rule_matches( 'not_contains', 'zz', 'Bob' ), true );
+check( 'rule gt', SC_Product_Options::rule_matches( 'gt', '3', '5' ), true );
+check( 'rule lt false', SC_Product_Options::rule_matches( 'lt', '3', '5' ), false );
+check( 'rule gt non-numeric', SC_Product_Options::rule_matches( 'gt', '3', 'abc' ), false );
+check( 'rule empty', SC_Product_Options::rule_matches( 'empty', '', '' ), true );
+check( 'rule not_empty', SC_Product_Options::rule_matches( 'not_empty', '', 'x' ), true );
+check( 'rule in', SC_Product_Options::rule_matches( 'in', 'red,blue', 'red' ), true );
+check( 'rule is array multi', SC_Product_Options::rule_matches( 'is', 'b', array( 'a', 'b' ) ), true );
+check( 'cond AND all true', SC_Product_Options::evaluate_conditions( array( 'logic' => 'and', 'rules' => array( array( 'field' => 'size', 'op' => 'is', 'value' => 'L' ), array( 'field' => 'qty', 'op' => 'gte', 'value' => '5' ) ) ), $opts ), true );
+check( 'cond AND one false', SC_Product_Options::evaluate_conditions( array( 'logic' => 'and', 'rules' => array( array( 'field' => 'size', 'op' => 'is', 'value' => 'M' ), array( 'field' => 'qty', 'op' => 'gte', 'value' => '5' ) ) ), $opts ), false );
+check( 'cond OR one true', SC_Product_Options::evaluate_conditions( array( 'logic' => 'or', 'rules' => array( array( 'field' => 'size', 'op' => 'is', 'value' => 'M' ), array( 'field' => 'color', 'op' => 'is', 'value' => 'red' ) ) ), $opts ), true );
+check( 'cond empty rules visible', SC_Product_Options::evaluate_conditions( array( 'rules' => array() ), $opts ), true );
+
+/* ---- StoreCanvas lookup-table pricing (pure) ---- */
+$lchoices = array(
+	array( 'value' => 's', 'label' => 'Small', 'price' => 0.0 ),
+	array( 'value' => 'm', 'label' => 'Medium', 'price' => 3.5 ),
+	array( 'value' => 'l', 'label' => 'Large', 'price' => 7.0 ),
+);
+check( 'lookup single', SC_Cart_Order::lookup_price( $lchoices, 'm' ), 3.5 );
+check( 'lookup multi sum', SC_Cart_Order::lookup_price( $lchoices, array( 'm', 'l' ) ), 10.5 );
+check( 'lookup unknown zero', SC_Cart_Order::lookup_price( $lchoices, 'xl' ), 0.0 );
 
 /* ---- TOC delivery-rate math (pure; pins the analytics card) ---- */
 check( 'rates zero sent', TOC_Logger::compute_rates( array() ), array( 'delivered_rate' => 0.0, 'failed_rate' => 0.0, 'reply_rate' => 0.0 ) );

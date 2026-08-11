@@ -48,7 +48,17 @@ class SC_Product_Options {
 			'percent'  => __( 'Percent of product', 'storecanvas' ),
 			'qty'      => __( 'Per quantity', 'storecanvas' ),
 			'per_char' => __( 'Per character (text)', 'storecanvas' ),
+			'lookup'   => __( 'Per choice (lookup table)', 'storecanvas' ),
 		);
+	}
+
+	/**
+	 * Operators available to conditional-logic rules.
+	 *
+	 * @return string[]
+	 */
+	public static function condition_operators() {
+		return array( 'is', 'is_not', 'contains', 'not_contains', 'gt', 'gte', 'lt', 'lte', 'empty', 'not_empty', 'in' );
 	}
 
 	/**
@@ -80,6 +90,37 @@ class SC_Product_Options {
 				);
 			}
 		}
+		// Multi-rule conditional logic: { logic: and|or, rules: [ {field, op, value} ] }.
+		$conditions = array();
+		if ( ! empty( $f['conditions']['rules'] ) && is_array( $f['conditions']['rules'] ) ) {
+			$logic    = ( isset( $f['conditions']['logic'] ) && 'or' === $f['conditions']['logic'] ) ? 'or' : 'and';
+			$ops      = self::condition_operators();
+			$rules    = array();
+			foreach ( $f['conditions']['rules'] as $r ) {
+				if ( ! is_array( $r ) ) {
+					continue;
+				}
+				$rf = sanitize_key( $r['field'] ?? '' );
+				if ( '' === $rf ) {
+					continue;
+				}
+				$op = sanitize_key( $r['op'] ?? 'is' );
+				if ( ! in_array( $op, $ops, true ) ) {
+					$op = 'is';
+				}
+				$rules[] = array(
+					'field' => $rf,
+					'op'    => $op,
+					'value' => sanitize_text_field( $r['value'] ?? '' ),
+				);
+			}
+			if ( $rules ) {
+				$conditions = array(
+					'logic' => $logic,
+					'rules' => $rules,
+				);
+			}
+		}
 		$choices = array();
 		if ( ! empty( $f['choices'] ) && is_array( $f['choices'] ) ) {
 			foreach ( $f['choices'] as $c ) {
@@ -96,6 +137,10 @@ class SC_Product_Options {
 					}
 					if ( array_key_exists( 'stock_qty', $c ) && null !== $c['stock_qty'] && '' !== $c['stock_qty'] ) {
 						$row['stock_qty'] = max( 0, (int) $c['stock_qty'] );
+					}
+					// Per-choice price for lookup-table pricing (may be negative for a discount).
+					if ( array_key_exists( 'price', $c ) && null !== $c['price'] && '' !== $c['price'] ) {
+						$row['price'] = (float) $c['price'];
 					}
 					$choices[] = $row;
 				} else {
@@ -132,6 +177,9 @@ class SC_Product_Options {
 		);
 		if ( $show_if ) {
 			$row['show_if'] = $show_if;
+		}
+		if ( $conditions ) {
+			$row['conditions'] = $conditions;
 		}
 		if ( $roles ) {
 			$row['roles_allowed'] = $roles;
@@ -221,13 +269,26 @@ class SC_Product_Options {
 			if ( ! self::user_can_see_field( $field ) ) {
 				continue;
 			}
-			$out[] = array(
+			$row = array(
 				'id'         => $field['id'],
 				'type'       => $field['type'] ?? 'text',
 				'price_type' => $field['price_type'] ?? 'none',
 				'price'      => (float) ( $field['price'] ?? 0 ),
 				'show_if'    => $field['show_if'] ?? null,
 			);
+			// Ship the per-choice price map so the live preview can match lookup-table charges.
+			if ( 'lookup' === ( $field['price_type'] ?? 'none' ) && ! empty( $field['choices'] ) && is_array( $field['choices'] ) ) {
+				$prices = array();
+				foreach ( $field['choices'] as $c ) {
+					if ( is_array( $c ) && isset( $c['price'] ) ) {
+						$prices[ (string) ( $c['value'] ?? '' ) ] = (float) $c['price'];
+					}
+				}
+				if ( $prices ) {
+					$row['choice_prices'] = $prices;
+				}
+			}
+			$out[] = $row;
 		}
 		return $out;
 	}
@@ -285,6 +346,11 @@ class SC_Product_Options {
 		if ( ! self::user_can_see_field( $field ) ) {
 			return false;
 		}
+		// Multi-rule conditional logic takes precedence when present.
+		if ( ! empty( $field['conditions']['rules'] ) && is_array( $field['conditions']['rules'] ) ) {
+			return self::evaluate_conditions( $field['conditions'], $options );
+		}
+		// Legacy single show_if (field + equality).
 		$sf = $field['show_if']['field'] ?? '';
 		if ( ! $sf ) {
 			return true;
@@ -295,6 +361,76 @@ class SC_Product_Options {
 			return in_array( $want, $got, true ) || ( '' === $want );
 		}
 		return ( '' === $want ) || ( (string) $got === $want );
+	}
+
+	/**
+	 * Evaluate a conditional-logic block against the submitted option values (pure).
+	 * An empty rule set is always visible; AND requires every rule, OR requires any.
+	 *
+	 * @param array $conditions { logic: and|or, rules: [ {field, op, value} ] }.
+	 * @param array $options    Submitted sc_option map.
+	 * @return bool
+	 */
+	public static function evaluate_conditions( $conditions, $options ) {
+		if ( empty( $conditions['rules'] ) || ! is_array( $conditions['rules'] ) ) {
+			return true;
+		}
+		$logic   = ( isset( $conditions['logic'] ) && 'or' === $conditions['logic'] ) ? 'or' : 'and';
+		$results = array();
+		foreach ( $conditions['rules'] as $rule ) {
+			if ( ! is_array( $rule ) || empty( $rule['field'] ) ) {
+				continue;
+			}
+			$got       = $options[ $rule['field'] ] ?? '';
+			$results[] = self::rule_matches( $rule['op'] ?? 'is', $rule['value'] ?? '', $got );
+		}
+		if ( ! $results ) {
+			return true;
+		}
+		return 'or' === $logic ? in_array( true, $results, true ) : ! in_array( false, $results, true );
+	}
+
+	/**
+	 * Evaluate a single conditional-logic rule (pure).
+	 *
+	 * @param string $op   Operator (see condition_operators()).
+	 * @param string $want Comparison value.
+	 * @param mixed  $got  Submitted value (scalar or array for multi-selects).
+	 * @return bool
+	 */
+	public static function rule_matches( $op, $want, $got ) {
+		$got_arr = is_array( $got ) ? array_map( 'strval', $got ) : array( (string) $got );
+		$got_str = is_array( $got ) ? implode( ',', $got_arr ) : (string) $got;
+		$want    = (string) $want;
+		$numeric = is_numeric( $got_str ) && is_numeric( $want );
+
+		switch ( $op ) {
+			case 'is':
+				return in_array( $want, $got_arr, true );
+			case 'is_not':
+				return ! in_array( $want, $got_arr, true );
+			case 'contains':
+				return '' !== $want && false !== strpos( $got_str, $want );
+			case 'not_contains':
+				return '' === $want || false === strpos( $got_str, $want );
+			case 'gt':
+				return $numeric && (float) $got_str > (float) $want;
+			case 'gte':
+				return $numeric && (float) $got_str >= (float) $want;
+			case 'lt':
+				return $numeric && (float) $got_str < (float) $want;
+			case 'lte':
+				return $numeric && (float) $got_str <= (float) $want;
+			case 'empty':
+				return '' === $got_str;
+			case 'not_empty':
+				return '' !== $got_str;
+			case 'in':
+				$list = array_map( 'trim', explode( ',', $want ) );
+				return (bool) array_intersect( $got_arr, $list );
+			default:
+				return false;
+		}
 	}
 
 	/**

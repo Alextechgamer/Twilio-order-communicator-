@@ -16,6 +16,19 @@
 		if ((field.type || '') === 'checkbox' && !value) {
 			return 0;
 		}
+		if (type === 'lookup') {
+			// Sum the per-choice prices for the selected value(s), mirroring the server.
+			var prices = field.choice_prices || {};
+			var picked = Array.isArray(value) ? value : [value];
+			var sum = 0;
+			picked.forEach(function (v) {
+				var key = String(v);
+				if (Object.prototype.hasOwnProperty.call(prices, key)) {
+					sum += parseFloat(prices[key]) || 0;
+				}
+			});
+			return sum;
+		}
 		var amount = parseFloat(field.price) || 0;
 		switch (type) {
 			case 'flat':
