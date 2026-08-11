@@ -32,11 +32,11 @@ jobs:
         run: php tests/run.php
 
   # Advisory: WordPress Coding Standards + PHPCompatibility. Not a hard gate yet
-  # (see tasks.md G8) — reports issues without failing the build.
+  # (see tasks.md G8) — the report is printed for humans but never fails the build,
+  # so the historical docblock/Yoda/alignment debt does not block merges.
   phpcs:
     name: PHPCS (advisory)
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - name: Setup PHP
@@ -47,5 +47,5 @@ jobs:
           tools: composer
       - name: Install tooling
         run: composer install --no-interaction --no-progress
-      - name: Run PHPCS
-        run: vendor/bin/phpcs --standard=phpcs.xml.dist -p --report=full
+      - name: Run PHPCS (advisory — style report, does not fail the build)
+        run: vendor/bin/phpcs --standard=phpcs.xml.dist -p --report=full || true
