@@ -4,7 +4,7 @@ Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
 WC requires at least: 7.0
-Stable tag: 1.14.1
+Stable tag: 1.14.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -85,6 +85,11 @@ No. The plugin includes its own tokenized TwiML endpoint.
 They text START or UNSTOP. Plain "YES" is intentionally not treated as re-subscribe.
 
 == Changelog ==
+
+= 1.14.2 =
+* Fix: international phone normalization — a single leading "0" is now treated as the national trunk prefix (e.g. UK 07911 123456 → +447911123456) instead of being forced onto +1, and a "00" prefix is handled as the international access code (same as "+")
+* Fix: the default country calling code now follows the WooCommerce store base country (woocommerce_default_country); the toc_default_country_code filter still overrides it
+* Note: normalization is deterministic so opt-out / consent keys stay consistent for non-US numbers
 
 = 1.14.1 =
 * Security: neutralize CSV formula injection in the dashboard communications export

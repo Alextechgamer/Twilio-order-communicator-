@@ -60,11 +60,31 @@ check( 'falsy no', $twilio->is_falsy_consent( 'no' ), true );
 check( 'falsy yes', $twilio->is_falsy_consent( 'yes' ), false );
 check( 'falsy empty', $twilio->is_falsy_consent( '' ), false );
 
-/* ---- TOC_Logger::normalize_phone ---- */
+/* ---- TOC_Logger::normalize_phone (pins the international-normalization fix) ---- */
 $logger = TOC_Logger::instance();
+// Default store country (US, +1).
+$GLOBALS['toc_test_options'] = array();
 check( 'phone US formatted', $logger->normalize_phone( '(505) 555-1234' ), '+15055551234' );
+check( 'phone US with cc', $logger->normalize_phone( '1 (505) 555-1234' ), '+15055551234' );
 check( 'phone already e164', $logger->normalize_phone( '+447911123456' ), '+447911123456' );
 check( 'phone junk', $logger->normalize_phone( 'not a phone' ), '' );
+check( 'phone bare plus', $logger->normalize_phone( '+' ), '' );
+// "00" international access prefix behaves like "+" regardless of store country.
+check( 'phone 00 intl prefix', $logger->normalize_phone( '00 44 7911 123456' ), '+447911123456' );
+// Deterministic: the same input always maps to the same key (opt-out safety).
+check( 'phone deterministic', $logger->normalize_phone( '07911 123456' ), $logger->normalize_phone( '07911123456' ) );
+
+// UK store (+44): a single leading "0" is the national trunk prefix, not a NANP number.
+$GLOBALS['toc_test_options'] = array( 'woocommerce_default_country' => 'GB' );
+check( 'phone UK mobile trunk-0', $logger->normalize_phone( '07911 123456' ), '+447911123456' );
+check( 'phone UK landline trunk-0', $logger->normalize_phone( '020 7946 0018' ), '+442079460018' );
+check( 'phone UK national no-trunk', $logger->normalize_phone( '7911123456' ), '+447911123456' );
+check( 'phone UK country default', $logger->default_country_code(), '44' );
+
+// Store base country "US:CA" (country:state form) still resolves to +1.
+$GLOBALS['toc_test_options'] = array( 'woocommerce_default_country' => 'US:CA' );
+check( 'phone US:state formatted', $logger->normalize_phone( '(505) 555-1234' ), '+15055551234' );
+$GLOBALS['toc_test_options'] = array();
 
 /* ---- license signed downloads ---- */
 $secret = 'unit-test-secret';
