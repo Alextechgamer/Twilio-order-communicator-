@@ -2,15 +2,15 @@
 
 WordPress / WooCommerce plugin for SMS and voice calls via **your own Twilio account**. Order communication is driven by custom statuses (**Ready for Pickup** and **Shipped**), with consent-aware SMS, quiet hours, bulk reminders, and order chat history.
 
-**Current version: 1.15.0** (plugin header / `TOC_VERSION`)
+**Current version: 1.15.1** (plugin header / `TOC_VERSION`)
 
 This monorepo also contains independent plugins:
 
 | Plugin | Path | Current |
 |--------|------|---------|
-| Twilio Order Communicator | `twilio-order-communicator/` | 1.15.0 |
-| StoreCanvas | `storecanvas/` | 1.5.0 |
-| Orderbay | `orderbay/` | 1.6.0 |
+| Twilio Order Communicator | `twilio-order-communicator/` | 1.15.1 |
+| StoreCanvas | `storecanvas/` | 1.5.1 |
+| Orderbay | `orderbay/` | 1.6.1 |
 
 ## Install
 
@@ -47,6 +47,7 @@ Latest source is always on `main` under `twilio-order-communicator/`.
 | Orderbay 1.5.0 | Per-tax-rate breakdown on invoices & proformas (e.g. VAT 20% / VAT 5%) from the order's tax totals + a prices include/exclude tax note, replacing the single combined Tax line. `normalize_tax_rows()` unit-tested |
 | StoreCanvas 1.5.0 | One-click Fancy Product Designer importer — maps exported FPD product JSON (views, print zones → % areas, text fields) into a StoreCanvas config; view images re-uploaded on import. Pure `SC_FPD_Import::map()` unit-tested |
 | Orderbay 1.6.0 | Theme template overrides (`wp-content/themes/<theme>/orderbay/<template>.php`) across all 9 document types + `ob_before_document`/`ob_after_document` hooks and an `ob_locate_template` filter. Pure `template_candidates()` unit-tested |
+| i18n 1.15.1 / 1.5.1 / 1.6.1 | Translation templates (`languages/*.pot`) for all three plugins via `tools/make-pot.php`; wrapped the previously English-only TOC Twilio/AJAX strings; moved StoreCanvas customizer JS strings into the localized `i18n` table and **fixed a missing `load_plugin_textdomain`** in StoreCanvas |
 
 ## What's in 1.14.2
 

@@ -1,6 +1,13 @@
 (function ($) {
 	'use strict';
 
+	// Translatable UI strings come from scCustomizer.i18n (see class-sc-plugin.php); the English
+	// fallback keeps behavior unchanged if a key is missing.
+	var I18N = (typeof scCustomizer !== 'undefined' && scCustomizer.i18n) || {};
+	function scT(key, fallback) {
+		return I18N && I18N[key] ? I18N[key] : fallback;
+	}
+
 	function parseData($el, key, fallback) {
 		try {
 			var raw = $el.attr('data-' + key);
@@ -298,9 +305,9 @@
 						'<button type="button" class="button sc-layer-select">' +
 						esc(label) +
 						'</button> ' +
-						'<button type="button" class="button sc-layer-up" title="Up">↑</button>' +
-						'<button type="button" class="button sc-layer-down" title="Down">↓</button>' +
-						'<button type="button" class="button sc-layer-remove" title="Remove">×</button>' +
+						'<button type="button" class="button sc-layer-up" title="' + scT('layerUp', 'Up') + '">↑</button>' +
+						'<button type="button" class="button sc-layer-down" title="' + scT('layerDown', 'Down') + '">↓</button>' +
+						'<button type="button" class="button sc-layer-remove" title="' + scT('layerRemove', 'Remove') + '">×</button>' +
 						'</div>'
 				);
 				$list.append($row);
@@ -461,7 +468,7 @@
 				ctx.fillStyle = '#f0f0f0';
 				ctx.fillRect(0, 0, canvas.width, canvas.height);
 				ctx.fillStyle = '#666';
-				ctx.fillText('No base image for this view', 20, 40);
+				ctx.fillText(scT('noBaseImage', 'No base image for this view'), 20, 40);
 				syncHidden();
 				return;
 			}
@@ -531,7 +538,7 @@
 				draw();
 			};
 			img.onerror = function () {
-				alert('Could not load library image.');
+				alert(scT('libImgError', 'Could not load library image.'));
 			};
 			img.src = url;
 		}
@@ -541,7 +548,7 @@
 				id: uid('t'),
 				type: 'text',
 				label: 'Text',
-				content: 'Your text',
+				content: scT('defaultText', 'Your text'),
 				fontSize: 28,
 				fill: '#111111',
 				fontFamily: 'Arial, Helvetica, sans-serif',
@@ -626,7 +633,7 @@
 		function loadLibrary() {
 			var $box = $root.find('#sc-library-thumbs').empty().text('Loading…');
 			if (typeof scLibrary === 'undefined' || !scLibrary || !scLibrary.ajax) {
-				$box.text('Library unavailable.');
+				$box.text(scT('libUnavailable', 'Library unavailable.'));
 				return;
 			}
 			$.get(scLibrary.ajax, {
@@ -636,7 +643,7 @@
 			}).done(function (res) {
 				$box.empty();
 				if (!res || !res.success || !res.data.items || !res.data.items.length) {
-					$box.text('No clip-art available.');
+					$box.text(scT('noClipart', 'No clip-art available.'));
 					return;
 				}
 				res.data.items.forEach(function (item) {
@@ -850,9 +857,9 @@
 
 		$(document).on('click', '#sc-save-design', function () {
 			if (typeof scDesigns === 'undefined' || !scDesigns || !scDesigns.ajax) return;
-			var title = 'My design';
+			var title = scT('defaultDesignName', 'My design');
 			if (scDesigns.loggedIn) {
-				var t = window.prompt('Name this design', 'My design');
+				var t = window.prompt(scT('promptName', 'Name this design'), scT('defaultDesignName', 'My design'));
 				if (t === null) return;
 				title = t;
 			}
@@ -868,15 +875,15 @@
 					if (res.data && res.data.mode === 'guest') {
 						guestToken = res.data.token || guestToken;
 						showGuestHint(
-							(res.data.message || 'Design saved.') +
+							(res.data.message || scT('designSaved', 'Design saved.')) +
 								(guestToken ? ' Token: ' + guestToken.slice(0, 8) + '…' : '')
 						);
-						alert(res.data.message || 'Design saved on this device.');
+						alert(res.data.message || scT('designSavedDevice', 'Design saved on this device.'));
 					} else {
-						alert('Design saved.');
+						alert(scT('designSaved', 'Design saved.'));
 					}
 				} else {
-					alert((res && res.data && res.data.message) || 'Could not save design.');
+					alert((res && res.data && res.data.message) || scT('saveFailed', 'Could not save design.'));
 				}
 			});
 		});
@@ -891,7 +898,7 @@
 			}).done(function (res) {
 				$box.empty();
 				if (!res || !res.success || !res.data.items || !res.data.items.length) {
-					$box.text('No saved designs.');
+					$box.text(scT('noSavedDesigns', 'No saved designs.'));
 					return;
 				}
 				res.data.items.forEach(function (item) {
@@ -921,12 +928,12 @@
 				product_id: productId,
 			}).done(function (res) {
 				if (!res || !res.success || !res.data.payload) {
-					alert((res && res.data && res.data.message) || 'No saved design found.');
+					alert((res && res.data && res.data.message) || scT('noSavedDesign', 'No saved design found.'));
 					return;
 				}
 				if (res.data.token) guestToken = res.data.token;
 				applyDesignPayload(res.data.payload);
-				showGuestHint('Design reloaded.');
+				showGuestHint(scT('designReloaded', 'Design reloaded.'));
 				journeyLog('design_load_guest', guestToken.slice(0, 8), productId);
 			});
 		}
@@ -938,10 +945,10 @@
 		$(document).on('click', '#sc-email-guest-design', function () {
 			if (typeof scDesigns === 'undefined' || !scDesigns || !scDesigns.ajax) return;
 			if (!guestToken) {
-				alert('Save a design first.');
+				alert(scT('saveFirst', 'Save a design first.'));
 				return;
 			}
-			var email = window.prompt('Email address for your design link', '');
+			var email = window.prompt(scT('promptEmail', 'Email address for your design link'), '');
 			if (!email) return;
 			$.post(scDesigns.ajax, {
 				action: 'sc_email_design_link',
@@ -951,9 +958,9 @@
 				token: guestToken,
 			}).done(function (res) {
 				if (res && res.success) {
-					alert(res.data.message || 'Link emailed.');
+					alert(res.data.message || scT('linkEmailed', 'Link emailed.'));
 				} else {
-					alert((res && res.data && res.data.message) || 'Could not send email.');
+					alert((res && res.data && res.data.message) || scT('emailFailed', 'Could not send email.'));
 				}
 			});
 		});

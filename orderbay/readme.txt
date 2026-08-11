@@ -3,12 +3,15 @@ Contributors: alextechgamer
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.6.0
+Stable tag: 1.6.1
 License: GPLv2 or later
 
 Self-hosted WooCommerce ops toolkit: documents, fulfillment, RMA, digests, search.
 
 == Changelog ==
+
+= 1.6.1 =
+* i18n: ship a translation template (languages/orderbay.pot) covering all document, settings and admin strings
 
 = 1.6.0 =
 * New: theme template overrides — copy any document template into wp-content/themes/your-theme/orderbay/ (e.g. orderbay/invoice.php) to customize it without editing the plugin; your copy survives updates

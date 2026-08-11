@@ -12,7 +12,7 @@ trait TOC_Admin_Ajax {
 	public function ajax_resolve() {
 		check_ajax_referer( 'toc_nonce', 'nonce' );
 		if ( ! current_user_can( TOC_Caps::manage() ) ) {
-			wp_send_json_error( 'Permission denied' );
+			wp_send_json_error( __( 'Permission denied', 'twilio-order-communicator' ) );
 		}
 
 		$id       = absint( $_POST['id'] ?? 0 );
@@ -25,14 +25,14 @@ trait TOC_Admin_Ajax {
 			TOC_Logger::instance()->mark_resolved( $id );
 			wp_send_json_success();
 		}
-		wp_send_json_error( 'Missing ID' );
+		wp_send_json_error( __( 'Missing ID', 'twilio-order-communicator' ) );
 	}
 
 	public function ajax_bulk() {
 		// Sequential bulk: one order per request (called repeatedly from admin JS).
 		check_ajax_referer( 'toc_nonce', 'nonce' );
 		if ( ! current_user_can( TOC_Caps::send() ) ) {
-			wp_send_json_error( 'Permission denied' );
+			wp_send_json_error( __( 'Permission denied', 'twilio-order-communicator' ) );
 		}
 
 		$order_id = absint( $_POST['order_id'] ?? 0 );
@@ -48,12 +48,12 @@ trait TOC_Admin_Ajax {
 		}
 
 		if ( ! $order_id || $message === '' ) {
-			wp_send_json_error( 'Missing data' );
+			wp_send_json_error( __( 'Missing data', 'twilio-order-communicator' ) );
 		}
 
 		$order = wc_get_order( $order_id );
 		if ( ! $order ) {
-			wp_send_json_error( 'Order not found' );
+			wp_send_json_error( __( 'Order not found', 'twilio-order-communicator' ) );
 		}
 
 		if ( class_exists( 'TOC_Order_Meta' ) && TOC_Order_Meta::is_collected( $order ) ) {
@@ -62,7 +62,7 @@ trait TOC_Admin_Ajax {
 					'order_id' => $order_id,
 					'ok'       => false,
 					'skipped'  => true,
-					'detail'   => 'Order is marked as collected',
+					'detail'   => __( 'Order is marked as collected', 'twilio-order-communicator' ),
 					'call'     => null,
 					'sms'      => null,
 				)
@@ -76,7 +76,7 @@ trait TOC_Admin_Ajax {
 					'order_id' => $order_id,
 					'ok'       => false,
 					'skipped'  => true,
-					'detail'   => 'No phone number',
+					'detail'   => __( 'No phone number', 'twilio-order-communicator' ),
 					'call'     => null,
 					'sms'      => null,
 				)
@@ -155,31 +155,34 @@ trait TOC_Admin_Ajax {
 	public function ajax_test() {
 		check_ajax_referer( 'toc_nonce', 'nonce' );
 		if ( ! current_user_can( TOC_Caps::manage() ) ) {
-			wp_send_json_error( 'Permission denied' );
+			wp_send_json_error( __( 'Permission denied', 'twilio-order-communicator' ) );
 		}
 
 		$twilio = TOC_Twilio::instance();
 		$api    = $twilio->test_credentials();
 		if ( empty( $api['success'] ) ) {
-			wp_send_json_error( $api['error'] ?? 'Credential check failed.' );
+			wp_send_json_error( $api['error'] ?? __( 'Credential check failed.', 'twilio-order-communicator' ) );
 		}
 
 		// TwiML token path (same path real calls use).
-		$test_url = $twilio->build_twiml_url( 'Connection test successful.' );
+		$test_url = $twilio->build_twiml_url( __( 'Connection test successful.', 'twilio-order-communicator' ) );
 		$response = wp_remote_get( $test_url, array( 'timeout' => 10 ) );
 
 		if ( is_wp_error( $response ) ) {
-			wp_send_json_error( 'Twilio OK, but TwiML endpoint unreachable: ' . $response->get_error_message() );
+			/* translators: %s: WordPress HTTP error detail. */
+			wp_send_json_error( sprintf( __( 'Twilio OK, but TwiML endpoint unreachable: %s', 'twilio-order-communicator' ), $response->get_error_message() ) );
 		}
 
 		$body = wp_remote_retrieve_body( $response );
 		$code = wp_remote_retrieve_response_code( $response );
 
 		if ( (int) $code !== 200 || strpos( $body, '<Say' ) === false ) {
-			wp_send_json_error( 'Twilio OK, but TwiML endpoint did not return valid XML. Response code: ' . $code );
+			/* translators: %s: HTTP response code. */
+			wp_send_json_error( sprintf( __( 'Twilio OK, but TwiML endpoint did not return valid XML. Response code: %s', 'twilio-order-communicator' ), $code ) );
 		}
 
 		$name = ! empty( $api['friendly_name'] ) ? ' (' . $api['friendly_name'] . ')' : '';
-		wp_send_json_success( 'Twilio credentials verified' . $name . ' and the built-in TwiML endpoint is working.' );
+		/* translators: %s: optional Twilio account friendly name in parentheses. */
+		wp_send_json_success( sprintf( __( 'Twilio credentials verified%s and the built-in TwiML endpoint is working.', 'twilio-order-communicator' ), $name ) );
 	}
 }

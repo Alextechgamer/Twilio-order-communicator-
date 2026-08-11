@@ -1,0 +1,1060 @@
+# Copyright (C) 2026 StoreCanvas
+# This file is distributed under the same license as the StoreCanvas plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: StoreCanvas\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-08-11 23:19+0000\n"
+"X-Domain: storecanvas\n"
+
+#: templates/customizer-panel.php:84
+msgid "0 = no stroke"
+msgstr ""
+
+#: includes/class-sc-queue.php:205
+msgid "Actions"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:95
+msgid "Add a print area so customers can place artwork."
+msgstr ""
+
+#: includes/class-sc-admin-product.php:122
+msgid "Add area"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:92
+msgid "Add at least one view with a base image."
+msgstr ""
+
+#: includes/class-sc-clipart.php:39
+msgid "Add clip-art"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:287 includes/class-sc-plugin.php:218
+msgid "Add field"
+msgstr ""
+
+#: templates/customizer-panel.php:37
+msgid "Add layer"
+msgstr ""
+
+#: includes/class-sc-option-groups.php:41
+msgid "Add option group"
+msgstr ""
+
+#: includes/class-sc-plugin.php:220
+msgid "Add print area"
+msgstr ""
+
+#: templates/customizer-panel.php:38
+msgid "Add text"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:116 includes/class-sc-plugin.php:219
+msgid "Add view"
+msgstr ""
+
+#: includes/class-sc-queue.php:175
+msgid "All"
+msgstr ""
+
+#: includes/class-sc-orders-list.php:166
+msgid "All orders (SC art)"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:90
+msgid "Almost ready"
+msgstr ""
+
+#: includes/class-sc-plugin.php:148
+msgid "Apply placement"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:134
+msgid "Area"
+msgstr ""
+
+#: includes/class-sc-cart-order.php:483
+msgid "Art layers"
+msgstr ""
+
+#: includes/class-sc-cart-order.php:657
+msgid "Art layers: %d"
+msgstr ""
+
+#: includes/class-sc-print-ready.php:171
+msgid "Artwork color mode is %s; RGB is required for print."
+msgstr ""
+
+#: includes/class-sc-print-ready.php:298
+msgid "Artwork extends outside the %s%% bleed inset of the print area. Move or scale down."
+msgstr ""
+
+#: includes/class-sc-clipart.php:67
+msgid "Artwork file"
+msgstr ""
+
+#: includes/class-sc-print-ready.php:303
+msgid "Artwork is outside the %s%% safe margin (still within bleed)."
+msgstr ""
+
+#: includes/class-sc-admin-product.php:204
+msgid "Artwork must stay inside this inset of the print area (stricter than safe margin when higher)."
+msgstr ""
+
+#: includes/class-sc-clipart.php:82
+msgid "Attachment ID"
+msgstr ""
+
+#: includes/class-sc-plugin.php:125
+msgid "Base"
+msgstr ""
+
+#: includes/class-sc-print-ready.php:1022
+msgid "Base file missing."
+msgstr ""
+
+#: includes/class-sc-print-ready.php:413
+msgid "Base or artwork file missing."
+msgstr ""
+
+#: includes/class-sc-admin-product.php:201
+msgid "Bleed inset %"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:222
+msgid "Block CMYK/grayscale uploads when color mode is detectable."
+msgstr ""
+
+#: includes/class-sc-proof-email.php:96
+msgid "Body"
+msgstr ""
+
+#: includes/class-sc-product-options.php:28
+msgid "Checkbox"
+msgstr ""
+
+#: includes/class-sc-product-options.php:639
+msgid "Choose…"
+msgstr ""
+
+#: templates/customizer-panel.php:45
+msgid "Click clip-art to add as a layer."
+msgstr ""
+
+#: includes/class-sc-clipart.php:38
+msgid "Clip-art"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:238
+msgid "Clip-art library"
+msgstr ""
+
+#: includes/class-sc-clipart.php:56
+msgid "Clip-art tags"
+msgstr ""
+
+#: includes/class-sc-product-options.php:37
+#: templates/customizer-panel.php:59
+msgid "Color"
+msgstr ""
+
+#: includes/class-sc-print-sheet.php:100
+msgid "Composite: %s"
+msgstr ""
+
+#: templates/customizer-panel.php:51
+msgid "Content"
+msgstr ""
+
+#: includes/class-sc-bulk-download.php:160
+msgid "Could not create ZIP archive."
+msgstr ""
+
+#: includes/class-sc-print-ready.php:355
+msgid "Could not create attachment."
+msgstr ""
+
+#: includes/class-sc-print-ready.php:1029
+msgid "Could not load base image."
+msgstr ""
+
+#: includes/class-sc-print-ready.php:423
+msgid "Could not load images for composite."
+msgstr ""
+
+#: includes/class-sc-plugin.php:155
+msgid "Could not load library image."
+msgstr ""
+
+#: includes/class-sc-fpd-import.php:363
+msgid "Could not parse the FPD JSON."
+msgstr ""
+
+#: includes/class-sc-print-ready.php:160
+msgid "Could not read image dimensions."
+msgstr ""
+
+#: includes/class-sc-export.php:92
+msgid "Could not render the PDF image (PHP GD required)."
+msgstr ""
+
+#: includes/class-sc-plugin.php:163
+msgid "Could not save design."
+msgstr ""
+
+#: includes/class-sc-plugin.php:170
+msgid "Could not send email."
+msgstr ""
+
+#: includes/class-sc-print-ready.php:1059
+#: includes/class-sc-print-ready.php:488
+msgid "Could not write print file."
+msgstr ""
+
+#: includes/class-sc-cart-order.php:477
+msgid "Custom placement"
+msgstr ""
+
+#: includes/class-sc-queue.php:200
+msgid "Customer"
+msgstr ""
+
+#: templates/customizer-panel.php:20
+msgid "Customize placement"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:103
+msgid "Customizer (live mockup)"
+msgstr ""
+
+#: includes/class-sc-product-options.php:36 includes/class-sc-queue.php:199
+msgid "Date"
+msgstr ""
+
+#: includes/class-sc-designs.php:155
+msgid "Design for product #%d – %s"
+msgstr ""
+
+#: includes/class-sc-plugin.php:166
+msgid "Design reloaded."
+msgstr ""
+
+#: includes/class-sc-designs.php:180
+msgid "Design saved on this device for 14 days."
+msgstr ""
+
+#: includes/class-sc-plugin.php:162
+msgid "Design saved on this device."
+msgstr ""
+
+#: includes/class-sc-plugin.php:161
+msgid "Design saved."
+msgstr ""
+
+#: includes/class-sc-plugin.php:152
+msgid "Down"
+msgstr ""
+
+#: includes/class-sc-bulk-download.php:49
+msgid "Download all StoreCanvas print files (ZIP)"
+msgstr ""
+
+#: includes/class-sc-product-options.php:26
+msgid "Dropdown"
+msgstr ""
+
+#: includes/class-sc-clipart.php:40
+msgid "Edit clip-art"
+msgstr ""
+
+#: includes/class-sc-option-groups.php:42
+msgid "Edit option group"
+msgstr ""
+
+#: includes/class-sc-product-options.php:32
+msgid "Email"
+msgstr ""
+
+#: includes/class-sc-plugin.php:168
+msgid "Email address for your design link"
+msgstr ""
+
+#: includes/class-sc-designs.php:70
+msgid "Email me a link"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:108
+msgid "Enable live mockup"
+msgstr ""
+
+#: includes/class-sc-proof-email.php:73
+msgid "Enable proof email"
+msgstr ""
+
+#: includes/class-sc-print-ready.php:154
+msgid "Estimated DPI is ~%s — acceptable but close to the minimum."
+msgstr ""
+
+#: includes/class-sc-print-ready.php:147
+msgid "Estimated print resolution is ~%1$s DPI (need at least %2$s DPI at %3$s″ width). Upload a larger image."
+msgstr ""
+
+#: includes/class-sc-option-groups.php:94
+msgid "Fields JSON"
+msgstr ""
+
+#: includes/class-sc-option-groups.php:93
+msgid "Fields use the same JSON shape as product option fields. Assign to products and/or categories. Product-local fields with the same id override group fields."
+msgstr ""
+
+#: includes/class-sc-print-ready.php:85
+msgid "File is %.1f MB; max allowed is %.1f MB."
+msgstr ""
+
+#: includes/class-sc-product-options.php:702
+msgid "File is stored with the order; use Customizer for live placement."
+msgstr ""
+
+#: includes/class-sc-print-ready.php:75
+msgid "File not found."
+msgstr ""
+
+#: includes/class-sc-print-ready.php:100
+msgid "File type is not allowed."
+msgstr ""
+
+#: includes/class-sc-product-options.php:39
+msgid "File upload"
+msgstr ""
+
+#: includes/class-sc-product-options.php:47
+msgid "Flat fee"
+msgstr ""
+
+#: templates/customizer-panel.php:64
+msgid "Font"
+msgstr ""
+
+#: includes/class-sc-bulk-download.php:140 includes/class-sc-export.php:56
+#: includes/class-sc-fpd-import.php:356
+#: includes/class-sc-print-sheet.php:47 includes/class-sc-queue.php:156
+#: includes/class-sc-queue.php:290 includes/class-sc-queue.php:315
+msgid "Forbidden"
+msgstr ""
+
+#: includes/class-sc-product-options.php:46
+msgid "Free"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:257
+msgid "Global option groups"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:193
+msgid "Green guide inset inside the print area on the canvas."
+msgstr ""
+
+#: includes/class-sc-option-groups.php:67
+msgid "Group fields & assignment"
+msgstr ""
+
+#: includes/class-sc-orders-list.php:167
+msgid "Has StoreCanvas art"
+msgstr ""
+
+#: includes/class-sc-designs.php:295
+msgid "Here is a link to reload your StoreCanvas design (valid ~14 days):\n\n%s\n"
+msgstr ""
+
+#: includes/class-sc-proof-email.php:36
+msgid "Hi {customer_first_name},\n\nThanks for your order #{order_number} at {store_name}.\n\nAttached is a proof of your customized artwork. If anything looks wrong, reply to this email before we print.\n\nThank you!"
+msgstr ""
+
+#: includes/class-sc-product-options.php:38
+msgid "Image choice"
+msgstr ""
+
+#: includes/class-sc-print-ready.php:117
+msgid "Image is too large to process (%1$s MP; max %2$s MP). Reduce its pixel dimensions and re-upload."
+msgstr ""
+
+#: includes/class-sc-print-ready.php:127
+msgid "Image is too small; minimum %d px on the long edge required."
+msgstr ""
+
+#: includes/class-sc-fpd-import.php:344
+msgid "Import FPD product"
+msgstr ""
+
+#: includes/class-sc-fpd-import.php:400
+msgid "Imported %1$d view(s) and %2$d option field(s) from FPD."
+msgstr ""
+
+#: includes/class-sc-queue.php:201
+msgid "Items"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:240
+msgid "Leave empty to allow all published library items. Select items to restrict this product."
+msgstr ""
+
+#: templates/customizer-panel.php:39
+msgid "Library"
+msgstr ""
+
+#: includes/class-sc-plugin.php:157
+msgid "Library unavailable."
+msgstr ""
+
+#: includes/class-sc-designs.php:307 includes/class-sc-plugin.php:169
+msgid "Link emailed."
+msgstr ""
+
+#: includes/class-sc-product-options.php:31
+msgid "Long text"
+msgstr ""
+
+#: includes/class-sc-queue.php:261
+msgid "Mark printed"
+msgstr ""
+
+#: includes/class-sc-queue.php:258
+msgid "Mark unprinted"
+msgstr ""
+
+#: includes/class-sc-queue.php:305
+msgid "Marked printed."
+msgstr ""
+
+#: includes/class-sc-queue.php:329
+msgid "Marked unprinted."
+msgstr ""
+
+#: includes/class-sc-admin-product.php:161
+msgid "Max upload (MB)"
+msgstr ""
+
+#: includes/class-sc-proof-email.php:99
+msgid "Merge tags: {customer_first_name}, {order_number}, {store_name}"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:152
+msgid "Min DPI"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:212
+msgid "Min bleed (px, optional)"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:170
+msgid "Min source px"
+msgstr ""
+
+#: includes/class-sc-product-options.php:29
+msgid "Multi-select"
+msgstr ""
+
+#: includes/class-sc-plugin.php:159
+msgid "My design"
+msgstr ""
+
+#: includes/class-sc-designs.php:67
+msgid "My designs"
+msgstr ""
+
+#: includes/class-sc-plugin.php:160
+msgid "Name this design"
+msgstr ""
+
+#: includes/class-sc-product-options.php:460
+msgid "No"
+msgstr ""
+
+#: includes/class-sc-orders-list.php:168
+msgid "No StoreCanvas art"
+msgstr ""
+
+#: includes/class-sc-bulk-download.php:150
+msgid "No StoreCanvas print files on this order."
+msgstr ""
+
+#: includes/class-sc-print-ready.php:325
+msgid "No artwork uploaded."
+msgstr ""
+
+#: includes/class-sc-plugin.php:154
+msgid "No base image for this view"
+msgstr ""
+
+#: includes/class-sc-print-ready.php:1005
+#: includes/class-sc-print-ready.php:393
+msgid "No base view image configured."
+msgstr ""
+
+#: includes/class-sc-plugin.php:158
+msgid "No clip-art available."
+msgstr ""
+
+#: includes/class-sc-admin-product.php:244
+msgid "No clip-art yet. Add items under WooCommerce → StoreCanvas library."
+msgstr ""
+
+#: includes/class-sc-journey.php:134
+msgid "No events yet."
+msgstr ""
+
+#: includes/class-sc-queue.php:209
+msgid "No matching orders."
+msgstr ""
+
+#: includes/class-sc-admin-product.php:268
+msgid "No option groups yet."
+msgstr ""
+
+#: includes/class-sc-plugin.php:150 includes/class-sc-print-ready.php:1018
+#: includes/class-sc-print-ready.php:407
+msgid "No print area configured."
+msgstr ""
+
+#: includes/class-sc-option-groups.php:103
+msgid "No product categories."
+msgstr ""
+
+#: includes/class-sc-plugin.php:165
+msgid "No saved design found."
+msgstr ""
+
+#: includes/class-sc-plugin.php:164
+msgid "No saved designs."
+msgstr ""
+
+#: includes/class-sc-product-options.php:35
+msgid "Number"
+msgstr ""
+
+#: includes/class-sc-queue.php:254
+msgid "Open"
+msgstr ""
+
+#: includes/class-sc-print-sheet.php:83
+msgid "Option"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:281
+msgid "Option fields (local)"
+msgstr ""
+
+#: includes/class-sc-option-groups.php:40
+msgid "Option group"
+msgstr ""
+
+#: includes/class-sc-option-groups.php:39
+msgid "Option groups"
+msgstr ""
+
+#: includes/class-sc-proof-email.php:68
+msgid "Optional email with print composite when an order has StoreCanvas artwork. Default off. Independent of Twilio Order Communicator."
+msgstr ""
+
+#: includes/class-sc-cart-order.php:660
+msgid "Options extra:"
+msgstr ""
+
+#: includes/class-sc-cart-order.php:491
+msgid "Options total"
+msgstr ""
+
+#: includes/class-sc-queue.php:198
+msgid "Order"
+msgstr ""
+
+#: includes/class-sc-bulk-download.php:145
+#: includes/class-sc-print-sheet.php:52 includes/class-sc-queue.php:296
+#: includes/class-sc-queue.php:321
+msgid "Order not found"
+msgstr ""
+
+#: includes/class-sc-queue.php:284
+msgid "Orders with custom art (layers, placement, composites, or preview). Mark printed sets order meta _sc_printed_at."
+msgstr ""
+
+#: includes/class-sc-print-ready.php:1094
+#: includes/class-sc-print-sheet.php:93
+msgid "Original artwork"
+msgstr ""
+
+#: includes/class-sc-print-ready.php:1105
+msgid "PDF"
+msgstr ""
+
+#: includes/class-sc-print-ready.php:1025
+#: includes/class-sc-print-ready.php:417
+msgid "PHP GD is required to generate print files."
+msgstr ""
+
+#: includes/class-sc-bulk-download.php:181
+msgid "PHP ZipArchive is not available. Download files individually:"
+msgstr ""
+
+#: includes/class-sc-fpd-import.php:338
+msgid "Paste an exported Fancy Product Designer product JSON to import its views, print areas and text fields into StoreCanvas. Review the result before selling — view images are re-uploaded and coordinates are converted from FPD."
+msgstr ""
+
+#: includes/class-sc-product-options.php:50
+msgid "Per character (text)"
+msgstr ""
+
+#: includes/class-sc-product-options.php:51
+msgid "Per choice (lookup table)"
+msgstr ""
+
+#: includes/class-sc-product-options.php:49
+msgid "Per quantity"
+msgstr ""
+
+#: includes/class-sc-product-options.php:48
+msgid "Percent of product"
+msgstr ""
+
+#: includes/class-sc-product-options.php:33
+msgid "Phone"
+msgstr ""
+
+#: includes/class-sc-product-options.php:34
+msgid "Phone (tel)"
+msgstr ""
+
+#: includes/class-sc-print-sheet.php:106
+msgid "Placement JSON"
+msgstr ""
+
+#: includes/class-sc-cart-order.php:654
+msgid "Placement data saved."
+msgstr ""
+
+#: includes/class-sc-queue.php:202
+msgid "Preview"
+msgstr ""
+
+#: includes/class-sc-print-sheet.php:69
+msgid "Print / Save as PDF"
+msgstr ""
+
+#: templates/customizer-panel.php:32
+msgid "Print area"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:121
+msgid "Print areas"
+msgstr ""
+
+#: includes/class-sc-print-ready.php:1102
+msgid "Print composite (%s)"
+msgstr ""
+
+#: includes/class-sc-export.php:66
+msgid "Print file is not an image."
+msgstr ""
+
+#: includes/class-sc-export.php:62
+msgid "Print file not found."
+msgstr ""
+
+#: includes/class-sc-print-ready.php:1090
+msgid "Print files"
+msgstr ""
+
+#: includes/class-sc-print-sheet.php:34
+msgid "Print sheet: %s"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:147
+msgid "Print validation"
+msgstr ""
+
+#: includes/class-sc-queue.php:177 includes/class-sc-queue.php:204
+msgid "Printed"
+msgstr ""
+
+#: includes/class-sc-option-groups.php:96
+msgid "Product IDs (comma-separated)"
+msgstr ""
+
+#: includes/class-sc-option-groups.php:98
+msgid "Product categories"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:71
+msgid "Product options and live mockup. Version 1.1.0."
+msgstr ""
+
+#: includes/class-sc-product-options.php:27
+msgid "Radio"
+msgstr ""
+
+#: includes/class-sc-journey.php:129
+msgid "Recent customizer events (upload, drag, add-to-cart, errors). Use this to see where customers drop off."
+msgstr ""
+
+#: includes/class-sc-designs.php:69
+msgid "Reload saved design"
+msgstr ""
+
+#: includes/class-sc-plugin.php:153
+msgid "Remove"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:221
+msgid "Require RGB"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:283
+msgid "Required + limits apply when the field is visible (show_if / role / variation). per_char pricing only for text-like fields. stock_qty on choices is optional (omit = unlimited)."
+msgstr ""
+
+#: includes/class-sc-plugin.php:149 templates/customizer-panel.php:42
+msgid "Reset"
+msgstr ""
+
+#: includes/class-sc-orders-list.php:76
+#: includes/class-sc-orders-list.php:80 includes/class-sc-queue.php:203
+msgid "SC Art"
+msgstr ""
+
+#: includes/class-sc-journey.php:114
+msgid "SC Journey"
+msgstr ""
+
+#: includes/class-sc-proof-email.php:54
+msgid "SC Proof Email"
+msgstr ""
+
+#: includes/class-sc-print-ready.php:1104
+msgid "SVG"
+msgstr ""
+
+#: templates/customizer-panel.php:33
+msgid "Safe margin"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:190
+msgid "Safe margin %"
+msgstr ""
+
+#: includes/class-sc-plugin.php:167
+msgid "Save a design first."
+msgstr ""
+
+#: includes/class-sc-designs.php:65
+msgid "Save this design"
+msgstr ""
+
+#: includes/class-sc-designs.php:46
+msgid "Saved design"
+msgstr ""
+
+#: includes/class-sc-designs.php:45
+msgid "Saved designs"
+msgstr ""
+
+#: includes/class-sc-product-options.php:40
+msgid "Section heading"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:129
+msgid "Select a view with a base image, then drag the blue rectangle or its corners. Changes sync to the area fields."
+msgstr ""
+
+#: includes/class-sc-admin-product.php:259
+msgid "Select groups to use on this product (WooCommerce → Option groups). Empty = auto-match by group product/category assignment. Local fields with the same id override group fields."
+msgstr ""
+
+#: includes/class-sc-plugin.php:221
+msgid "Select image"
+msgstr ""
+
+#: includes/class-sc-proof-email.php:78
+msgid "Send customer proof email"
+msgstr ""
+
+#: includes/class-sc-product-options.php:30
+msgid "Short text"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:109
+msgid "Show canvas placement UI on the product page."
+msgstr ""
+
+#: templates/customizer-panel.php:56
+msgid "Size"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:78
+msgid "Status: Options: %1$d fields · Views: %2$d · Areas: %3$d · Validation: %4$s"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:28
+#: includes/class-sc-admin-product.php:70
+#: includes/class-sc-cart-order.php:630
+msgid "StoreCanvas"
+msgstr ""
+
+#: includes/class-sc-journey.php:113
+msgid "StoreCanvas Journey"
+msgstr ""
+
+#: includes/class-sc-proof-email.php:53
+msgid "StoreCanvas Proof Email"
+msgstr ""
+
+#: includes/class-sc-queue.php:34 includes/class-sc-queue.php:35
+msgid "StoreCanvas Queue"
+msgstr ""
+
+#: includes/class-sc-bulk-download.php:40
+msgid "StoreCanvas bulk ZIP link: %s"
+msgstr ""
+
+#: includes/class-sc-journey.php:128
+msgid "StoreCanvas customer journey"
+msgstr ""
+
+#: includes/class-sc-proof-email.php:67
+msgid "StoreCanvas customer proof email"
+msgstr ""
+
+#: includes/class-sc-clipart.php:37
+msgid "StoreCanvas library"
+msgstr ""
+
+#: includes/class-sc-bulk-download.php:182
+msgid "StoreCanvas print files"
+msgstr ""
+
+#: includes/class-sc-print-sheet.php:40
+msgid "StoreCanvas print sheet"
+msgstr ""
+
+#: includes/class-sc-print-sheet.php:70
+msgid "StoreCanvas print sheet — Order #%s"
+msgstr ""
+
+#: includes/class-sc-queue.php:171
+msgid "StoreCanvas production queue"
+msgstr ""
+
+#: includes/class-sc-proof-email.php:202
+msgid "StoreCanvas proof email failed to send."
+msgstr ""
+
+#: includes/class-sc-proof-email.php:195
+msgid "StoreCanvas proof email sent to %s."
+msgstr ""
+
+#: includes/class-sc-proof-email.php:160
+msgid "StoreCanvas proof email skipped: no artwork/composites."
+msgstr ""
+
+#: includes/class-sc-proof-email.php:166
+msgid "StoreCanvas proof email skipped: no billing email."
+msgstr ""
+
+#: storecanvas.php:113
+msgid "StoreCanvas requires WooCommerce to be active."
+msgstr ""
+
+#: includes/class-sc-fpd-import.php:331
+msgid "StoreCanvas: Import from Fancy Product Designer"
+msgstr ""
+
+#: storecanvas.php:133
+msgid "StoreCanvas: PHP GD is not available. Print composites will be skipped until GD is enabled. Product options and live mockup still work."
+msgstr ""
+
+#: includes/class-sc-bulk-download.php:28
+msgid "StoreCanvas: download print files ZIP"
+msgstr ""
+
+#: includes/class-sc-queue.php:300
+msgid "StoreCanvas: marked printed from production queue."
+msgstr ""
+
+#: includes/class-sc-print-sheet.php:28
+msgid "StoreCanvas: open print sheet"
+msgstr ""
+
+#: includes/class-sc-print-ready.php:868
+msgid "StoreCanvas: print composites skipped (PHP GD not available)."
+msgstr ""
+
+#: includes/class-sc-admin-product.php:229
+msgid "Strict bleed"
+msgstr ""
+
+#: templates/customizer-panel.php:78
+msgid "Stroke"
+msgstr ""
+
+#: includes/class-sc-proof-email.php:90
+msgid "Subject"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:179
+msgid "Target print width (inches)"
+msgstr ""
+
+#: templates/customizer-panel.php:49
+msgid "Text layer"
+msgstr ""
+
+#: includes/class-sc-fpd-import.php:345
+msgid "This overwrites the StoreCanvas customizer and options for this product."
+msgstr ""
+
+#: includes/class-sc-cart-order.php:292
+msgid "Too many artwork uploads from your connection. Please wait a few minutes and try again."
+msgstr ""
+
+#: includes/class-sc-proof-email.php:83
+msgid "Trigger status"
+msgstr ""
+
+#: includes/class-sc-queue.php:176
+msgid "Unprinted"
+msgstr ""
+
+#: includes/class-sc-plugin.php:151
+msgid "Up"
+msgstr ""
+
+#: includes/class-sc-plugin.php:147
+msgid "Upload artwork"
+msgstr ""
+
+#: templates/customizer-panel.php:91
+msgid "Upload artwork, add text, or pick from the library. Drag inside the blue print area; green guide is the safe margin. Corner handles resize; blue handle rotates."
+msgstr ""
+
+#: includes/class-sc-clipart.php:84
+msgid "Upload via Media Library and paste the attachment ID, or set the Featured Image (PNG/JPEG/SVG)."
+msgstr ""
+
+#: includes/class-sc-admin-product.php:182
+msgid "Used to estimate DPI of uploaded artwork."
+msgstr ""
+
+#: includes/class-sc-print-sheet.php:83
+msgid "Value"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:131
+msgid "View"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:115
+msgid "Views"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:128
+msgid "Visual print-area editor"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:230
+msgid "When on, bleed violations block add-to-cart. When off, soft-warn only."
+msgstr ""
+
+#: templates/customizer-panel.php:81
+msgid "Width"
+msgstr ""
+
+#: includes/class-sc-proof-email.php:86
+msgid "WooCommerce status slug, e.g. processing or completed."
+msgstr ""
+
+#: includes/class-sc-cart-order.php:478
+#: includes/class-sc-orders-list.php:117
+#: includes/class-sc-product-options.php:460
+#: includes/class-sc-queue.php:251
+msgid "Yes"
+msgstr ""
+
+#: includes/class-sc-proof-email.php:32
+msgid "Your print proof for order {order_number}"
+msgstr ""
+
+#: includes/class-sc-designs.php:290
+msgid "Your saved design at %s"
+msgstr ""
+
+#: includes/class-sc-plugin.php:156
+msgid "Your text"
+msgstr ""
+
+#: includes/class-sc-queue.php:255
+msgid "ZIP"
+msgstr ""
+
+#: includes/class-sc-plugin.php:127
+msgid "line"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:82
+msgid "off"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:82
+msgid "on"
+msgstr ""
+
+#: includes/class-sc-plugin.php:126
+msgid "options"
+msgstr ""
+
+#: includes/class-sc-proof-email.php:171
+msgid "there"
+msgstr ""
+
+#: includes/class-sc-admin-product.php:124
+msgid "x, y, w, h are percentages (0–100) of the view image. Use the visual editor below or edit numbers."
+msgstr ""
+
+#: includes/class-sc-cart-order.php:119
+msgid "“%1$s” must be at least %2$d characters."
+msgstr ""
+
+#: includes/class-sc-cart-order.php:132
+msgid "“%1$s” must be at least %2$s."
+msgstr ""
+
+#: includes/class-sc-cart-order.php:123
+msgid "“%1$s” must be at most %2$d characters."
+msgstr ""
+
+#: includes/class-sc-cart-order.php:136
+msgid "“%1$s” must be at most %2$s."
+msgstr ""
+
+#: includes/class-sc-cart-order.php:174
+msgid "“%1$s” option “%2$s” has insufficient stock (remaining: %3$d)."
+msgstr ""
+
+#: includes/class-sc-cart-order.php:109
+msgid "“%s” is required."
+msgstr ""
+
+#: includes/class-sc-cart-order.php:155
+msgid "“%s” must be a valid date."
+msgstr ""
+
+#: includes/class-sc-cart-order.php:143
+msgid "“%s” must be a valid email."
+msgstr ""
+
+#: includes/class-sc-cart-order.php:149
+msgid "“%s” must be a valid hex color."
+msgstr ""
+

@@ -3,7 +3,7 @@ Contributors: alextechgamer
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.5.0
+Stable tag: 1.5.1
 License: GPLv2 or later
 
 Self-hosted WooCommerce personalization: product options, live mockup, print-ready, library, guest save.
@@ -15,6 +15,11 @@ Product options parity with common add-ons plugins plus live mockup and print co
 Independent of Twilio Order Communicator and Orderbay.
 
 == Changelog ==
+
+= 1.5.1 =
+* Fix: load_plugin_textdomain was missing, so bundled translations never loaded — now registered on init
+* i18n: move the hardcoded English strings in the customizer JS into the localized scCustomizer.i18n table (English fallback preserved)
+* i18n: ship a translation template (languages/storecanvas.pot)
 
 = 1.5.0 =
 * New: one-click Fancy Product Designer (FPD) importer — paste an exported FPD product JSON on the product screen to import its views, print areas (converted to stage-relative percentages) and text fields into StoreCanvas

@@ -189,7 +189,7 @@ class TOC_Twilio {
 				'success' => false,
 				'code'    => 0,
 				'data'    => array(),
-				'error'   => 'Twilio credentials not configured.',
+				'error'   => __( 'Twilio credentials not configured.', 'twilio-order-communicator' ),
 			);
 		}
 
@@ -404,7 +404,7 @@ class TOC_Twilio {
 
 	public function test_credentials() {
 		if ( ! $this->is_configured() ) {
-			return array( 'success' => false, 'error' => 'Credentials missing. Save Account SID, Auth Token and From Number first.' );
+			return array( 'success' => false, 'error' => __( 'Credentials missing. Save Account SID, Auth Token and From Number first.', 'twilio-order-communicator' ) );
 		}
 
 		$creds = $this->get_credentials();
@@ -413,13 +413,14 @@ class TOC_Twilio {
 		if ( empty( $result['success'] ) ) {
 			return array(
 				'success' => false,
-				'error'   => 'Twilio rejected credentials: ' . ( $result['error'] ?? 'unknown' ),
+				/* translators: %s: error detail from Twilio. */
+				'error'   => sprintf( __( 'Twilio rejected credentials: %s', 'twilio-order-communicator' ), $result['error'] ?? __( 'unknown', 'twilio-order-communicator' ) ),
 			);
 		}
 
 		$data = $result['data'];
 		if ( empty( $data['sid'] ) ) {
-			return array( 'success' => false, 'error' => 'Twilio rejected credentials: unexpected response.' );
+			return array( 'success' => false, 'error' => __( 'Twilio rejected credentials: unexpected response.', 'twilio-order-communicator' ) );
 		}
 
 		return array(
@@ -453,21 +454,21 @@ class TOC_Twilio {
 	public function send_sms( $to, $body, $order_id = 0, $force = false ) {
 		$creds = $this->get_credentials();
 		if ( ! $this->is_configured() ) {
-			return array( 'success' => false, 'error' => 'Twilio credentials not configured.' );
+			return array( 'success' => false, 'error' => __( 'Twilio credentials not configured.', 'twilio-order-communicator' ) );
 		}
 
 		$to = TOC_Logger::instance()->normalize_phone( $to );
 		if ( empty( $to ) || ! self::is_e164( $to ) ) {
-			return array( 'success' => false, 'error' => 'Invalid phone number (must be E.164, e.g. +15055551234).' );
+			return array( 'success' => false, 'error' => __( 'Invalid phone number (must be E.164, e.g. +15055551234).', 'twilio-order-communicator' ) );
 		}
 
 		if ( ! $force && $this->phone_is_opted_out( $to ) ) {
-			return array( 'success' => false, 'error' => 'Phone number has opted out (STOP).' );
+			return array( 'success' => false, 'error' => __( 'Phone number has opted out (STOP).', 'twilio-order-communicator' ) );
 		}
 
 		if ( ! $force && get_option( 'toc_require_sms_consent', 1 ) ) {
 			if ( $order_id && ! $this->customer_consented_sms( $order_id ) ) {
-				return array( 'success' => false, 'error' => 'Customer has not consented to SMS.' );
+				return array( 'success' => false, 'error' => __( 'Customer has not consented to SMS.', 'twilio-order-communicator' ) );
 			}
 		}
 
@@ -493,12 +494,12 @@ class TOC_Twilio {
 		);
 
 		if ( empty( $result['success'] ) ) {
-			return array( 'success' => false, 'error' => $result['error'] ?? 'Unknown Twilio error' );
+			return array( 'success' => false, 'error' => $result['error'] ?? __( 'Unknown Twilio error', 'twilio-order-communicator' ) );
 		}
 
 		$data = $result['data'];
 		if ( empty( $data['sid'] ) ) {
-			return array( 'success' => false, 'error' => 'Unknown Twilio error' );
+			return array( 'success' => false, 'error' => __( 'Unknown Twilio error', 'twilio-order-communicator' ) );
 		}
 
 		TOC_Logger::instance()->log(
@@ -522,12 +523,12 @@ class TOC_Twilio {
 	public function make_call( $to, $message, $order_id = 0 ) {
 		$creds = $this->get_credentials();
 		if ( ! $this->is_configured() ) {
-			return array( 'success' => false, 'error' => 'Twilio credentials not configured.' );
+			return array( 'success' => false, 'error' => __( 'Twilio credentials not configured.', 'twilio-order-communicator' ) );
 		}
 
 		$to = TOC_Logger::instance()->normalize_phone( $to );
 		if ( empty( $to ) || ! self::is_e164( $to ) ) {
-			return array( 'success' => false, 'error' => 'Invalid phone number (must be E.164, e.g. +15055551234).' );
+			return array( 'success' => false, 'error' => __( 'Invalid phone number (must be E.164, e.g. +15055551234).', 'twilio-order-communicator' ) );
 		}
 
 		$order = $order_id ? wc_get_order( $order_id ) : null;
@@ -552,12 +553,12 @@ class TOC_Twilio {
 		);
 
 		if ( empty( $result['success'] ) ) {
-			return array( 'success' => false, 'error' => $result['error'] ?? 'Unknown Twilio error' );
+			return array( 'success' => false, 'error' => $result['error'] ?? __( 'Unknown Twilio error', 'twilio-order-communicator' ) );
 		}
 
 		$data = $result['data'];
 		if ( empty( $data['sid'] ) ) {
-			return array( 'success' => false, 'error' => 'Unknown Twilio error' );
+			return array( 'success' => false, 'error' => __( 'Unknown Twilio error', 'twilio-order-communicator' ) );
 		}
 
 		TOC_Logger::instance()->log(

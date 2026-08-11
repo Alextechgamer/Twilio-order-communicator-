@@ -3,7 +3,7 @@
  * Plugin Name:       StoreCanvas
  * Plugin URI:        https://github.com/Alextechgamer/Twilio-order-communicator-
  * Description:       Self-hosted WooCommerce personalization: product options, live mockup placement, print-ready exports, clip-art library, and guest design save.
- * Version:           1.5.0
+ * Version:           1.5.1
  * Author:            Alextechgamer
  * Author URI:        https://github.com/Alextechgamer
  * Requires at least: 6.0
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SC_VERSION', '1.5.0' );
+define( 'SC_VERSION', '1.5.1' );
 define( 'SC_PLUGIN_FILE', __FILE__ );
 define( 'SC_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -76,6 +76,14 @@ function sc_init() {
 	}
 }
 add_action( 'plugins_loaded', 'sc_init' );
+
+// Load translations so bundled /languages/*.mo files are used. On init per WP 6.7+.
+add_action(
+	'init',
+	function () {
+		load_plugin_textdomain( 'storecanvas', false, dirname( SC_PLUGIN_BASENAME ) . '/languages' );
+	}
+);
 
 /**
  * Show the result notice after an FPD import redirect.
