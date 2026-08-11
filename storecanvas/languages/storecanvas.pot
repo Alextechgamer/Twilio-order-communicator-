@@ -6,7 +6,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-11 23:19+0000\n"
+"POT-Creation-Date: 2026-08-11 23:23+0000\n"
 "X-Domain: storecanvas\n"
 
 #: templates/customizer-panel.php:84
@@ -69,8 +69,16 @@ msgstr ""
 msgid "Almost ready"
 msgstr ""
 
+#: includes/class-sc-templates.php:247
+msgid "Applied the %1$s template (%2$d option field(s)). Set the product view image to finish."
+msgstr ""
+
 #: includes/class-sc-plugin.php:148
 msgid "Apply placement"
+msgstr ""
+
+#: includes/class-sc-templates.php:208
+msgid "Apply template"
 msgstr ""
 
 #: includes/class-sc-admin-product.php:134
@@ -107,6 +115,14 @@ msgstr ""
 
 #: includes/class-sc-clipart.php:82
 msgid "Attachment ID"
+msgstr ""
+
+#: includes/class-sc-templates.php:48
+msgid "Back"
+msgstr ""
+
+#: includes/class-sc-templates.php:52
+msgid "Back print"
 msgstr ""
 
 #: includes/class-sc-plugin.php:125
@@ -217,6 +233,14 @@ msgstr ""
 
 #: includes/class-sc-cart-order.php:477
 msgid "Custom placement"
+msgstr ""
+
+#: includes/class-sc-templates.php:77
+msgid "Custom text"
+msgstr ""
+
+#: includes/class-sc-templates.php:59
+msgid "Custom text (optional)"
 msgstr ""
 
 #: includes/class-sc-queue.php:200
@@ -331,6 +355,10 @@ msgstr ""
 msgid "File upload"
 msgstr ""
 
+#: includes/class-sc-templates.php:95
+msgid "Finish"
+msgstr ""
+
 #: includes/class-sc-product-options.php:47
 msgid "Flat fee"
 msgstr ""
@@ -343,11 +371,21 @@ msgstr ""
 #: includes/class-sc-fpd-import.php:356
 #: includes/class-sc-print-sheet.php:47 includes/class-sc-queue.php:156
 #: includes/class-sc-queue.php:290 includes/class-sc-queue.php:315
+#: includes/class-sc-templates.php:219
 msgid "Forbidden"
 msgstr ""
 
 #: includes/class-sc-product-options.php:46
 msgid "Free"
+msgstr ""
+
+#: includes/class-sc-templates.php:104 includes/class-sc-templates.php:47
+#: includes/class-sc-templates.php:86
+msgid "Front"
+msgstr ""
+
+#: includes/class-sc-templates.php:51
+msgid "Front print"
 msgstr ""
 
 #: includes/class-sc-admin-product.php:257
@@ -364,6 +402,10 @@ msgstr ""
 
 #: includes/class-sc-orders-list.php:167
 msgid "Has StoreCanvas art"
+msgstr ""
+
+#: includes/class-sc-templates.php:114
+msgid "Headline text"
 msgstr ""
 
 #: includes/class-sc-designs.php:295
@@ -434,6 +476,10 @@ msgstr ""
 msgid "Marked unprinted."
 msgstr ""
 
+#: includes/class-sc-templates.php:113
+msgid "Material"
+msgstr ""
+
 #: includes/class-sc-admin-product.php:161
 msgid "Max upload (MB)"
 msgstr ""
@@ -452,6 +498,14 @@ msgstr ""
 
 #: includes/class-sc-admin-product.php:170
 msgid "Min source px"
+msgstr ""
+
+#: includes/class-sc-templates.php:64
+msgid "Mug"
+msgstr ""
+
+#: includes/class-sc-templates.php:76
+msgid "Mug style"
 msgstr ""
 
 #: includes/class-sc-product-options.php:29
@@ -587,6 +641,10 @@ msgstr ""
 msgid "Original artwork"
 msgstr ""
 
+#: includes/class-sc-templates.php:209
+msgid "Overwrites the StoreCanvas customizer and options for this product."
+msgstr ""
+
 #: includes/class-sc-print-ready.php:1105
 msgid "PDF"
 msgstr ""
@@ -644,7 +702,8 @@ msgstr ""
 msgid "Print / Save as PDF"
 msgstr ""
 
-#: templates/customizer-panel.php:32
+#: includes/class-sc-templates.php:107 includes/class-sc-templates.php:71
+#: includes/class-sc-templates.php:89 templates/customizer-panel.php:32
 msgid "Print area"
 msgstr ""
 
@@ -765,6 +824,10 @@ msgstr ""
 msgid "Section heading"
 msgstr ""
 
+#: includes/class-sc-templates.php:198
+msgid "Seed a working print area and options from a preset, then set the product image and adjust as needed."
+msgstr ""
+
 #: includes/class-sc-admin-product.php:129
 msgid "Select a view with a base image, then drag the blue rectangle or its corners. Changes sync to the area fields."
 msgstr ""
@@ -781,6 +844,10 @@ msgstr ""
 msgid "Send customer proof email"
 msgstr ""
 
+#: includes/class-sc-templates.php:58
+msgid "Shirt color"
+msgstr ""
+
 #: includes/class-sc-product-options.php:30
 msgid "Short text"
 msgstr ""
@@ -789,12 +856,21 @@ msgstr ""
 msgid "Show canvas placement UI on the product page."
 msgstr ""
 
-#: templates/customizer-panel.php:56
+#: includes/class-sc-templates.php:100
+msgid "Sign / Poster"
+msgstr ""
+
+#: includes/class-sc-templates.php:112 includes/class-sc-templates.php:57
+#: includes/class-sc-templates.php:94 templates/customizer-panel.php:56
 msgid "Size"
 msgstr ""
 
 #: includes/class-sc-admin-product.php:78
 msgid "Status: Options: %1$d fields · Views: %2$d · Areas: %3$d · Validation: %4$s"
+msgstr ""
+
+#: includes/class-sc-templates.php:82
+msgid "Sticker"
 msgstr ""
 
 #: includes/class-sc-admin-product.php:28
@@ -863,7 +939,7 @@ msgstr ""
 msgid "StoreCanvas proof email skipped: no billing email."
 msgstr ""
 
-#: storecanvas.php:113
+#: storecanvas.php:115
 msgid "StoreCanvas requires WooCommerce to be active."
 msgstr ""
 
@@ -871,8 +947,12 @@ msgstr ""
 msgid "StoreCanvas: Import from Fancy Product Designer"
 msgstr ""
 
-#: storecanvas.php:133
+#: storecanvas.php:135
 msgid "StoreCanvas: PHP GD is not available. Print composites will be skipped until GD is enabled. Product options and live mockup still work."
+msgstr ""
+
+#: includes/class-sc-templates.php:191
+msgid "StoreCanvas: Start from a template"
 msgstr ""
 
 #: includes/class-sc-bulk-download.php:28
@@ -903,6 +983,10 @@ msgstr ""
 msgid "Subject"
 msgstr ""
 
+#: includes/class-sc-templates.php:43
+msgid "T-shirt"
+msgstr ""
+
 #: includes/class-sc-admin-product.php:179
 msgid "Target print width (inches)"
 msgstr ""
@@ -921,6 +1005,10 @@ msgstr ""
 
 #: includes/class-sc-proof-email.php:83
 msgid "Trigger status"
+msgstr ""
+
+#: includes/class-sc-templates.php:226
+msgid "Unknown template."
 msgstr ""
 
 #: includes/class-sc-queue.php:176
@@ -973,6 +1061,10 @@ msgstr ""
 
 #: includes/class-sc-proof-email.php:86
 msgid "WooCommerce status slug, e.g. processing or completed."
+msgstr ""
+
+#: includes/class-sc-templates.php:68
+msgid "Wrap"
 msgstr ""
 
 #: includes/class-sc-cart-order.php:478

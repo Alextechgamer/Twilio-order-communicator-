@@ -3,7 +3,7 @@ Contributors: alextechgamer
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.5.1
+Stable tag: 1.6.0
 License: GPLv2 or later
 
 Self-hosted WooCommerce personalization: product options, live mockup, print-ready, library, guest save.
@@ -15,6 +15,11 @@ Product options parity with common add-ons plugins plus live mockup and print co
 Independent of Twilio Order Communicator and Orderbay.
 
 == Changelog ==
+
+= 1.6.0 =
+* New: prebuilt product templates (T-shirt, Mug, Sticker, Sign/Poster) — a "Start from a template" box on the product screen seeds a working print area + option fields with one click
+* Templates seed structure (views, print areas, options), not artwork — set the product's view image to finish
+* Reuses the option sanitizer so imported fields are validated on save
 
 = 1.5.1 =
 * Fix: load_plugin_textdomain was missing, so bundled translations never loaded — now registered on init

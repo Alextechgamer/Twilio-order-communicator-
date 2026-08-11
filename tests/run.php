@@ -21,6 +21,7 @@ require $root . '/storecanvas/includes/class-sc-export.php';
 require $root . '/storecanvas/includes/class-sc-cart-order.php';
 require $root . '/storecanvas/includes/class-sc-product-options.php';
 require $root . '/storecanvas/includes/class-sc-fpd-import.php';
+require $root . '/storecanvas/includes/class-sc-templates.php';
 
 $pass  = 0;
 $fail  = 0;
@@ -170,6 +171,33 @@ if ( extension_loaded( 'dom' ) ) {
 } else {
 	echo "SKIP: ext-dom not loaded — e-invoice XML tests skipped\n";
 }
+
+/* ---- StoreCanvas prebuilt templates (pure) ---- */
+$sc_tpls = SC_Templates::templates();
+check( 'tpl has 4 presets', count( $sc_tpls ), 4 );
+check( 'tpl keys', array_keys( $sc_tpls ) === array( 'tee', 'mug', 'sticker', 'sign' ), true );
+$tpl_wellformed = true;
+foreach ( $sc_tpls as $k => $tpl ) {
+	if ( 1 !== ( $tpl['customizer']['enabled'] ?? 0 ) ) { $tpl_wellformed = false; }
+	if ( count( $tpl['customizer']['views'] ) < 1 ) { $tpl_wellformed = false; }
+	if ( count( $tpl['customizer']['areas'] ) < 1 ) { $tpl_wellformed = false; }
+	foreach ( $tpl['customizer']['areas'] as $a ) {
+		foreach ( array( 'x', 'y', 'w', 'h' ) as $dim ) {
+			if ( $a[ $dim ] < 0 || $a[ $dim ] > 100 ) { $tpl_wellformed = false; }
+		}
+		// every area references a real view id
+		$view_ids = array_map( function ( $v ) { return $v['id']; }, $tpl['customizer']['views'] );
+		if ( ! in_array( $a['view_id'], $view_ids, true ) ) { $tpl_wellformed = false; }
+	}
+	foreach ( $tpl['options']['fields'] as $f ) {
+		if ( empty( $f['id'] ) || empty( $f['type'] ) ) { $tpl_wellformed = false; }
+		if ( 'select' === $f['type'] && empty( $f['choices'] ) ) { $tpl_wellformed = false; }
+	}
+}
+check( 'tpl all well-formed', $tpl_wellformed, true );
+check( 'tpl apply tee', SC_Templates::apply( 'tee' )['customizer']['enabled'], 1 );
+check( 'tpl apply tee has options', count( SC_Templates::apply( 'tee' )['options']['fields'] ) >= 1, true );
+check( 'tpl apply unknown null', SC_Templates::apply( 'bogus' ), null );
 
 /* ---- StoreCanvas FPD importer mapping (pure; modeled FPD schema) ---- */
 $fpd = array(

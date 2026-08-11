@@ -9,7 +9,7 @@ This monorepo also contains independent plugins:
 | Plugin | Path | Current |
 |--------|------|---------|
 | Twilio Order Communicator | `twilio-order-communicator/` | 1.16.0 |
-| StoreCanvas | `storecanvas/` | 1.5.1 |
+| StoreCanvas | `storecanvas/` | 1.6.0 |
 | Orderbay | `orderbay/` | 1.6.1 |
 
 ## Install
@@ -49,6 +49,7 @@ Latest source is always on `main` under `twilio-order-communicator/`.
 | Orderbay 1.6.0 | Theme template overrides (`wp-content/themes/<theme>/orderbay/<template>.php`) across all 9 document types + `ob_before_document`/`ob_after_document` hooks and an `ob_locate_template` filter. Pure `template_candidates()` unit-tested |
 | i18n 1.15.1 / 1.5.1 / 1.6.1 | Translation templates (`languages/*.pot`) for all three plugins via `tools/make-pot.php`; wrapped the previously English-only TOC Twilio/AJAX strings; moved StoreCanvas customizer JS strings into the localized `i18n` table and **fixed a missing `load_plugin_textdomain`** in StoreCanvas |
 | TOC 1.16.0 | `{tracking}` / `{tracking_url}` merge tags for SMS/voice/email, resolved from OrderBay meta → WooCommerce Shipment Tracking → the `toc_order_tracking` filter. Pure `tracking_from_meta()` unit-tested |
+| StoreCanvas 1.6.0 | Prebuilt product templates (T-shirt / Mug / Sticker / Sign) — a "Start from a template" box seeds a working print area + option fields in one click. Pure `SC_Templates::templates()` / `apply()` unit-tested |
 
 ## What's in 1.14.2
 

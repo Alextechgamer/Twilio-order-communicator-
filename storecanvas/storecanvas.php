@@ -3,7 +3,7 @@
  * Plugin Name:       StoreCanvas
  * Plugin URI:        https://github.com/Alextechgamer/Twilio-order-communicator-
  * Description:       Self-hosted WooCommerce personalization: product options, live mockup placement, print-ready exports, clip-art library, and guest design save.
- * Version:           1.5.1
+ * Version:           1.6.0
  * Author:            Alextechgamer
  * Author URI:        https://github.com/Alextechgamer
  * Requires at least: 6.0
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SC_VERSION', '1.5.1' );
+define( 'SC_VERSION', '1.6.0' );
 define( 'SC_PLUGIN_FILE', __FILE__ );
 define( 'SC_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -34,6 +34,7 @@ require_once SC_PLUGIN_DIR . 'includes/class-sc-export.php';
 require_once SC_PLUGIN_DIR . 'includes/class-sc-cart-order.php';
 require_once SC_PLUGIN_DIR . 'includes/class-sc-admin-product.php';
 require_once SC_PLUGIN_DIR . 'includes/class-sc-fpd-import.php';
+require_once SC_PLUGIN_DIR . 'includes/class-sc-templates.php';
 require_once SC_PLUGIN_DIR . 'includes/class-sc-journey.php';
 require_once SC_PLUGIN_DIR . 'includes/class-sc-designs.php';
 require_once SC_PLUGIN_DIR . 'includes/class-sc-print-sheet.php';
@@ -69,6 +70,7 @@ function sc_init() {
 	if ( is_admin() ) {
 		SC_Admin_Product::instance();
 		SC_FPD_Import::instance();
+		SC_Templates::instance();
 		SC_Orders_List::instance();
 		SC_Queue::instance();
 		add_action( 'admin_notices', 'sc_gd_missing_notice' );
