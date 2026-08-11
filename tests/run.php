@@ -20,6 +20,7 @@ require $root . '/storecanvas/includes/class-sc-print-ready.php';
 require $root . '/storecanvas/includes/class-sc-export.php';
 require $root . '/storecanvas/includes/class-sc-cart-order.php';
 require $root . '/storecanvas/includes/class-sc-product-options.php';
+require $root . '/storecanvas/includes/class-sc-fpd-import.php';
 
 $pass  = 0;
 $fail  = 0;
@@ -161,6 +162,44 @@ if ( extension_loaded( 'dom' ) ) {
 } else {
 	echo "SKIP: ext-dom not loaded — e-invoice XML tests skipped\n";
 }
+
+/* ---- StoreCanvas FPD importer mapping (pure; modeled FPD schema) ---- */
+$fpd = array(
+	'title' => 'Classic Tee',
+	'views' => array(
+		array(
+			'title'       => 'Front',
+			'thumbnail'   => 'https://example.com/front.png',
+			'options'     => array( 'stageWidth' => 1000, 'stageHeight' => 1200 ),
+			'printingBox' => array( 'left' => 250, 'top' => 300, 'width' => 500, 'height' => 600 ),
+			'elements'    => array(
+				array( 'type' => 'image', 'source' => 'https://example.com/front.png', 'parameters' => array( 'width' => 1000, 'height' => 1200 ) ),
+				array( 'type' => 'text', 'title' => 'Your Name', 'parameters' => array( 'text' => 'Type here' ) ),
+				array( 'type' => 'text', 'title' => 'Your Name' ),
+				array( 'type' => 'image', 'source' => 'https://example.com/logo.png' ),
+			),
+		),
+		array(
+			'title'    => 'Back',
+			'elements' => array(),
+		),
+	),
+);
+$mapped = SC_FPD_Import::map( $fpd );
+check( 'fpd title', $mapped['title'], 'Classic Tee' );
+check( 'fpd enabled', $mapped['customizer']['enabled'], 1 );
+check( 'fpd two views', count( $mapped['customizer']['views'] ), 2 );
+check( 'fpd view label', $mapped['customizer']['views'][0]['label'], 'Front' );
+check( 'fpd view image url kept', $mapped['customizer']['views'][0]['image_url'], 'https://example.com/front.png' );
+check( 'fpd area x pct', $mapped['customizer']['areas'][0]['x'], 25.0 );
+check( 'fpd area w pct', $mapped['customizer']['areas'][0]['w'], 50.0 );
+check( 'fpd back default area', $mapped['customizer']['areas'][1]['w'], 60.0 );
+check( 'fpd one text field (deduped)', count( $mapped['options']['fields'] ), 1 );
+check( 'fpd text field id slug', $mapped['options']['fields'][0]['id'], 'your_name' );
+check( 'fpd text field type', $mapped['options']['fields'][0]['type'], 'text' );
+check( 'fpd notes present', count( $mapped['notes'] ) >= 1, true );
+check( 'fpd bare list of views', count( SC_FPD_Import::map( array( array( 'title' => 'Only', 'elements' => array() ) ) )['customizer']['views'] ), 1 );
+check( 'fpd empty input', SC_FPD_Import::map( 'nope' )['customizer']['enabled'], 0 );
 
 /* ---- StoreCanvas conditional logic (pure; AND/OR + operators) ---- */
 $opts = array( 'size' => 'L', 'color' => 'red', 'qty' => '5', 'name' => 'Bob', 'tags' => array( 'a', 'b' ) );

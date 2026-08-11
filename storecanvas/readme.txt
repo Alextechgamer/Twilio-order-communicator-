@@ -3,7 +3,7 @@ Contributors: alextechgamer
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.4.0
+Stable tag: 1.5.0
 License: GPLv2 or later
 
 Self-hosted WooCommerce personalization: product options, live mockup, print-ready, library, guest save.
@@ -15,6 +15,11 @@ Product options parity with common add-ons plugins plus live mockup and print co
 Independent of Twilio Order Communicator and Orderbay.
 
 == Changelog ==
+
+= 1.5.0 =
+* New: one-click Fancy Product Designer (FPD) importer — paste an exported FPD product JSON on the product screen to import its views, print areas (converted to stage-relative percentages) and text fields into StoreCanvas
+* View images are re-uploaded to the media library; unmapped image/clip-art elements and missing print boxes are reported so you can finish the setup
+* Note: FPD's export schema varies by version — review the imported result before selling. The mapping core is unit-tested; image sideload runs on import
 
 = 1.4.0 =
 * New: multi-rule conditional logic on option fields — AND/OR with operators (is, is_not, contains, not_contains, gt, gte, lt, lte, empty, not_empty, in), extending the previous single show_if equality

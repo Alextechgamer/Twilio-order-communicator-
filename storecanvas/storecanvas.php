@@ -3,7 +3,7 @@
  * Plugin Name:       StoreCanvas
  * Plugin URI:        https://github.com/Alextechgamer/Twilio-order-communicator-
  * Description:       Self-hosted WooCommerce personalization: product options, live mockup placement, print-ready exports, clip-art library, and guest design save.
- * Version:           1.4.0
+ * Version:           1.5.0
  * Author:            Alextechgamer
  * Author URI:        https://github.com/Alextechgamer
  * Requires at least: 6.0
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SC_VERSION', '1.4.0' );
+define( 'SC_VERSION', '1.5.0' );
 define( 'SC_PLUGIN_FILE', __FILE__ );
 define( 'SC_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -33,6 +33,7 @@ require_once SC_PLUGIN_DIR . 'includes/class-sc-print-ready.php';
 require_once SC_PLUGIN_DIR . 'includes/class-sc-export.php';
 require_once SC_PLUGIN_DIR . 'includes/class-sc-cart-order.php';
 require_once SC_PLUGIN_DIR . 'includes/class-sc-admin-product.php';
+require_once SC_PLUGIN_DIR . 'includes/class-sc-fpd-import.php';
 require_once SC_PLUGIN_DIR . 'includes/class-sc-journey.php';
 require_once SC_PLUGIN_DIR . 'includes/class-sc-designs.php';
 require_once SC_PLUGIN_DIR . 'includes/class-sc-print-sheet.php';
@@ -67,12 +68,30 @@ function sc_init() {
 	SC_Blocks::instance();
 	if ( is_admin() ) {
 		SC_Admin_Product::instance();
+		SC_FPD_Import::instance();
 		SC_Orders_List::instance();
 		SC_Queue::instance();
 		add_action( 'admin_notices', 'sc_gd_missing_notice' );
+		add_action( 'admin_notices', 'sc_fpd_import_notice' );
 	}
 }
 add_action( 'plugins_loaded', 'sc_init' );
+
+/**
+ * Show the result notice after an FPD import redirect.
+ */
+function sc_fpd_import_notice() {
+	if ( empty( $_GET['sc_fpd_notice'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		return;
+	}
+	if ( ! current_user_can( 'edit_products' ) ) {
+		return;
+	}
+	$type  = ( isset( $_GET['sc_fpd_type'] ) && 'error' === $_GET['sc_fpd_type'] ) ? 'error' : 'success'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$class = 'error' === $type ? 'notice-error' : 'notice-success';
+	$msg   = sanitize_text_field( wp_unslash( $_GET['sc_fpd_notice'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	echo '<div class="notice ' . esc_attr( $class ) . ' is-dismissible"><p>' . esc_html( $msg ) . '</p></div>';
+}
 
 add_action( 'before_woocommerce_init', function () {
 	if ( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) ) {
