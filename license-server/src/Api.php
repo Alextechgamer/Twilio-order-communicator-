@@ -277,7 +277,11 @@ class TOC_License_API {
 	private function download_secret() {
 		$secret = (string) ( $this->config['download_secret'] ?? '' );
 		if ( $secret === '' ) {
-			$secret = (string) ( $this->config['admin_token'] ?? 'toc-download' );
+			$secret = (string) ( $this->config['admin_token'] ?? '' );
+		}
+		// Fail closed: never sign or verify with an empty or placeholder secret.
+		if ( $secret === '' || $secret === 'change-me-to-a-long-random-string' ) {
+			throw new RuntimeException( 'Download secret is not configured. Set download_secret (or a non-default admin_token) in config.php.' );
 		}
 		return $secret;
 	}

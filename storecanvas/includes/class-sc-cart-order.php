@@ -264,10 +264,16 @@ class SC_Cart_Order {
 		}
 
 		if ( ! empty( $_POST['sc_layers_json'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
-			$raw     = wp_unslash( $_POST['sc_layers_json'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-			$decoded = json_decode( $raw, true );
-			if ( is_array( $decoded ) ) {
-				$cart_item_data[ SC_Plugin::CART_LAYERS ] = $decoded;
+			$raw       = wp_unslash( $_POST['sc_layers_json'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+			$max_bytes = (int) apply_filters( 'sc_max_layers_json_bytes', 512 * 1024 );
+			if ( is_string( $raw ) && strlen( $raw ) <= $max_bytes ) {
+				$decoded = json_decode( $raw, true );
+				if ( is_array( $decoded ) ) {
+					$layers = $this->sanitize_layers( $decoded );
+					if ( $layers ) {
+						$cart_item_data[ SC_Plugin::CART_LAYERS ] = $layers;
+					}
+				}
 			}
 		}
 
@@ -281,6 +287,10 @@ class SC_Cart_Order {
 			$check = SC_Print_Ready::instance()->validate_source( $_FILES['sc_artwork']['tmp_name'], $rules, $area ); // phpcs:ignore
 			if ( ! $check['ok'] ) {
 				$cart_item_data['sc_validation_errors'] = $check['errors'];
+			} elseif ( ! $this->upload_rate_ok() ) {
+				$cart_item_data['sc_validation_errors'] = array(
+					__( 'Too many artwork uploads from your connection. Please wait a few minutes and try again.', 'storecanvas' ),
+				);
 			} else {
 				$att = SC_Print_Ready::instance()->sideload_upload( $_FILES['sc_artwork'] ); // phpcs:ignore
 				if ( ! is_wp_error( $att ) ) {
@@ -582,5 +592,154 @@ class SC_Cart_Order {
 			echo '<p style="margin:4px 0 0;">' . esc_html__( 'Options extra:', 'storecanvas' ) . ' ' . wp_kses_post( wc_price( (float) $extra ) ) . '</p>';
 		}
 		echo '</div>';
+	}
+
+	/**
+	 * Bound and whitelist customer-supplied design-layer JSON before it is stored to
+	 * cart/order meta. Untrusted input previously reached order meta and the GD
+	 * compositor verbatim, letting a guest reference arbitrary attachment IDs and post
+	 * unbounded structures. Here we cap the layer count, coerce IDs/placements, gate
+	 * attachment references (see layer_attachment_allowed), and keep only bounded scalars.
+	 *
+	 * @param array $layers Decoded layer list.
+	 * @return array
+	 */
+	private function sanitize_layers( $layers ) {
+		if ( ! is_array( $layers ) ) {
+			return array();
+		}
+		$max = max( 1, (int) apply_filters( 'sc_max_layers', 100 ) );
+		$out = array();
+		foreach ( $layers as $layer ) {
+			if ( ! is_array( $layer ) ) {
+				continue;
+			}
+			$out[] = $this->sanitize_layer( $layer );
+			if ( count( $out ) >= $max ) {
+				break;
+			}
+		}
+		return $out;
+	}
+
+	/**
+	 * @param array $layer One raw layer.
+	 * @return array Sanitized layer.
+	 */
+	private function sanitize_layer( $layer ) {
+		$out  = array();
+		$type = isset( $layer['type'] ) ? sanitize_key( (string) $layer['type'] ) : 'image';
+		$out['type'] = $type;
+
+		// Image reference — the security-sensitive fields.
+		if ( ! empty( $layer['attachment_id'] ) ) {
+			$aid = (int) $layer['attachment_id'];
+			if ( $aid > 0 && self::layer_attachment_allowed( $aid ) ) {
+				$out['attachment_id'] = $aid;
+			}
+		}
+		if ( ! empty( $layer['clipart_id'] ) ) {
+			$out['clipart_id'] = max( 0, (int) $layer['clipart_id'] );
+		}
+
+		// Placement maps: view_id => {x,y,scale,rotation}. Clamp scale like the compositor.
+		foreach ( array( 'placements', 'placementByView' ) as $pk ) {
+			if ( empty( $layer[ $pk ] ) || ! is_array( $layer[ $pk ] ) ) {
+				continue;
+			}
+			$clean = array();
+			$views = 0;
+			foreach ( $layer[ $pk ] as $view => $pl ) {
+				if ( $views++ >= 30 || ! is_array( $pl ) ) {
+					continue;
+				}
+				$clean[ sanitize_key( (string) $view ) ] = array(
+					'x'        => isset( $pl['x'] ) ? (float) $pl['x'] : 50,
+					'y'        => isset( $pl['y'] ) ? (float) $pl['y'] : 50,
+					'scale'    => isset( $pl['scale'] ) ? max( 0.1, min( 3.0, (float) $pl['scale'] ) ) : 1.0,
+					'rotation' => isset( $pl['rotation'] ) ? (float) $pl['rotation'] : 0.0,
+				);
+			}
+			if ( $clean ) {
+				$out[ $pk ] = $clean;
+			}
+		}
+
+		// Preserve remaining scalar props (e.g. text-layer fields) as bounded strings;
+		// drop nested/unknown structures to keep stored meta well-shaped.
+		$reserved = array( 'type', 'attachment_id', 'clipart_id', 'placements', 'placementByView' );
+		$kept     = 0;
+		foreach ( $layer as $k => $v ) {
+			if ( in_array( $k, $reserved, true ) || ! is_scalar( $v ) || $kept >= 40 ) {
+				continue;
+			}
+			$key = sanitize_key( (string) $k );
+			if ( '' === $key ) {
+				continue;
+			}
+			$out[ $key ] = substr( wp_strip_all_tags( (string) $v ), 0, 2000 );
+			$kept++;
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Whether a design layer may reference a given attachment ID.
+	 *
+	 * Closes the arbitrary-attachment-inclusion IDOR: guest-supplied layer JSON could
+	 * name any attachment on the site and have it composited into a print file. We allow
+	 * only image attachments that are StoreCanvas-originated uploads, owned by the current
+	 * logged-in user, or (for admin regeneration) referenced by a shop manager. Stores can
+	 * widen/narrow this with the `sc_layer_attachment_allowed` filter.
+	 *
+	 * @param int $id Attachment ID.
+	 * @return bool
+	 */
+	public static function layer_attachment_allowed( $id ) {
+		$id      = (int) $id;
+		$allowed = false;
+		if ( $id > 0 && 'attachment' === get_post_type( $id ) && wp_attachment_is_image( $id ) ) {
+			if ( get_post_meta( $id, '_sc_uploaded', true ) ) {
+				$allowed = true;
+			} elseif ( is_user_logged_in() ) {
+				$post = get_post( $id );
+				if ( $post && (int) $post->post_author === get_current_user_id() && get_current_user_id() > 0 ) {
+					$allowed = true;
+				}
+			}
+			if ( ! $allowed && current_user_can( 'edit_shop_orders' ) ) {
+				$allowed = true;
+			}
+		}
+		/**
+		 * Filter whether a design layer may reference this attachment.
+		 *
+		 * @param bool $allowed Current decision.
+		 * @param int  $id      Attachment ID.
+		 */
+		return (bool) apply_filters( 'sc_layer_attachment_allowed', $allowed, $id );
+	}
+
+	/**
+	 * Simple per-IP throttle for the unauthenticated add-to-cart artwork upload, so a
+	 * visitor cannot flood the media library with orphaned uploads. Filter the cap with
+	 * `sc_max_uploads_per_hour` (0 disables the throttle).
+	 *
+	 * @return bool True if another upload is allowed right now.
+	 */
+	private function upload_rate_ok() {
+		$max = (int) apply_filters( 'sc_max_uploads_per_hour', 30 );
+		if ( $max <= 0 ) {
+			return true;
+		}
+		$ip    = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+		$key   = 'sc_up_' . md5( $ip );
+		$count = (int) get_transient( $key );
+		if ( $count >= $max ) {
+			return false;
+		}
+		set_transient( $key, $count + 1, HOUR_IN_SECONDS );
+		return true;
 	}
 }

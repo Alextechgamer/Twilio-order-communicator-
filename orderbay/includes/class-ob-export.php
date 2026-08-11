@@ -154,21 +154,42 @@ class OB_Export {
 			}
 			fputcsv(
 				$out,
-				array(
-					$order->get_id(),
-					$order->get_order_number(),
-					$order->get_date_created() ? $order->get_date_created()->date( 'c' ) : '',
-					$order->get_status(),
-					$order->get_total(),
-					$order->get_formatted_billing_full_name(),
-					$order->get_billing_email(),
-					$order->get_billing_phone(),
-					$order->get_meta( OB_Plugin::META_ATTENTION ) ? '1' : '0',
-					(string) $tags,
+				array_map(
+					array( $this, 'csv_cell' ),
+					array(
+						$order->get_id(),
+						$order->get_order_number(),
+						$order->get_date_created() ? $order->get_date_created()->date( 'c' ) : '',
+						$order->get_status(),
+						$order->get_total(),
+						$order->get_formatted_billing_full_name(),
+						$order->get_billing_email(),
+						$order->get_billing_phone(),
+						$order->get_meta( OB_Plugin::META_ATTENTION ) ? '1' : '0',
+						(string) $tags,
+					)
 				)
 			);
 		}
 		fclose( $out );
 		exit;
+	}
+
+	/**
+	 * Neutralize CSV formula injection.
+	 *
+	 * Order fields such as billing name/email/phone/tags are attacker-controllable.
+	 * A value beginning with =, +, -, @, tab or CR can be executed as a formula when
+	 * the export is opened in a spreadsheet app, so prefix those with a single quote.
+	 *
+	 * @param mixed $value Cell value.
+	 * @return string
+	 */
+	private function csv_cell( $value ) {
+		$value = (string) $value;
+		if ( '' !== $value && in_array( $value[0], array( '=', '+', '-', '@', "\t", "\r" ), true ) ) {
+			$value = "'" . $value;
+		}
+		return $value;
 	}
 }

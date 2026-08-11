@@ -23,6 +23,8 @@ return array(
 	'download_ttl'    => 3600,
 
 	// HMAC secret for signed download tokens (defaults to admin_token if empty).
+	// Required: signed downloads fail closed unless this OR admin_token is set to a
+	// real random value (the placeholder above does not count).
 	'download_secret' => '',
 
 	// CORS (usually leave empty; plugins call server-to-server).

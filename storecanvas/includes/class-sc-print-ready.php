@@ -309,6 +309,9 @@ class SC_Print_Ready {
 		}
 		$meta = wp_generate_attachment_metadata( $att_id, $move['file'] );
 		wp_update_attachment_metadata( $att_id, $meta );
+		// Mark as StoreCanvas-originated so design layers may reference it (see
+		// SC_Cart_Order::layer_attachment_allowed) without opening the whole media library.
+		update_post_meta( $att_id, '_sc_uploaded', 1 );
 		return (int) $att_id;
 	}
 
@@ -667,7 +670,12 @@ class SC_Print_Ready {
 			}
 			$art_id = 0;
 			if ( ! empty( $layer['attachment_id'] ) ) {
-				$art_id = (int) $layer['attachment_id'];
+				$candidate = (int) $layer['attachment_id'];
+				// Defense in depth: only composite attachments this design is entitled to
+				// reference (guards regeneration of any pre-hardening / tampered order meta).
+				if ( ! class_exists( 'SC_Cart_Order' ) || SC_Cart_Order::layer_attachment_allowed( $candidate ) ) {
+					$art_id = $candidate;
+				}
 			} elseif ( ! empty( $layer['clipart_id'] ) && class_exists( 'SC_Clipart' ) ) {
 				$cid = (int) $layer['clipart_id'];
 				$art_id = (int) get_post_meta( $cid, '_sc_clipart_attachment', true );

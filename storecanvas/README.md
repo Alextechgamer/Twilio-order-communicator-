@@ -1,4 +1,4 @@
-# StoreCanvas 1.2.0 1.1.0
+# StoreCanvas 1.2.0
 
 Self-hosted WooCommerce **product personalization**: options with pricing, live mockup placement, print-ready composites, clip-art library, guest design save, live price updates, production queue, and admin print tools.
 
