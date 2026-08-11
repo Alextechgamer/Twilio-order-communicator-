@@ -2,7 +2,15 @@
 
 WordPress / WooCommerce plugin for SMS and voice calls via **your own Twilio account**. Order communication is driven by custom statuses (**Ready for Pickup** and **Shipped**), with consent-aware SMS, quiet hours, bulk reminders, and order chat history.
 
-**Current version: 1.13.0**
+**Current version: 1.14.0** (plugin header / `TOC_VERSION`)
+
+This monorepo also contains independent plugins:
+
+| Plugin | Path | Current |
+|--------|------|---------|
+| Twilio Order Communicator | `twilio-order-communicator/` | 1.14.0 |
+| StoreCanvas | `storecanvas/` | 1.2.0 |
+| Orderbay | `orderbay/` | 1.1.0 |
 
 ## Install
 
@@ -24,11 +32,17 @@ Seller docs: [`RELEASE.md`](./RELEASE.md) (build + deploy + keys) · [`license-s
 
 ## Download
 
-- [`twilio-order-communicator-1.12.0.zip`](./twilio-order-communicator-1.12.0.zip) — **current packaged** (role permissions UI; includes 1.9–1.11 features)
-- [`twilio-order-communicator-1.9.0.zip`](./twilio-order-communicator-1.9.0.zip) — scheduled reminders
-- [`twilio-order-communicator-1.8.2.zip`](./twilio-order-communicator-1.8.2.zip) — G5–G8 audit fixes
-- [`twilio-order-communicator-1.8.1.zip`](./twilio-order-communicator-1.8.1.zip) — G1–G4 audit fixes
-- [`twilio-order-communicator-1.8.0.zip`](./twilio-order-communicator-1.8.0.zip) — licensing release
+Release **zips are not stored in git** (see `.gitignore`). Build with the steps in [`RELEASE.md`](./RELEASE.md), or download assets from [GitHub Releases](https://github.com/Alextechgamer/Twilio-order-communicator-/releases) when published.
+
+Latest source is always on `main` under `twilio-order-communicator/`.
+
+## What's in 1.14.0
+
+| Feature | Notes |
+|---------|--------|
+| Consent Yes | Block checkout does not overwrite explicit Yes with No when field missing |
+| Bulk Ready | Filters by `date_modified`; All time (`days=0`) |
+| Status emails | Prefer WooCommerce mailer `wrap_message` when available |
 
 ## What's in 1.13.0
 
@@ -107,6 +121,10 @@ twilio-order-communicator/
   includes/class-toc-license.php
   includes/class-toc-updater.php
   includes/trait-toc-admin-license.php
+  …
+storecanvas/
+  …
+orderbay/
   …
 license-server/
   public/index.php
