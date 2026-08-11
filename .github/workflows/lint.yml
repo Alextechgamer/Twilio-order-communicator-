@@ -28,6 +28,8 @@ jobs:
           set -e
           find . \( -path ./vendor -o -path ./node_modules \) -prune -o -name '*.php' -print0 \
             | xargs -0 -n1 -P4 php -l
+      - name: Unit tests (no dependencies)
+        run: php tests/run.php
 
   # Advisory: WordPress Coding Standards + PHPCompatibility. Not a hard gate yet
   # (see tasks.md G8) — reports issues without failing the build.
