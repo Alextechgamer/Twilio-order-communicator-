@@ -9,7 +9,7 @@ This monorepo also contains independent plugins:
 | Plugin | Path | Current |
 |--------|------|---------|
 | Twilio Order Communicator | `twilio-order-communicator/` | 1.14.1 |
-| StoreCanvas | `storecanvas/` | 1.2.1 |
+| StoreCanvas | `storecanvas/` | 1.3.0 |
 | Orderbay | `orderbay/` | 1.2.0 |
 
 ## Install

@@ -14,6 +14,8 @@ require $root . '/twilio-order-communicator/includes/class-toc-twilio.php';
 require $root . '/twilio-order-communicator/includes/class-toc-logger.php';
 require $root . '/license-server/src/Helpers.php';
 require $root . '/orderbay/includes/class-ob-einvoice.php';
+require $root . '/storecanvas/includes/class-sc-print-ready.php';
+require $root . '/storecanvas/includes/class-sc-export.php';
 
 $pass  = 0;
 $fail  = 0;
@@ -132,6 +134,36 @@ if ( extension_loaded( 'dom' ) ) {
 } else {
 	echo "SKIP: ext-dom not loaded — e-invoice XML tests skipped\n";
 }
+
+/* ---- StoreCanvas print output: pHYs DPI + SVG + minimal PDF (pure) ---- */
+$png_1x1 = base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M8AAAMBAQDJ/pLvAAAAAElFTkSuQmCC' );
+$dpi_png = SC_Print_Ready::png_with_dpi( $png_1x1, 300 );
+check( 'phys inserted', strpos( $dpi_png, 'pHYs' ) !== false, true );
+check( 'png signature intact', strncmp( $dpi_png, "\x89PNG\r\n\x1a\n", 8 ) === 0, true );
+check( 'png iend present', strpos( $dpi_png, 'IEND' ) !== false, true );
+$ppu = 0;
+$pp  = strpos( $dpi_png, 'pHYs' );
+if ( false !== $pp ) {
+	$u   = unpack( 'Nx/Ny/Cunit', substr( $dpi_png, $pp + 4, 9 ) );
+	$ppu = $u['x'];
+}
+check( 'phys decodes to 300 dpi', (int) round( $ppu * 0.0254 ), 300 );
+check( 'png_with_dpi rejects non-png', SC_Print_Ready::png_with_dpi( 'not a png', 300 ), '' );
+
+if ( extension_loaded( 'dom' ) ) {
+	$svg = SC_Export::svg_wrap( $png_1x1, 'image/png', 900, 600, 300, array( 'bleed_mm' => 3.0 ) );
+	check( 'svg well-formed', false !== @simplexml_load_string( $svg ), true );
+	check( 'svg embeds image', strpos( $svg, '<image' ) !== false, true );
+	check( 'svg physical width', strpos( $svg, 'width="76.2mm"' ) !== false, true );
+	check( 'svg has bleed rect', strpos( $svg, '<rect' ) !== false, true );
+}
+
+$pdf = SC_Export::pdf_single_image_jpeg( 'JPEGBYTES', 900, 600, 300 );
+check( 'pdf header', strncmp( $pdf, '%PDF-', 5 ) === 0, true );
+check( 'pdf xref', strpos( $pdf, "\nxref\n" ) !== false, true );
+check( 'pdf trailer', strpos( $pdf, 'trailer' ) !== false, true );
+check( 'pdf xobject image', strpos( $pdf, '/XObject' ) !== false, true );
+check( 'pdf eof', substr( trim( $pdf ), -5 ) === '%%EOF', true );
 
 echo "PASS: {$pass}  FAIL: {$fail}\n";
 foreach ( $fails as $f ) {
