@@ -417,7 +417,7 @@ class OB_Invoicing {
 		}
 		$settings = OB_Plugin::get_doc_settings();
 		$orders   = array( $order );
-		include OB_PLUGIN_DIR . 'templates/credit-note.php';
+		include OB_Documents::locate_template( 'credit-note.php' );
 		exit;
 	}
 
@@ -527,7 +527,7 @@ class OB_Invoicing {
 		self::ensure_invoice_number( $order );
 		$settings = OB_Plugin::get_doc_settings();
 		$orders   = array( $order );
-		include OB_PLUGIN_DIR . 'templates/invoice.php';
+		include OB_Documents::locate_template( 'invoice.php' );
 		exit;
 	}
 }

@@ -604,7 +604,7 @@ class OB_Fulfillment {
 			);
 		}
 		$settings = OB_Plugin::get_doc_settings();
-		include OB_PLUGIN_DIR . 'templates/pick-list.php';
+		include OB_Documents::locate_template( 'pick-list.php' );
 		exit;
 	}
 
@@ -688,7 +688,7 @@ class OB_Fulfillment {
 		$settings       = OB_Plugin::get_doc_settings();
 		$orders         = array( $order );
 		$ob_customer_view = true; // Template flag: hide staff-only bits if checked.
-		include OB_PLUGIN_DIR . 'templates/packing-slip.php';
+		include OB_Documents::locate_template( 'packing-slip.php' );
 		exit;
 	}
 

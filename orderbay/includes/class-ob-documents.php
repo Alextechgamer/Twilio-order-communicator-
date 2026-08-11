@@ -186,7 +186,10 @@ class OB_Documents {
 		echo '</table>';
 
 		submit_button( __( 'Save document settings', 'orderbay' ) );
-		echo '</form></div>';
+		echo '</form>';
+		echo '<h2>' . esc_html__( 'Template customization', 'orderbay' ) . '</h2>';
+		echo '<p class="description">' . esc_html__( 'Override any document template without editing the plugin: copy a file from the plugin\'s templates/ folder into your theme at wp-content/themes/your-theme/orderbay/ (e.g. orderbay/invoice.php). Your copy survives plugin updates. The ob_before_document / ob_after_document actions and the ob_locate_template filter are also available.', 'orderbay' ) . '</p>';
+		echo '</div>';
 	}
 
 	/**
@@ -251,6 +254,64 @@ class OB_Documents {
 			);
 		}
 		return $rows;
+	}
+
+	/**
+	 * Ordered theme→plugin candidate paths for a document template (pure).
+	 * A store can override any template by copying it into `wp-content/themes/<theme>/orderbay/`.
+	 *
+	 * @param string $name           Template filename (e.g. 'invoice.php').
+	 * @param string $stylesheet_dir Active (child) theme directory.
+	 * @param string $template_dir   Parent theme directory.
+	 * @param string $plugin_dir     Plugin templates directory.
+	 * @return string[]
+	 */
+	public static function template_candidates( $name, $stylesheet_dir, $template_dir, $plugin_dir ) {
+		$name   = basename( (string) $name );
+		$subdir = 'orderbay/';
+		$out    = array();
+		if ( $stylesheet_dir ) {
+			$out[] = rtrim( $stylesheet_dir, '/' ) . '/' . $subdir . $name;
+		}
+		if ( $template_dir && rtrim( $template_dir, '/' ) !== rtrim( (string) $stylesheet_dir, '/' ) ) {
+			$out[] = rtrim( $template_dir, '/' ) . '/' . $subdir . $name;
+		}
+		$out[] = rtrim( $plugin_dir, '/' ) . '/' . $name;
+		return $out;
+	}
+
+	/**
+	 * Resolve a document template path, preferring a theme override, then the plugin default.
+	 * The final path is filterable via `ob_locate_template`.
+	 *
+	 * @param string $name Template filename (basename only; traversal is stripped).
+	 * @return string Absolute path.
+	 */
+	public static function locate_template( $name ) {
+		$name       = basename( (string) $name );
+		$candidates = self::template_candidates(
+			$name,
+			function_exists( 'get_stylesheet_directory' ) ? get_stylesheet_directory() : '',
+			function_exists( 'get_template_directory' ) ? get_template_directory() : '',
+			rtrim( OB_PLUGIN_DIR, '/' ) . '/templates'
+		);
+		$found = '';
+		foreach ( $candidates as $path ) {
+			if ( is_readable( $path ) ) {
+				$found = $path;
+				break;
+			}
+		}
+		if ( '' === $found ) {
+			$found = rtrim( OB_PLUGIN_DIR, '/' ) . '/templates/' . $name;
+		}
+		/**
+		 * Filter the resolved OrderBay document template path.
+		 *
+		 * @param string $found Absolute path.
+		 * @param string $name  Template filename.
+		 */
+		return apply_filters( 'ob_locate_template', $found, $name );
 	}
 
 	public function order_actions( $actions ) {
@@ -412,7 +473,15 @@ class OB_Documents {
 		$settings = OB_Plugin::get_doc_settings();
 		$this->prepare_order_for_type( $order, $type );
 		$orders = array( $order );
-		include OB_PLUGIN_DIR . 'templates/' . $this->template_for( $type );
+		/**
+		 * Fires before an OrderBay document renders (extension point for headers/logos).
+		 *
+		 * @param string     $type   Document type.
+		 * @param WC_Order[] $orders Orders being rendered.
+		 */
+		do_action( 'ob_before_document', $type, $orders );
+		include self::locate_template( $this->template_for( $type ) );
+		do_action( 'ob_after_document', $type, $orders );
 		exit;
 	}
 
@@ -519,7 +588,9 @@ class OB_Documents {
 			wp_die( esc_html__( 'No orders selected.', 'orderbay' ) );
 		}
 		$settings = OB_Plugin::get_doc_settings();
-		include OB_PLUGIN_DIR . 'templates/' . $this->template_for( $type );
+		do_action( 'ob_before_document', $type, $orders );
+		include self::locate_template( $this->template_for( $type ) );
+		do_action( 'ob_after_document', $type, $orders );
 		exit;
 	}
 
@@ -541,7 +612,7 @@ class OB_Documents {
 		$settings = OB_Plugin::get_doc_settings();
 		$orders   = array( $order );
 		ob_start();
-		include OB_PLUGIN_DIR . 'templates/' . $self->template_for( $type );
+		include self::locate_template( $self->template_for( $type ) );
 		$html = (string) ob_get_clean();
 		$html = preg_replace( '/<p class="no-print">.*?<\/p>/s', '', $html );
 
@@ -587,7 +658,7 @@ class OB_Documents {
 		$settings = $s;
 		$orders   = array( $order );
 		ob_start();
-		include OB_PLUGIN_DIR . 'templates/' . $this->template_for( $type );
+		include self::locate_template( $this->template_for( $type ) );
 		$html = ob_get_clean();
 		// Strip no-print scripts for PDF engines.
 		$html = preg_replace( '/<p class="no-print">.*?<\/p>/s', '', $html );

@@ -246,6 +246,22 @@ check( 'price per_char', SC_Cart_Order::price_for( 'per_char', 0.5, 0.0, 'abcd' 
 check( 'price negative flat (discount)', SC_Cart_Order::price_for( 'flat', -4.0, 20.0, '1' ), -4.0 );
 check( 'price unknown type zero', SC_Cart_Order::price_for( 'bogus', 5.0, 20.0, '1' ), 0.0 );
 
+/* ---- OrderBay template override candidates (pure; theme → plugin lookup) ---- */
+check( 'tpl child theme first', OB_Documents::template_candidates( 'invoice.php', '/th/child', '/th/parent', '/plug/templates' ), array(
+	'/th/child/orderbay/invoice.php',
+	'/th/parent/orderbay/invoice.php',
+	'/plug/templates/invoice.php',
+) );
+check( 'tpl same child/parent dedupes', OB_Documents::template_candidates( 'invoice.php', '/th/x', '/th/x', '/plug/templates' ), array(
+	'/th/x/orderbay/invoice.php',
+	'/plug/templates/invoice.php',
+) );
+check( 'tpl no theme falls to plugin', OB_Documents::template_candidates( 'rma-slip.php', '', '', '/plug/templates' ), array( '/plug/templates/rma-slip.php' ) );
+check( 'tpl strips traversal', OB_Documents::template_candidates( '../../evil.php', '/th/child', '', '/plug/templates' ), array(
+	'/th/child/orderbay/evil.php',
+	'/plug/templates/evil.php',
+) );
+
 /* ---- OrderBay per-rate tax rows (pure; pins the tax-breakdown feature) ---- */
 $tax_obj = array(
 	(object) array( 'label' => 'VAT (20%)', 'amount' => 4.0 ),

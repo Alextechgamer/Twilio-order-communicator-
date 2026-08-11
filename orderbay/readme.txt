@@ -3,12 +3,17 @@ Contributors: alextechgamer
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.5.0
+Stable tag: 1.6.0
 License: GPLv2 or later
 
 Self-hosted WooCommerce ops toolkit: documents, fulfillment, RMA, digests, search.
 
 == Changelog ==
+
+= 1.6.0 =
+* New: theme template overrides — copy any document template into wp-content/themes/your-theme/orderbay/ (e.g. orderbay/invoice.php) to customize it without editing the plugin; your copy survives updates
+* New: ob_before_document / ob_after_document action hooks and an ob_locate_template filter for programmatic customization
+* All nine document render paths (invoice, proforma, credit note, packing slip, delivery note, shipping label, RMA slip, pick list) now resolve through the override lookup
 
 = 1.5.0 =
 * New: per-tax-rate breakdown on invoices and proformas (e.g. "VAT (20%)", "VAT (5%)") from the order's tax totals, instead of a single combined Tax line — required for EU VAT-compliant invoices with mixed rates
