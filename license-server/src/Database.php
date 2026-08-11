@@ -61,6 +61,56 @@ class TOC_License_DB {
 				UNIQUE(slug, version)
 			)'
 		);
+		$this->pdo->exec(
+			'CREATE TABLE IF NOT EXISTS rate_limits (
+				bucket TEXT PRIMARY KEY,
+				count INTEGER NOT NULL DEFAULT 0,
+				window_start INTEGER NOT NULL
+			)'
+		);
+	}
+
+	/**
+	 * Fixed-window rate limiter. Returns true if the call is allowed, false once the
+	 * bucket has reached $max hits inside the current $window seconds. Portable across
+	 * SQLite versions (no UPSERT); a rare first-insert race is caught and treated as
+	 * allowed, which is acceptable for abuse throttling.
+	 *
+	 * @param string $bucket Identifier (e.g. "activate|1.2.3.4").
+	 * @param int    $max    Max hits per window.
+	 * @param int    $window Window length in seconds.
+	 * @return bool
+	 */
+	public function rate_hit( $bucket, $max, $window ) {
+		$now  = time();
+		$stmt = $this->pdo->prepare( 'SELECT count, window_start FROM rate_limits WHERE bucket = ?' );
+		$stmt->execute( array( $bucket ) );
+		$row = $stmt->fetch();
+
+		if ( ! $row ) {
+			try {
+				$ins = $this->pdo->prepare( 'INSERT INTO rate_limits (bucket, count, window_start) VALUES (?, 1, ?)' );
+				$ins->execute( array( $bucket, $now ) );
+			} catch ( PDOException $e ) {
+				// Concurrent insert created the row first — count it as allowed.
+				return true;
+			}
+			return true;
+		}
+
+		if ( ( $now - (int) $row['window_start'] ) >= (int) $window ) {
+			$upd = $this->pdo->prepare( 'UPDATE rate_limits SET count = 1, window_start = ? WHERE bucket = ?' );
+			$upd->execute( array( $now, $bucket ) );
+			return true;
+		}
+
+		if ( (int) $row['count'] >= (int) $max ) {
+			return false;
+		}
+
+		$upd = $this->pdo->prepare( 'UPDATE rate_limits SET count = count + 1 WHERE bucket = ?' );
+		$upd->execute( array( $bucket ) );
+		return true;
 	}
 
 	public function get_license( $key ) {

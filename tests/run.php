@@ -72,6 +72,20 @@ check( 'license verify tampered version', TOC_License_Helpers::verify_download( 
 check( 'license verify wrong secret', TOC_License_Helpers::verify_download( 'other', 'toc', '1.2.3', $future, $sig ), false );
 check( 'license verify expired', TOC_License_Helpers::verify_download( $secret, 'toc', '1.2.3', time() - 10, $sig ), false );
 
+/* ---- license-server rate limiter (in-memory SQLite; skipped if pdo_sqlite absent) ---- */
+if ( extension_loaded( 'pdo_sqlite' ) ) {
+	require $root . '/license-server/src/Database.php';
+	$db = new TOC_License_DB( ':memory:' );
+	// Allow 3 per window, 4th is blocked; a different bucket is independent.
+	check( 'rate 1st allowed', $db->rate_hit( 'activate|1.1.1.1', 3, 3600 ), true );
+	check( 'rate 2nd allowed', $db->rate_hit( 'activate|1.1.1.1', 3, 3600 ), true );
+	check( 'rate 3rd allowed', $db->rate_hit( 'activate|1.1.1.1', 3, 3600 ), true );
+	check( 'rate 4th blocked', $db->rate_hit( 'activate|1.1.1.1', 3, 3600 ), false );
+	check( 'rate other bucket ok', $db->rate_hit( 'activate|2.2.2.2', 3, 3600 ), true );
+} else {
+	echo "SKIP: pdo_sqlite not loaded — license-server rate-limit test skipped\n";
+}
+
 echo "PASS: {$pass}  FAIL: {$fail}\n";
 foreach ( $fails as $f ) {
 	echo "  FAIL {$f}\n";
