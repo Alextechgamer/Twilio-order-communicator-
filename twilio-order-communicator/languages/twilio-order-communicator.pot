@@ -6,7 +6,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-11 23:19+0000\n"
+"POT-Creation-Date: 2026-08-11 23:27+0000\n"
 "X-Domain: twilio-order-communicator\n"
 
 #: includes/trait-toc-admin-bulk.php:53
@@ -386,7 +386,7 @@ msgstr ""
 msgid "Credentials"
 msgstr ""
 
-#: includes/class-toc-twilio.php:407
+#: includes/class-toc-twilio.php:477
 msgid "Credentials missing. Save Account SID, Auth Token and From Number first."
 msgstr ""
 
@@ -399,7 +399,7 @@ msgstr ""
 msgid "Customer Communications"
 msgstr ""
 
-#: includes/class-toc-twilio.php:471
+#: includes/class-toc-twilio.php:541
 msgid "Customer has not consented to SMS."
 msgstr ""
 
@@ -714,7 +714,7 @@ msgstr ""
 msgid "Invalid"
 msgstr ""
 
-#: includes/class-toc-twilio.php:462 includes/class-toc-twilio.php:531
+#: includes/class-toc-twilio.php:532 includes/class-toc-twilio.php:601
 msgid "Invalid phone number (must be E.164, e.g. +15055551234)."
 msgstr ""
 
@@ -1064,7 +1064,7 @@ msgstr ""
 msgid "Phone"
 msgstr ""
 
-#: includes/class-toc-twilio.php:466
+#: includes/class-toc-twilio.php:536
 msgid "Phone number has opted out (STOP)."
 msgstr ""
 
@@ -1597,8 +1597,8 @@ msgstr ""
 msgid "Twilio Order Communicator license status: %s. Messaging still works; premium plugin updates are paused until the license is active."
 msgstr ""
 
-#: includes/class-toc-twilio.php:192 includes/class-toc-twilio.php:457
-#: includes/class-toc-twilio.php:526
+#: includes/class-toc-twilio.php:192 includes/class-toc-twilio.php:527
+#: includes/class-toc-twilio.php:596
 msgid "Twilio credentials not configured."
 msgstr ""
 
@@ -1610,11 +1610,11 @@ msgstr ""
 msgid "Twilio not configured"
 msgstr ""
 
-#: includes/class-toc-twilio.php:417
+#: includes/class-toc-twilio.php:487
 msgid "Twilio rejected credentials: %s"
 msgstr ""
 
-#: includes/class-toc-twilio.php:423
+#: includes/class-toc-twilio.php:493
 msgid "Twilio rejected credentials: unexpected response."
 msgstr ""
 
@@ -1634,8 +1634,8 @@ msgstr ""
 msgid "Unknown"
 msgstr ""
 
-#: includes/class-toc-twilio.php:497 includes/class-toc-twilio.php:502
-#: includes/class-toc-twilio.php:556 includes/class-toc-twilio.php:561
+#: includes/class-toc-twilio.php:567 includes/class-toc-twilio.php:572
+#: includes/class-toc-twilio.php:626 includes/class-toc-twilio.php:631
 msgid "Unknown Twilio error"
 msgstr ""
 
@@ -1814,7 +1814,7 @@ msgstr ""
 msgid "still override the required string."
 msgstr ""
 
-#: includes/class-toc-twilio.php:417
+#: includes/class-toc-twilio.php:487
 msgid "unknown"
 msgstr ""
 

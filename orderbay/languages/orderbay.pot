@@ -6,7 +6,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-11 23:19+0000\n"
+"POT-Creation-Date: 2026-08-11 23:27+0000\n"
 "X-Domain: orderbay\n"
 
 #: templates/delivery-note.php:43
@@ -33,11 +33,11 @@ msgstr ""
 msgid "%d proforma(s)"
 msgstr ""
 
-#: includes/class-ob-documents.php:212
+#: includes/class-ob-documents.php:216
 msgid "%s counter reset"
 msgstr ""
 
-#: includes/class-ob-documents.php:209
+#: includes/class-ob-documents.php:213
 msgid "%s number format"
 msgstr ""
 
@@ -47,6 +47,10 @@ msgstr ""
 
 #: includes/class-ob-digest.php:252
 msgid "--- Needs attention (open) ---"
+msgstr ""
+
+#: includes/class-ob-documents.php:141
+msgid "A QR library is installed — order QR codes are rendered through it (scannable for full order URLs)."
 msgstr ""
 
 #: includes/class-ob-dashboard.php:101
@@ -105,7 +109,7 @@ msgstr ""
 msgid "Auto needs-attention"
 msgstr ""
 
-#: includes/class-ob-documents.php:148
+#: includes/class-ob-documents.php:152
 msgid "Auto: Dompdf/TCPDF if already installed on host"
 msgstr ""
 
@@ -131,7 +135,7 @@ msgstr ""
 msgid "Body"
 msgstr ""
 
-#: includes/class-ob-documents.php:147
+#: includes/class-ob-documents.php:151
 msgid "Browser only (Print → Save as PDF)"
 msgstr ""
 
@@ -172,7 +176,7 @@ msgstr ""
 msgid "Could not render the base invoice PDF."
 msgstr ""
 
-#: includes/class-ob-documents.php:185 templates/credit-note.php:16
+#: includes/class-ob-documents.php:189 templates/credit-note.php:16
 #: templates/credit-note.php:45
 msgid "Credit note"
 msgstr ""
@@ -185,7 +189,7 @@ msgstr ""
 msgid "Credit note %s"
 msgstr ""
 
-#: includes/class-ob-documents.php:183
+#: includes/class-ob-documents.php:187
 msgid "Credit note prefix"
 msgstr ""
 
@@ -227,7 +231,7 @@ msgstr ""
 msgid "Customer packing slips are disabled."
 msgstr ""
 
-#: includes/class-ob-documents.php:396
+#: includes/class-ob-documents.php:400
 msgid "DN"
 msgstr ""
 
@@ -247,11 +251,11 @@ msgstr ""
 msgid "Delete"
 msgstr ""
 
-#: includes/class-ob-documents.php:359 templates/delivery-note.php:23
+#: includes/class-ob-documents.php:363 templates/delivery-note.php:23
 msgid "Delivery note"
 msgstr ""
 
-#: includes/class-ob-documents.php:141
+#: includes/class-ob-documents.php:145
 msgid "Delivery note prices"
 msgstr ""
 
@@ -259,7 +263,7 @@ msgstr ""
 msgid "Delivery note — Order #%s"
 msgstr ""
 
-#: includes/class-ob-documents.php:152
+#: includes/class-ob-documents.php:156
 msgid "Detected on this host: %s. Download PDF button appears when engine is Auto."
 msgstr ""
 
@@ -295,11 +299,11 @@ msgstr ""
 msgid "Download CSV"
 msgstr ""
 
-#: includes/class-ob-documents.php:367
+#: includes/class-ob-documents.php:371
 msgid "Download PDF (host engine)"
 msgstr ""
 
-#: includes/class-ob-documents.php:161
+#: includes/class-ob-documents.php:165
 msgid "Download UBL (Peppol BIS 3.0) or CII (Factur-X EN16931) invoice XML from the order screen. EN16931 baseline — validate against an official validator before relying on it. A \"Factur-X PDF\" button also appears when a PDF engine (Dompdf/TCPDF) and the horstoeko/zugferd library are installed on the host; its output must pass a Factur-X validator. Peppol network transmission is not included."
 msgstr ""
 
@@ -311,19 +315,19 @@ msgstr ""
 msgid "Duplicate (Orderbay)"
 msgstr ""
 
-#: includes/class-ob-documents.php:371
+#: includes/class-ob-documents.php:375
 msgid "E-invoice CII (Factur-X)"
 msgstr ""
 
-#: includes/class-ob-documents.php:370
+#: includes/class-ob-documents.php:374
 msgid "E-invoice UBL"
 msgstr ""
 
-#: includes/class-ob-documents.php:381
+#: includes/class-ob-documents.php:385
 msgid "E-invoice XML is a draft — not fully compliant yet:"
 msgstr ""
 
-#: includes/class-ob-documents.php:160
+#: includes/class-ob-documents.php:164
 msgid "E-invoicing (UBL / Factur-X)"
 msgstr ""
 
@@ -363,10 +367,6 @@ msgstr ""
 msgid "Estimated total"
 msgstr ""
 
-#: includes/class-ob-documents.php:140
-msgid "Experimental: the built-in QR encoder may not scan reliably on all readers yet. Test with your scanner before relying on it; the Code 128 barcode above is production-ready."
-msgstr ""
-
 #: includes/class-ob-plugin.php:182 includes/class-ob-plugin.php:183
 msgid "Export CSV"
 msgstr ""
@@ -379,7 +379,7 @@ msgstr ""
 msgid "Export orders CSV"
 msgstr ""
 
-#: includes/class-ob-documents.php:373
+#: includes/class-ob-documents.php:377
 msgid "Factur-X PDF"
 msgstr ""
 
@@ -405,8 +405,8 @@ msgstr ""
 
 #: includes/class-ob-catalog.php:140 includes/class-ob-dashboard.php:43
 #: includes/class-ob-digest.php:296 includes/class-ob-documents.php:102
-#: includes/class-ob-documents.php:456 includes/class-ob-documents.php:570
-#: includes/class-ob-documents.php:640 includes/class-ob-einvoice.php:143
+#: includes/class-ob-documents.php:460 includes/class-ob-documents.php:574
+#: includes/class-ob-documents.php:644 includes/class-ob-einvoice.php:143
 #: includes/class-ob-einvoice.php:75 includes/class-ob-export.php:104
 #: includes/class-ob-export.php:75 includes/class-ob-fulfillment.php:289
 #: includes/class-ob-fulfillment.php:537
@@ -420,7 +420,7 @@ msgstr ""
 msgid "Forbidden"
 msgstr ""
 
-#: includes/class-ob-documents.php:175
+#: includes/class-ob-documents.php:179
 msgid "Format tokens: {PREFIX} {YYYY} {YY} {MM} {DD} {SEQ} {SEQ:5} (zero-padded). Default {PREFIX}{SEQ} keeps existing numbers. A sequence token is always enforced. Yearly/monthly reset restarts the counter at 1 each period."
 msgstr ""
 
@@ -475,7 +475,7 @@ msgstr ""
 msgid "ID"
 msgstr ""
 
-#: includes/class-ob-documents.php:180
+#: includes/class-ob-documents.php:184
 msgid "Immutable once assigned per order (_ob_proforma_number)."
 msgstr ""
 
@@ -487,7 +487,7 @@ msgstr ""
 msgid "Insert note template"
 msgstr ""
 
-#: includes/class-ob-documents.php:393
+#: includes/class-ob-documents.php:397
 msgid "Inv"
 msgstr ""
 
@@ -503,12 +503,12 @@ msgstr ""
 msgid "Invalid packing slip request."
 msgstr ""
 
-#: includes/class-ob-documents.php:179 includes/class-ob-documents.php:356
+#: includes/class-ob-documents.php:183 includes/class-ob-documents.php:360
 #: includes/class-ob-invoicing.php:479 templates/invoice.php:16
 msgid "Invoice"
 msgstr ""
 
-#: includes/class-ob-documents.php:349 includes/class-ob-invoicing.php:350
+#: includes/class-ob-documents.php:353 includes/class-ob-invoicing.php:350
 msgid "Invoice #"
 msgstr ""
 
@@ -528,7 +528,7 @@ msgstr ""
 msgid "Invoice number"
 msgstr ""
 
-#: includes/class-ob-documents.php:177
+#: includes/class-ob-documents.php:181
 msgid "Invoice prefix"
 msgstr ""
 
@@ -540,7 +540,7 @@ msgstr ""
 msgid "Invoice — Order #%s"
 msgstr ""
 
-#: includes/class-ob-documents.php:174
+#: includes/class-ob-documents.php:178
 msgid "Invoice, proforma & credit note numbers"
 msgstr ""
 
@@ -562,7 +562,7 @@ msgstr ""
 msgid "Last sent: %s"
 msgstr ""
 
-#: includes/class-ob-documents.php:397
+#: includes/class-ob-documents.php:401
 msgid "Lbl"
 msgstr ""
 
@@ -598,7 +598,7 @@ msgstr ""
 msgid "Merge tags: {order_number} {customer_first_name} {store_name} {tracking_number} {tracking_url}"
 msgstr ""
 
-#: includes/class-ob-documents.php:217
+#: includes/class-ob-documents.php:221
 msgid "Monthly (restart at 1 each month)"
 msgstr ""
 
@@ -619,7 +619,7 @@ msgstr ""
 msgid "Needs attention: %d\n"
 msgstr ""
 
-#: includes/class-ob-documents.php:215
+#: includes/class-ob-documents.php:219
 msgid "Never (continuous)"
 msgstr ""
 
@@ -631,15 +631,15 @@ msgstr ""
 msgid "Next RMA sequence"
 msgstr ""
 
-#: includes/class-ob-documents.php:184
+#: includes/class-ob-documents.php:188
 msgid "Next credit #"
 msgstr ""
 
-#: includes/class-ob-documents.php:178
+#: includes/class-ob-documents.php:182
 msgid "Next invoice #"
 msgstr ""
 
-#: includes/class-ob-documents.php:181
+#: includes/class-ob-documents.php:185
 msgid "Next proforma #"
 msgstr ""
 
@@ -651,12 +651,16 @@ msgstr ""
 msgid "Next scheduled run (UTC timestamp): %s"
 msgstr ""
 
-#: includes/class-ob-documents.php:154
+#: includes/class-ob-documents.php:158
 msgid "No Dompdf/TCPDF detected. Orderbay does not bundle PDF libraries."
 msgstr ""
 
-#: includes/class-ob-documents.php:650
+#: includes/class-ob-documents.php:654
 msgid "No Dompdf/TCPDF on this host. Use browser Print → Save as PDF."
+msgstr ""
+
+#: includes/class-ob-documents.php:143
+msgid "No QR library installed: the built-in encoder is experimental and only handles short payloads (up to ~42 bytes) — a long order URL is skipped rather than rendered as an unscannable code. Install chillerlan/php-qrcode (or endroid/qr-code) via Composer for reliable QR, or test the built-in with your scanner. The Code 128 barcode above is production-ready."
 msgstr ""
 
 #: templates/credit-note.php:90
@@ -671,7 +675,7 @@ msgstr ""
 msgid "No line items on this order."
 msgstr ""
 
-#: includes/class-ob-documents.php:588
+#: includes/class-ob-documents.php:592
 msgid "No orders selected."
 msgstr ""
 
@@ -737,11 +741,11 @@ msgstr ""
 msgid "Order #%s"
 msgstr ""
 
-#: includes/class-ob-qr.php:59
+#: includes/class-ob-qr.php:125
 msgid "Order QR"
 msgstr ""
 
-#: includes/class-ob-documents.php:471 includes/class-ob-documents.php:655
+#: includes/class-ob-documents.php:475 includes/class-ob-documents.php:659
 #: includes/class-ob-einvoice.php:154 includes/class-ob-einvoice.php:85
 #: includes/class-ob-invoicing.php:392 includes/class-ob-invoicing.php:408
 #: includes/class-ob-notes.php:139 includes/class-ob-partial.php:182
@@ -795,7 +799,7 @@ msgstr ""
 msgid "Orderbay dashboard"
 msgstr ""
 
-#: includes/class-ob-documents.php:336
+#: includes/class-ob-documents.php:340
 msgid "Orderbay delivery note: %s"
 msgstr ""
 
@@ -827,7 +831,7 @@ msgstr ""
 msgid "Orderbay invoice number assigned: %s"
 msgstr ""
 
-#: includes/class-ob-documents.php:327
+#: includes/class-ob-documents.php:331
 msgid "Orderbay invoice: %s"
 msgstr ""
 
@@ -835,7 +839,7 @@ msgstr ""
 msgid "Orderbay note templates"
 msgstr ""
 
-#: includes/class-ob-documents.php:330
+#: includes/class-ob-documents.php:334
 msgid "Orderbay packing: %s"
 msgstr ""
 
@@ -843,7 +847,7 @@ msgstr ""
 msgid "Orderbay proforma number assigned: %s"
 msgstr ""
 
-#: includes/class-ob-documents.php:333
+#: includes/class-ob-documents.php:337
 msgid "Orderbay proforma: %s"
 msgstr ""
 
@@ -855,7 +859,7 @@ msgstr ""
 msgid "Orderbay returns / RMA"
 msgstr ""
 
-#: includes/class-ob-documents.php:339
+#: includes/class-ob-documents.php:343
 msgid "Orderbay shipping label: %s"
 msgstr ""
 
@@ -919,7 +923,7 @@ msgstr ""
 msgid "Orderbay: needs attention (customer RMA request)."
 msgstr ""
 
-#: includes/class-ob-documents.php:691
+#: includes/class-ob-documents.php:695
 msgid "Orderbay: no orders selected for bulk print."
 msgstr ""
 
@@ -927,23 +931,23 @@ msgstr ""
 msgid "Orderbay: print credit note"
 msgstr ""
 
-#: includes/class-ob-documents.php:321
+#: includes/class-ob-documents.php:325
 msgid "Orderbay: print delivery note"
 msgstr ""
 
-#: includes/class-ob-documents.php:318
+#: includes/class-ob-documents.php:322
 msgid "Orderbay: print invoice"
 msgstr ""
 
-#: includes/class-ob-documents.php:320
+#: includes/class-ob-documents.php:324
 msgid "Orderbay: print packing slip"
 msgstr ""
 
-#: includes/class-ob-documents.php:319
+#: includes/class-ob-documents.php:323
 msgid "Orderbay: print proforma"
 msgstr ""
 
-#: includes/class-ob-documents.php:322
+#: includes/class-ob-documents.php:326
 msgid "Orderbay: print shipping label"
 msgstr ""
 
@@ -979,7 +983,7 @@ msgstr ""
 msgid "Orders today"
 msgstr ""
 
-#: includes/class-ob-documents.php:191
+#: includes/class-ob-documents.php:195
 msgid "Override any document template without editing the plugin: copy a file from the plugin's templates/ folder into your theme at wp-content/themes/your-theme/orderbay/ (e.g. orderbay/invoice.php). Your copy survives plugin updates. The ob_before_document / ob_after_document actions and the ob_locate_template filter are also available."
 msgstr ""
 
@@ -987,19 +991,19 @@ msgstr ""
 msgid "Owner-only + nonce. Independent of Twilio Order Communicator."
 msgstr ""
 
-#: includes/class-ob-documents.php:145
+#: includes/class-ob-documents.php:149
 msgid "PDF engine"
 msgstr ""
 
-#: includes/class-ob-documents.php:681
+#: includes/class-ob-documents.php:685
 msgid "PDF engine failed."
 msgstr ""
 
-#: includes/class-ob-documents.php:646
+#: includes/class-ob-documents.php:650
 msgid "PDF engine is set to browser-only."
 msgstr ""
 
-#: includes/class-ob-documents.php:376
+#: includes/class-ob-documents.php:380
 msgid "PDF: browser Print → Save as PDF (primary). Optional host Dompdf/TCPDF when PDF engine = Auto."
 msgstr ""
 
@@ -1008,11 +1012,11 @@ msgstr ""
 msgid "PROFORMA"
 msgstr ""
 
-#: includes/class-ob-documents.php:395
+#: includes/class-ob-documents.php:399
 msgid "Pack"
 msgstr ""
 
-#: includes/class-ob-documents.php:358
+#: includes/class-ob-documents.php:362
 #: includes/class-ob-fulfillment.php:634 templates/packing-slip.php:16
 msgid "Packing slip"
 msgstr ""
@@ -1060,23 +1064,23 @@ msgstr ""
 msgid "Print / Save as PDF"
 msgstr ""
 
-#: includes/class-ob-documents.php:523
+#: includes/class-ob-documents.php:527
 msgid "Print Orderbay delivery notes"
 msgstr ""
 
-#: includes/class-ob-documents.php:520
+#: includes/class-ob-documents.php:524
 msgid "Print Orderbay invoices"
 msgstr ""
 
-#: includes/class-ob-documents.php:522
+#: includes/class-ob-documents.php:526
 msgid "Print Orderbay packing slips"
 msgstr ""
 
-#: includes/class-ob-documents.php:521
+#: includes/class-ob-documents.php:525
 msgid "Print Orderbay proformas"
 msgstr ""
 
-#: includes/class-ob-documents.php:524
+#: includes/class-ob-documents.php:528
 msgid "Print Orderbay shipping labels"
 msgstr ""
 
@@ -1088,7 +1092,7 @@ msgstr ""
 msgid "Print credit note"
 msgstr ""
 
-#: includes/class-ob-documents.php:394
+#: includes/class-ob-documents.php:398
 msgid "Pro"
 msgstr ""
 
@@ -1116,11 +1120,11 @@ msgstr ""
 msgid "Products (bulk price/stock/duplicate)"
 msgstr ""
 
-#: includes/class-ob-documents.php:182 includes/class-ob-documents.php:357
+#: includes/class-ob-documents.php:186 includes/class-ob-documents.php:361
 msgid "Proforma"
 msgstr ""
 
-#: includes/class-ob-documents.php:352
+#: includes/class-ob-documents.php:356
 msgid "Proforma #"
 msgstr ""
 
@@ -1132,7 +1136,7 @@ msgstr ""
 msgid "Proforma only — amounts may change before final invoice. Payment not acknowledged by this document."
 msgstr ""
 
-#: includes/class-ob-documents.php:180
+#: includes/class-ob-documents.php:184
 msgid "Proforma prefix"
 msgstr ""
 
@@ -1279,7 +1283,7 @@ msgstr ""
 msgid "Save digest settings"
 msgstr ""
 
-#: includes/class-ob-documents.php:188
+#: includes/class-ob-documents.php:192
 msgid "Save document settings"
 msgstr ""
 
@@ -1319,11 +1323,11 @@ msgstr ""
 msgid "Seller country code is missing or invalid."
 msgstr ""
 
-#: includes/class-ob-documents.php:170
+#: includes/class-ob-documents.php:174
 msgid "Seller details look complete for e-invoicing."
 msgstr ""
 
-#: includes/class-ob-documents.php:164
+#: includes/class-ob-documents.php:168
 msgid "Seller details needed for compliant e-invoices:"
 msgstr ""
 
@@ -1370,7 +1374,7 @@ msgstr ""
 msgid "Shipping"
 msgstr ""
 
-#: includes/class-ob-documents.php:360
+#: includes/class-ob-documents.php:364
 msgid "Shipping label"
 msgstr ""
 
@@ -1383,10 +1387,10 @@ msgid "Shipping refunded"
 msgstr ""
 
 #: includes/class-ob-documents.php:139
-msgid "Show order QR on invoice + packing slip (default off; pure PHP SVG, no Composer)"
+msgid "Show order QR on invoice + packing slip (default off)"
 msgstr ""
 
-#: includes/class-ob-documents.php:144
+#: includes/class-ob-documents.php:148
 msgid "Show prices on delivery notes (default off)"
 msgstr ""
 
@@ -1428,7 +1432,7 @@ msgstr ""
 msgid "Tags (comma-separated)"
 msgstr ""
 
-#: includes/class-ob-documents.php:249 templates/invoice.php:128
+#: includes/class-ob-documents.php:253 templates/invoice.php:128
 #: templates/proforma.php:122
 msgid "Tax"
 msgstr ""
@@ -1437,7 +1441,7 @@ msgstr ""
 msgid "Tax refunded"
 msgstr ""
 
-#: includes/class-ob-documents.php:190
+#: includes/class-ob-documents.php:194
 msgid "Template customization"
 msgstr ""
 
@@ -1549,7 +1553,7 @@ msgstr ""
 msgid "When an order enters one of these statuses, set Needs attention. Empty / none selected = off. Attention is never auto-cleared."
 msgstr ""
 
-#: includes/class-ob-documents.php:216
+#: includes/class-ob-documents.php:220
 msgid "Yearly (restart at 1 each year)"
 msgstr ""
 
