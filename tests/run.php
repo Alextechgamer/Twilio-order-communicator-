@@ -15,6 +15,7 @@ require $root . '/twilio-order-communicator/includes/class-toc-logger.php';
 require $root . '/license-server/src/Helpers.php';
 require $root . '/orderbay/includes/class-ob-einvoice.php';
 require $root . '/orderbay/includes/class-ob-invoicing.php';
+require $root . '/orderbay/includes/class-ob-documents.php';
 require $root . '/storecanvas/includes/class-sc-print-ready.php';
 require $root . '/storecanvas/includes/class-sc-export.php';
 require $root . '/storecanvas/includes/class-sc-cart-order.php';
@@ -205,6 +206,19 @@ check( 'price qty array is zero', SC_Cart_Order::price_for( 'qty', 3.0, 0.0, arr
 check( 'price per_char', SC_Cart_Order::price_for( 'per_char', 0.5, 0.0, 'abcd' ), 2.0 );
 check( 'price negative flat (discount)', SC_Cart_Order::price_for( 'flat', -4.0, 20.0, '1' ), -4.0 );
 check( 'price unknown type zero', SC_Cart_Order::price_for( 'bogus', 5.0, 20.0, '1' ), 0.0 );
+
+/* ---- OrderBay per-rate tax rows (pure; pins the tax-breakdown feature) ---- */
+$tax_obj = array(
+	(object) array( 'label' => 'VAT (20%)', 'amount' => 4.0 ),
+	(object) array( 'label' => 'VAT (5%)', 'amount' => 1.0 ),
+);
+check( 'tax rows from objects', OB_Documents::normalize_tax_rows( $tax_obj ), array(
+	array( 'label' => 'VAT (20%)', 'amount' => 4.0 ),
+	array( 'label' => 'VAT (5%)', 'amount' => 1.0 ),
+) );
+check( 'tax rows from arrays', OB_Documents::normalize_tax_rows( array( array( 'label' => 'GST', 'amount' => 2.5 ) ) ), array( array( 'label' => 'GST', 'amount' => 2.5 ) ) );
+check( 'tax rows empty label defaults', OB_Documents::normalize_tax_rows( array( array( 'amount' => 3.0 ) ) ), array( array( 'label' => 'Tax', 'amount' => 3.0 ) ) );
+check( 'tax rows non-array', OB_Documents::normalize_tax_rows( null ), array() );
 
 /* ---- OrderBay numbering-format expander (pure; pins the configurable-numbering feature) ---- */
 $fts = gmmktime( 12, 0, 0, 8, 11, 2026 ); // 2026-08-11 UTC, deterministic

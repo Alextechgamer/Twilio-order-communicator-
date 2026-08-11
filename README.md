@@ -10,7 +10,7 @@ This monorepo also contains independent plugins:
 |--------|------|---------|
 | Twilio Order Communicator | `twilio-order-communicator/` | 1.15.0 |
 | StoreCanvas | `storecanvas/` | 1.4.0 |
-| Orderbay | `orderbay/` | 1.4.0 |
+| Orderbay | `orderbay/` | 1.5.0 |
 
 ## Install
 
@@ -44,6 +44,7 @@ Latest source is always on `main` under `twilio-order-communicator/`.
 | StoreCanvas 1.3.1 | Pricing correctness: percent options use the selected variation's price (not the parent), qty options charge amount × quantity, and negative option totals reduce the price (floored at 0) and display consistently. Live preview mirrors the server; `price_for()` unit-tested |
 | TOC 1.15.0 | Delivery analytics dashboard card (SMS sent / delivered / failed / reply rates over 30d); inbound-webhook MessageSid idempotency (no double-processing of Twilio retries); single-use tokenized TwiML URL. `compute_rates()` unit-tested |
 | StoreCanvas 1.4.0 | Multi-rule conditional logic (AND/OR + operators) beyond single `show_if`; lookup-table pricing (per-choice prices, multi-select summed) with the live preview matched to the server. `evaluate_conditions()` / `rule_matches()` / `lookup_price()` unit-tested |
+| Orderbay 1.5.0 | Per-tax-rate breakdown on invoices & proformas (e.g. VAT 20% / VAT 5%) from the order's tax totals + a prices include/exclude tax note, replacing the single combined Tax line. `normalize_tax_rows()` unit-tested |
 
 ## What's in 1.14.2
 

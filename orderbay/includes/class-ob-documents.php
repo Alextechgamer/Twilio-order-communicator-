@@ -219,6 +219,40 @@ class OB_Documents {
 		echo '</select></td></tr>';
 	}
 
+	/**
+	 * Normalize WooCommerce tax totals into simple per-rate rows for document rendering (pure).
+	 * Accepts the array returned by WC_Order::get_tax_totals() (objects with ->label/->amount)
+	 * or equivalent arrays, so it can be unit-tested without a WooCommerce runtime.
+	 *
+	 * @param mixed $tax_totals Iterable of tax totals.
+	 * @return array<int,array{label:string,amount:float}>
+	 */
+	public static function normalize_tax_rows( $tax_totals ) {
+		$rows = array();
+		if ( ! is_array( $tax_totals ) ) {
+			return $rows;
+		}
+		foreach ( $tax_totals as $t ) {
+			if ( is_object( $t ) ) {
+				$label  = isset( $t->label ) ? (string) $t->label : '';
+				$amount = isset( $t->amount ) ? (float) $t->amount : 0.0;
+			} elseif ( is_array( $t ) ) {
+				$label  = isset( $t['label'] ) ? (string) $t['label'] : '';
+				$amount = isset( $t['amount'] ) ? (float) $t['amount'] : 0.0;
+			} else {
+				continue;
+			}
+			if ( '' === $label ) {
+				$label = __( 'Tax', 'orderbay' );
+			}
+			$rows[] = array(
+				'label'  => $label,
+				'amount' => $amount,
+			);
+		}
+		return $rows;
+	}
+
 	public function order_actions( $actions ) {
 		$actions['ob_print_invoice']      = __( 'Orderbay: print invoice', 'orderbay' );
 		$actions['ob_print_proforma']     = __( 'Orderbay: print proforma', 'orderbay' );

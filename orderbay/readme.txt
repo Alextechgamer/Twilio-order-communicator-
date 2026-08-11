@@ -3,12 +3,17 @@ Contributors: alextechgamer
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.4.0
+Stable tag: 1.5.0
 License: GPLv2 or later
 
 Self-hosted WooCommerce ops toolkit: documents, fulfillment, RMA, digests, search.
 
 == Changelog ==
+
+= 1.5.0 =
+* New: per-tax-rate breakdown on invoices and proformas (e.g. "VAT (20%)", "VAT (5%)") from the order's tax totals, instead of a single combined Tax line — required for EU VAT-compliant invoices with mixed rates
+* New: "Prices include/exclude tax" basis note under the tax rows
+* Falls back to the single combined Tax line when no per-rate data is present
 
 = 1.4.0 =
 * New: configurable numbering formats for invoice, proforma and credit note — template tokens {PREFIX} {YYYY} {YY} {MM} {DD} {SEQ} {SEQ:n} (zero-padded)
