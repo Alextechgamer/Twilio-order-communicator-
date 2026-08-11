@@ -33,6 +33,91 @@ class OB_EInvoice {
 
 	private function __construct() {
 		add_action( 'admin_post_ob_einvoice', array( $this, 'handle_download' ) );
+		add_action( 'admin_post_ob_facturx', array( $this, 'handle_facturx' ) );
+	}
+
+	/**
+	 * Whether a Factur-X PDF can be assembled on this host: a Factur-X/ZUGFeRD library
+	 * (horstoeko/zugferd) AND a base-PDF engine (Dompdf/TCPDF) must both be present.
+	 *
+	 * @return bool
+	 */
+	public static function facturx_available() {
+		return class_exists( '\\horstoeko\\zugferd\\ZugferdDocumentPdfBuilder' )
+			&& class_exists( 'OB_Documents' )
+			&& (bool) OB_Documents::detect_pdf_engine();
+	}
+
+	/**
+	 * Nonce-protected Factur-X download URL.
+	 *
+	 * @param int $order_id Order ID.
+	 * @return string
+	 */
+	public static function facturx_url( $order_id ) {
+		$order_id = absint( $order_id );
+		return wp_nonce_url(
+			admin_url( 'admin-post.php?action=ob_facturx&order_id=' . $order_id ),
+			'ob_facturx_' . $order_id
+		);
+	}
+
+	/**
+	 * Assemble and stream a Factur-X PDF (PDF/A-3 with the embedded CII XML) using an
+	 * optional host library. Only reachable when facturx_available().
+	 *
+	 * NOTE: the integration is written to the documented horstoeko/zugferd API but cannot
+	 * be executed in this environment (no library). The produced PDF must pass a Factur-X /
+	 * ZUGFeRD validator before production use.
+	 */
+	public function handle_facturx() {
+		if ( ! current_user_can( 'edit_shop_orders' ) ) {
+			wp_die( esc_html__( 'Forbidden', 'orderbay' ) );
+		}
+		$order_id = isset( $_GET['order_id'] ) ? absint( $_GET['order_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		check_admin_referer( 'ob_facturx_' . $order_id );
+
+		if ( ! self::facturx_available() ) {
+			wp_die( esc_html__( 'Factur-X needs a PDF engine (Dompdf/TCPDF) and the horstoeko/zugferd library on this host.', 'orderbay' ) );
+		}
+		$order = wc_get_order( $order_id );
+		if ( ! $order ) {
+			wp_die( esc_html__( 'Order not found', 'orderbay' ) );
+		}
+		if ( class_exists( 'OB_Invoicing' ) ) {
+			OB_Invoicing::ensure_invoice_number( $order );
+		}
+
+		$pdf_bytes = OB_Documents::render_pdf_bytes( $order, 'invoice' );
+		if ( '' === $pdf_bytes ) {
+			wp_die( esc_html__( 'Could not render the base invoice PDF.', 'orderbay' ) );
+		}
+		$xml = self::build_cii( self::order_to_invoice_data( $order ) );
+
+		try {
+			$builder = new \horstoeko\zugferd\ZugferdDocumentPdfBuilder( $xml, $pdf_bytes );
+			$builder->generateDocument();
+			$name = 'facturx-' . preg_replace( '/[^A-Za-z0-9_-]/', '', (string) $order->get_meta( OB_Plugin::META_INVOICE_NUMBER ) ) . '.pdf';
+			if ( method_exists( $builder, 'downloadString' ) ) {
+				$facturx = (string) $builder->downloadString( $name );
+			} else {
+				$tmp = wp_tempnam( 'facturx' );
+				$builder->saveDocument( $tmp );
+				$facturx = (string) file_get_contents( $tmp );
+				@unlink( $tmp ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			}
+		} catch ( \Throwable $e ) {
+			wp_die( esc_html__( 'Factur-X assembly failed: ', 'orderbay' ) . esc_html( $e->getMessage() ) );
+		}
+
+		if ( '' === $facturx ) {
+			wp_die( esc_html__( 'Factur-X assembly produced no output.', 'orderbay' ) );
+		}
+		nocache_headers();
+		header( 'Content-Type: application/pdf' );
+		header( 'Content-Disposition: attachment; filename=' . $name );
+		echo $facturx; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- binary PDF.
+		exit;
 	}
 
 	/**

@@ -158,7 +158,7 @@ class OB_Documents {
 
 		if ( class_exists( 'OB_EInvoice' ) ) {
 			echo '<h2>' . esc_html__( 'E-invoicing (UBL / Factur-X)', 'orderbay' ) . '</h2>';
-			echo '<p class="description">' . esc_html__( 'Download UBL (Peppol BIS 3.0) or CII (Factur-X EN16931) invoice XML from the order screen. This is an EN16931 baseline — validate it against an official validator before relying on it. Factur-X PDF/A-3 embedding and Peppol network transmission are not included yet.', 'orderbay' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'Download UBL (Peppol BIS 3.0) or CII (Factur-X EN16931) invoice XML from the order screen. EN16931 baseline — validate against an official validator before relying on it. A "Factur-X PDF" button also appears when a PDF engine (Dompdf/TCPDF) and the horstoeko/zugferd library are installed on the host; its output must pass a Factur-X validator. Peppol network transmission is not included.', 'orderbay' ) . '</p>';
 			$seller_issues = OB_EInvoice::seller_issues( OB_EInvoice::seller_data() );
 			if ( $seller_issues ) {
 				echo '<div class="notice notice-warning inline"><p><strong>' . esc_html__( 'Seller details needed for compliant e-invoices:', 'orderbay' ) . '</strong></p><ul style="list-style:disc;margin-left:20px;">';
@@ -240,6 +240,9 @@ class OB_Documents {
 		if ( class_exists( 'OB_EInvoice' ) ) {
 			echo '<a class="button" href="' . esc_url( OB_EInvoice::download_url( $order->get_id(), 'ubl' ) ) . '">' . esc_html__( 'E-invoice UBL', 'orderbay' ) . '</a> ';
 			echo '<a class="button" href="' . esc_url( OB_EInvoice::download_url( $order->get_id(), 'cii' ) ) . '">' . esc_html__( 'E-invoice CII (Factur-X)', 'orderbay' ) . '</a> ';
+			if ( OB_EInvoice::facturx_available() ) {
+				echo '<a class="button" href="' . esc_url( OB_EInvoice::facturx_url( $order->get_id() ) ) . '">' . esc_html__( 'Factur-X PDF', 'orderbay' ) . '</a> ';
+			}
 		}
 		echo '<span class="description" style="display:block;margin-top:4px;">' . esc_html__( 'PDF: browser Print → Save as PDF (primary). Optional host Dompdf/TCPDF when PDF engine = Auto.', 'orderbay' ) . '</span>';
 		if ( class_exists( 'OB_EInvoice' ) ) {
@@ -450,6 +453,44 @@ class OB_Documents {
 		$settings = OB_Plugin::get_doc_settings();
 		include OB_PLUGIN_DIR . 'templates/' . $this->template_for( $type );
 		exit;
+	}
+
+	/**
+	 * Render a document to PDF bytes using the detected host engine (Dompdf/TCPDF).
+	 * Returns '' when no engine is available. Reused by the Factur-X assembler.
+	 *
+	 * @param WC_Order $order Order.
+	 * @param string   $type  Document type.
+	 * @return string PDF bytes or ''.
+	 */
+	public static function render_pdf_bytes( $order, $type = 'invoice' ) {
+		$engine = self::detect_pdf_engine();
+		if ( ! $engine ) {
+			return '';
+		}
+		$self = self::instance();
+		$self->prepare_order_for_type( $order, $type );
+		$settings = OB_Plugin::get_doc_settings();
+		$orders   = array( $order );
+		ob_start();
+		include OB_PLUGIN_DIR . 'templates/' . $self->template_for( $type );
+		$html = (string) ob_get_clean();
+		$html = preg_replace( '/<p class="no-print">.*?<\/p>/s', '', $html );
+
+		if ( 'dompdf' === $engine && class_exists( '\\Dompdf\\Dompdf' ) ) {
+			$dompdf = new \Dompdf\Dompdf();
+			$dompdf->loadHtml( $html );
+			$dompdf->setPaper( ( 'a4' === ( $settings['paper'] ?? 'letter' ) ) ? 'a4' : 'letter' );
+			$dompdf->render();
+			return (string) $dompdf->output();
+		}
+		if ( 'tcpdf' === $engine && class_exists( 'TCPDF' ) ) {
+			$pdf = new TCPDF();
+			$pdf->AddPage();
+			$pdf->writeHTML( $html, true, false, true, false, '' );
+			return (string) $pdf->Output( '', 'S' );
+		}
+		return '';
 	}
 
 	/**

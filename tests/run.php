@@ -125,6 +125,9 @@ if ( extension_loaded( 'dom' ) ) {
 	check( 'cii grand total', strpos( $cii, '<ram:GrandTotalAmount>29.00</ram:GrandTotalAmount>' ) !== false, true );
 	check( 'cii en16931 guideline', strpos( $cii, 'urn:cen.eu:en16931:2017' ) !== false, true );
 
+	// Factur-X degrades gracefully when the optional library is absent.
+	check( 'facturx unavailable without library', OB_EInvoice::facturx_available(), false );
+
 	// Compliance.
 	check( 'compliance complete', OB_EInvoice::compliance_issues( $einv ), array() );
 	$bad          = $einv;
