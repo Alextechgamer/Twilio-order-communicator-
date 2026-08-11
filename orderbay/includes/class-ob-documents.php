@@ -172,17 +172,51 @@ class OB_Documents {
 		}
 
 		echo '<h2>' . esc_html__( 'Invoice, proforma & credit note numbers', 'orderbay' ) . '</h2>';
+		echo '<p class="description">' . esc_html__( 'Format tokens: {PREFIX} {YYYY} {YY} {MM} {DD} {SEQ} {SEQ:5} (zero-padded). Default {PREFIX}{SEQ} keeps existing numbers. A sequence token is always enforced. Yearly/monthly reset restarts the counter at 1 each period.', 'orderbay' ) . '</p>';
 		echo '<table class="form-table">';
 		echo '<tr><th>' . esc_html__( 'Invoice prefix', 'orderbay' ) . '</th><td><input type="text" name="ob_invoice_prefix" value="' . esc_attr( get_option( OB_Plugin::OPT_INVOICE_PREFIX, 'INV-' ) ) . '" /></td></tr>';
 		echo '<tr><th>' . esc_html__( 'Next invoice #', 'orderbay' ) . '</th><td><input type="number" min="1" name="ob_invoice_next" value="' . esc_attr( (string) max( 1, (int) get_option( OB_Plugin::OPT_INVOICE_NEXT, 1 ) ) ) . '" /></td></tr>';
+		$this->numbering_format_rows( __( 'Invoice', 'orderbay' ), OB_Plugin::OPT_INVOICE_FORMAT, OB_Plugin::OPT_INVOICE_RESET );
 		echo '<tr><th>' . esc_html__( 'Proforma prefix', 'orderbay' ) . '</th><td><input type="text" name="ob_proforma_prefix" value="' . esc_attr( get_option( OB_Plugin::OPT_PROFORMA_PREFIX, 'PRO-' ) ) . '" /><p class="description">' . esc_html__( 'Immutable once assigned per order (_ob_proforma_number).', 'orderbay' ) . '</p></td></tr>';
 		echo '<tr><th>' . esc_html__( 'Next proforma #', 'orderbay' ) . '</th><td><input type="number" min="1" name="ob_proforma_next" value="' . esc_attr( (string) max( 1, (int) get_option( OB_Plugin::OPT_PROFORMA_NEXT, 1 ) ) ) . '" /></td></tr>';
+		$this->numbering_format_rows( __( 'Proforma', 'orderbay' ), OB_Plugin::OPT_PROFORMA_FORMAT, OB_Plugin::OPT_PROFORMA_RESET );
 		echo '<tr><th>' . esc_html__( 'Credit note prefix', 'orderbay' ) . '</th><td><input type="text" name="ob_credit_prefix" value="' . esc_attr( get_option( OB_Plugin::OPT_CREDIT_PREFIX, 'CN-' ) ) . '" /></td></tr>';
 		echo '<tr><th>' . esc_html__( 'Next credit #', 'orderbay' ) . '</th><td><input type="number" min="1" name="ob_credit_next" value="' . esc_attr( (string) max( 1, (int) get_option( OB_Plugin::OPT_CREDIT_NEXT, 1 ) ) ) . '" /></td></tr>';
+		$this->numbering_format_rows( __( 'Credit note', 'orderbay' ), OB_Plugin::OPT_CREDIT_FORMAT, OB_Plugin::OPT_CREDIT_RESET );
 		echo '</table>';
 
 		submit_button( __( 'Save document settings', 'orderbay' ) );
 		echo '</form></div>';
+	}
+
+	/**
+	 * Render the format-template + reset-period rows for one document type.
+	 *
+	 * @param string $label      Human label for the document type.
+	 * @param string $opt_format Format option key.
+	 * @param string $opt_reset  Reset-period option key.
+	 */
+	private function numbering_format_rows( $label, $opt_format, $opt_reset ) {
+		$format = (string) get_option( $opt_format, '{PREFIX}{SEQ}' );
+		if ( '' === $format ) {
+			$format = '{PREFIX}{SEQ}';
+		}
+		$reset = (string) get_option( $opt_reset, 'none' );
+
+		echo '<tr><th>' . esc_html( sprintf( /* translators: %s: document type. */ __( '%s number format', 'orderbay' ), $label ) ) . '</th><td>';
+		echo '<input type="text" name="' . esc_attr( $opt_format ) . '" value="' . esc_attr( $format ) . '" class="regular-text" /></td></tr>';
+
+		echo '<tr><th>' . esc_html( sprintf( /* translators: %s: document type. */ __( '%s counter reset', 'orderbay' ), $label ) ) . '</th><td>';
+		echo '<select name="' . esc_attr( $opt_reset ) . '">';
+		$options = array(
+			'none'    => __( 'Never (continuous)', 'orderbay' ),
+			'yearly'  => __( 'Yearly (restart at 1 each year)', 'orderbay' ),
+			'monthly' => __( 'Monthly (restart at 1 each month)', 'orderbay' ),
+		);
+		foreach ( $options as $val => $text ) {
+			echo '<option value="' . esc_attr( $val ) . '"' . selected( $reset, $val, false ) . '>' . esc_html( $text ) . '</option>';
+		}
+		echo '</select></td></tr>';
 	}
 
 	public function order_actions( $actions ) {

@@ -10,7 +10,7 @@ This monorepo also contains independent plugins:
 |--------|------|---------|
 | Twilio Order Communicator | `twilio-order-communicator/` | 1.14.2 |
 | StoreCanvas | `storecanvas/` | 1.3.0 |
-| Orderbay | `orderbay/` | 1.3.0 |
+| Orderbay | `orderbay/` | 1.4.0 |
 
 ## Install
 
@@ -35,6 +35,12 @@ Seller docs: [`RELEASE.md`](./RELEASE.md) (build + deploy + keys) · [`license-s
 Release **zips are not stored in git** (see `.gitignore`). Build with the steps in [`RELEASE.md`](./RELEASE.md), or download assets from [GitHub Releases](https://github.com/Alextechgamer/Twilio-order-communicator-/releases) when published.
 
 Latest source is always on `main` under `twilio-order-communicator/`.
+
+## What's in this line (post-1.14.2)
+
+| Plugin | Notes |
+|--------|--------|
+| Orderbay 1.4.0 | Configurable invoice/proforma/credit-note numbering: `{PREFIX}{YYYY}{MM}{DD}{SEQ}` tokens + `{SEQ:n}` zero-padding, optional yearly/monthly counter reset (period-scoped, atomic). Back-compatible default `{PREFIX}{SEQ}`; sequence token always enforced |
 
 ## What's in 1.14.2
 

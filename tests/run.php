@@ -14,6 +14,7 @@ require $root . '/twilio-order-communicator/includes/class-toc-twilio.php';
 require $root . '/twilio-order-communicator/includes/class-toc-logger.php';
 require $root . '/license-server/src/Helpers.php';
 require $root . '/orderbay/includes/class-ob-einvoice.php';
+require $root . '/orderbay/includes/class-ob-invoicing.php';
 require $root . '/storecanvas/includes/class-sc-print-ready.php';
 require $root . '/storecanvas/includes/class-sc-export.php';
 
@@ -157,6 +158,17 @@ if ( extension_loaded( 'dom' ) ) {
 } else {
 	echo "SKIP: ext-dom not loaded — e-invoice XML tests skipped\n";
 }
+
+/* ---- OrderBay numbering-format expander (pure; pins the configurable-numbering feature) ---- */
+$fts = gmmktime( 12, 0, 0, 8, 11, 2026 ); // 2026-08-11 UTC, deterministic
+check( 'fmt back-compat default', OB_Invoicing::format_number( '{PREFIX}{SEQ}', 5, $fts, 'INV-' ), 'INV-5' );
+check( 'fmt empty template defaults', OB_Invoicing::format_number( '', 5, $fts, 'INV-' ), 'INV-5' );
+check( 'fmt year + padded seq', OB_Invoicing::format_number( '{PREFIX}{YYYY}-{SEQ:5}', 42, $fts, 'INV-' ), 'INV-2026-00042' );
+check( 'fmt short year + month', OB_Invoicing::format_number( '{YY}{MM}-{SEQ}', 7, $fts, '' ), '2608-7' );
+check( 'fmt day token', OB_Invoicing::format_number( '{DD}', 1, $fts, '' ), '11' );
+check( 'fmt pad never truncates', OB_Invoicing::format_number( '{SEQ:3}', 1234, $fts, '' ), '1234' );
+check( 'fmt unknown token kept', OB_Invoicing::format_number( 'X{FOO}{SEQ}', 3, $fts, '' ), 'X{FOO}3' );
+check( 'fmt all tokens', OB_Invoicing::format_number( '{PREFIX}{YYYY}{MM}{DD}-{SEQ:4}', 9, $fts, 'AC/' ), 'AC/20260811-0009' );
 
 /* ---- StoreCanvas print output: pHYs DPI + SVG + minimal PDF (pure) ---- */
 $png_1x1 = base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M8AAAMBAQDJ/pLvAAAAAElFTkSuQmCC' );

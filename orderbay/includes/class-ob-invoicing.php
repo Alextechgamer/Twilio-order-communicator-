@@ -44,6 +44,16 @@ class OB_Invoicing {
 			'sanitize_callback' => array( $this, 'sanitize_next' ),
 			'default'           => 1,
 		) );
+		register_setting( 'ob_documents', OB_Plugin::OPT_INVOICE_FORMAT, array(
+			'type'              => 'string',
+			'sanitize_callback' => array( $this, 'sanitize_format' ),
+			'default'           => '{PREFIX}{SEQ}',
+		) );
+		register_setting( 'ob_documents', OB_Plugin::OPT_INVOICE_RESET, array(
+			'type'              => 'string',
+			'sanitize_callback' => array( $this, 'sanitize_reset' ),
+			'default'           => 'none',
+		) );
 		register_setting( 'ob_documents', OB_Plugin::OPT_CREDIT_PREFIX, array(
 			'type'              => 'string',
 			'sanitize_callback' => array( $this, 'sanitize_credit_prefix' ),
@@ -53,6 +63,16 @@ class OB_Invoicing {
 			'type'              => 'integer',
 			'sanitize_callback' => array( $this, 'sanitize_next' ),
 			'default'           => 1,
+		) );
+		register_setting( 'ob_documents', OB_Plugin::OPT_CREDIT_FORMAT, array(
+			'type'              => 'string',
+			'sanitize_callback' => array( $this, 'sanitize_format' ),
+			'default'           => '{PREFIX}{SEQ}',
+		) );
+		register_setting( 'ob_documents', OB_Plugin::OPT_CREDIT_RESET, array(
+			'type'              => 'string',
+			'sanitize_callback' => array( $this, 'sanitize_reset' ),
+			'default'           => 'none',
 		) );
 		register_setting( 'ob_documents', OB_Plugin::OPT_PROFORMA_PREFIX, array(
 			'type'              => 'string',
@@ -66,6 +86,16 @@ class OB_Invoicing {
 			'type'              => 'integer',
 			'sanitize_callback' => array( $this, 'sanitize_next' ),
 			'default'           => 1,
+		) );
+		register_setting( 'ob_documents', OB_Plugin::OPT_PROFORMA_FORMAT, array(
+			'type'              => 'string',
+			'sanitize_callback' => array( $this, 'sanitize_format' ),
+			'default'           => '{PREFIX}{SEQ}',
+		) );
+		register_setting( 'ob_documents', OB_Plugin::OPT_PROFORMA_RESET, array(
+			'type'              => 'string',
+			'sanitize_callback' => array( $this, 'sanitize_reset' ),
+			'default'           => 'none',
 		) );
 	}
 
@@ -85,6 +115,99 @@ class OB_Invoicing {
 	}
 
 	/**
+	 * Sanitize a numbering-format template. Guarantees a sequence token is present so two
+	 * documents can never collide on the same number (a legal problem for tax invoices).
+	 *
+	 * @param mixed $v Raw value.
+	 * @return string
+	 */
+	public function sanitize_format( $v ) {
+		$v = is_string( $v ) ? trim( wp_strip_all_tags( $v ) ) : '';
+		if ( '' === $v ) {
+			return '{PREFIX}{SEQ}';
+		}
+		if ( ! preg_match( '/\{SEQ(:\d{1,2})?\}/', $v ) ) {
+			$v .= '{SEQ}';
+		}
+		return $v;
+	}
+
+	/**
+	 * Sanitize a reset period. Only none/yearly/monthly are allowed.
+	 *
+	 * @param mixed $v Raw value.
+	 * @return string
+	 */
+	public function sanitize_reset( $v ) {
+		$v = is_string( $v ) ? strtolower( trim( $v ) ) : 'none';
+		return in_array( $v, array( 'none', 'yearly', 'monthly' ), true ) ? $v : 'none';
+	}
+
+	/**
+	 * Expand a numbering template into the final document number (pure).
+	 *
+	 * Supported tokens: {PREFIX}, {YYYY}, {YY}, {MM}, {DD}, {SEQ}, and {SEQ:n} (zero-pad
+	 * the sequence to n digits). The default template '{PREFIX}{SEQ}' reproduces the historical
+	 * prefix+sequence output exactly, so existing numbers are unchanged.
+	 *
+	 * @param string $template Template string.
+	 * @param int    $seq      Sequence number (>= 1).
+	 * @param int    $ts       Unix timestamp used for the date tokens (0 = now).
+	 * @param string $prefix   Value substituted for {PREFIX}.
+	 * @return string
+	 */
+	public static function format_number( $template, $seq, $ts = 0, $prefix = '' ) {
+		$template = is_string( $template ) ? $template : '';
+		if ( '' === trim( $template ) ) {
+			$template = '{PREFIX}{SEQ}';
+		}
+		$seq = (int) $seq;
+		if ( $seq < 0 ) {
+			$seq = 0;
+		}
+		$ts = (int) $ts > 0 ? (int) $ts : time();
+
+		// Zero-padded sequence {SEQ:n} first, so it is not shadowed by the bare {SEQ}.
+		$out = preg_replace_callback(
+			'/\{SEQ:(\d{1,2})\}/',
+			function ( $m ) use ( $seq ) {
+				return str_pad( (string) $seq, (int) $m[1], '0', STR_PAD_LEFT );
+			},
+			$template
+		);
+
+		return strtr(
+			$out,
+			array(
+				'{PREFIX}' => (string) $prefix,
+				'{YYYY}'   => gmdate( 'Y', $ts ),
+				'{YY}'     => gmdate( 'y', $ts ),
+				'{MM}'     => gmdate( 'm', $ts ),
+				'{DD}'     => gmdate( 'd', $ts ),
+				'{SEQ}'    => (string) $seq,
+			)
+		);
+	}
+
+	/**
+	 * Reset-period bucket key for the counter row. Empty when there is no reset.
+	 *
+	 * @param string $reset none|yearly|monthly.
+	 * @param int    $ts    Local timestamp.
+	 * @return string
+	 */
+	private static function period_key( $reset, $ts ) {
+		switch ( $reset ) {
+			case 'yearly':
+				return gmdate( 'Y', $ts );
+			case 'monthly':
+				return gmdate( 'Ym', $ts );
+			default:
+				return '';
+		}
+	}
+
+	/**
 	 * Assign immutable invoice number once.
 	 *
 	 * @param WC_Order $order Order.
@@ -98,7 +221,7 @@ class OB_Invoicing {
 		if ( $existing ) {
 			return (string) $existing;
 		}
-		$number = self::allocate_number( OB_Plugin::OPT_INVOICE_PREFIX, OB_Plugin::OPT_INVOICE_NEXT, 'INV-' );
+		$number = self::allocate_number( OB_Plugin::OPT_INVOICE_PREFIX, OB_Plugin::OPT_INVOICE_NEXT, 'INV-', OB_Plugin::OPT_INVOICE_FORMAT, OB_Plugin::OPT_INVOICE_RESET );
 		$order->update_meta_data( OB_Plugin::META_INVOICE_NUMBER, $number );
 		$order->add_order_note( sprintf( __( 'Orderbay invoice number assigned: %s', 'orderbay' ), $number ), false, true );
 		$order->save();
@@ -126,7 +249,7 @@ class OB_Invoicing {
 		if ( $existing ) {
 			return (string) $existing;
 		}
-		$number = self::allocate_number( OB_Plugin::OPT_PROFORMA_PREFIX, OB_Plugin::OPT_PROFORMA_NEXT, 'PRO-' );
+		$number = self::allocate_number( OB_Plugin::OPT_PROFORMA_PREFIX, OB_Plugin::OPT_PROFORMA_NEXT, 'PRO-', OB_Plugin::OPT_PROFORMA_FORMAT, OB_Plugin::OPT_PROFORMA_RESET );
 		$order->update_meta_data( OB_Plugin::META_PROFORMA_NUMBER, $number );
 		$order->add_order_note( sprintf( __( 'Orderbay proforma number assigned: %s', 'orderbay' ), $number ), false, true );
 		$order->save();
@@ -141,7 +264,7 @@ class OB_Invoicing {
 		if ( $existing ) {
 			return (string) $existing;
 		}
-		$number = self::allocate_number( OB_Plugin::OPT_CREDIT_PREFIX, OB_Plugin::OPT_CREDIT_NEXT, 'CN-' );
+		$number = self::allocate_number( OB_Plugin::OPT_CREDIT_PREFIX, OB_Plugin::OPT_CREDIT_NEXT, 'CN-', OB_Plugin::OPT_CREDIT_FORMAT, OB_Plugin::OPT_CREDIT_RESET );
 		$order->update_meta_data( OB_Plugin::META_CREDIT_NUMBER, $number );
 		$order->add_order_note( sprintf( __( 'Orderbay credit note number issued: %s', 'orderbay' ), $number ), false, true );
 		$order->save();
@@ -160,9 +283,11 @@ class OB_Invoicing {
 	 * @param string $opt_prefix     Option key for the prefix.
 	 * @param string $opt_next       Option key for the next integer.
 	 * @param string $default_prefix Fallback prefix.
+	 * @param string $opt_format     Optional option key for the format template ('' → '{PREFIX}{SEQ}').
+	 * @param string $opt_reset      Optional option key for the reset period ('' → 'none').
 	 * @return string
 	 */
-	public static function allocate_number( $opt_prefix, $opt_next, $default_prefix ) {
+	public static function allocate_number( $opt_prefix, $opt_next, $default_prefix, $opt_format = '', $opt_reset = '' ) {
 		global $wpdb;
 
 		$prefix = get_option( $opt_prefix, $default_prefix );
@@ -170,18 +295,33 @@ class OB_Invoicing {
 			$prefix = $default_prefix;
 		}
 
+		$template = $opt_format ? (string) get_option( $opt_format, '{PREFIX}{SEQ}' ) : '{PREFIX}{SEQ}';
+		if ( '' === trim( $template ) ) {
+			$template = '{PREFIX}{SEQ}';
+		}
+		$reset = $opt_reset ? (string) get_option( $opt_reset, 'none' ) : 'none';
+
+		// Store-local time drives both the counter bucket and the date tokens, so the year
+		// printed in the number always matches the bucket it was drawn from (no cross-year gaps).
+		$ts     = function_exists( 'current_time' ) ? (int) current_time( 'timestamp' ) : time(); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
+		$period = self::period_key( $reset, $ts );
+
+		// Period-scoped counter row when a reset is configured (e.g. ob_invoice_next_2026);
+		// the legacy row is used unchanged when reset = none, so existing stores are untouched.
+		$counter_opt = '' !== $period ? $opt_next . '_' . $period : $opt_next;
+
 		// Seed the counter row if it does not exist yet (atomic, idempotent).
 		$wpdb->query(
 			$wpdb->prepare(
 				"INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, '1', 'no')",
-				$opt_next
+				$counter_opt
 			)
 		);
 		// Atomic increment; LAST_INSERT_ID() returns the value THIS connection just set.
 		$wpdb->query(
 			$wpdb->prepare(
 				"UPDATE {$wpdb->options} SET option_value = LAST_INSERT_ID(option_value + 1) WHERE option_name = %s",
-				$opt_next
+				$counter_opt
 			)
 		);
 		$next = (int) $wpdb->get_var( 'SELECT LAST_INSERT_ID()' );
@@ -191,10 +331,10 @@ class OB_Invoicing {
 		}
 
 		// The direct writes bypass the options cache — drop the stale entries.
-		wp_cache_delete( $opt_next, 'options' );
+		wp_cache_delete( $counter_opt, 'options' );
 		wp_cache_delete( 'notoptions', 'options' );
 
-		return $prefix . $seq;
+		return self::format_number( $template, $seq, $ts, $prefix );
 	}
 
 	/**
