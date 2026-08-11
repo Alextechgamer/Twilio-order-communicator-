@@ -3,7 +3,7 @@ Contributors: alextechgamer
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.3.0
+Stable tag: 1.3.1
 License: GPLv2 or later
 
 Self-hosted WooCommerce personalization: product options, live mockup, print-ready, library, guest save.
@@ -15,6 +15,12 @@ Product options parity with common add-ons plugins plus live mockup and print co
 Independent of Twilio Order Communicator and Orderbay.
 
 == Changelog ==
+
+= 1.3.1 =
+* Fix: percent-priced options now use the selected variation's price as the base instead of the parent product's, so variable products with per-variation prices are charged correctly
+* Fix: qty-priced options now charge the amount times the quantity entered in the field (previously behaved like a flat fee)
+* Fix: a negative options total (a discount) now actually reduces the price (floored at zero) and is shown in the cart, so the displayed price matches what is charged; the live price preview mirrors the server rules
+* Pure pricing helper SC_Cart_Order::price_for() is unit-tested
 
 = 1.3.0 =
 * New: true print resolution — generated PNG composites now carry a pHYs DPI chunk (default 300, filter sc_output_dpi) instead of defaulting to 72

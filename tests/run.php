@@ -17,6 +17,7 @@ require $root . '/orderbay/includes/class-ob-einvoice.php';
 require $root . '/orderbay/includes/class-ob-invoicing.php';
 require $root . '/storecanvas/includes/class-sc-print-ready.php';
 require $root . '/storecanvas/includes/class-sc-export.php';
+require $root . '/storecanvas/includes/class-sc-cart-order.php';
 
 $pass  = 0;
 $fail  = 0;
@@ -158,6 +159,17 @@ if ( extension_loaded( 'dom' ) ) {
 } else {
 	echo "SKIP: ext-dom not loaded — e-invoice XML tests skipped\n";
 }
+
+/* ---- StoreCanvas option pricing (pure; pins the percent/qty/negative fixes) ---- */
+check( 'price flat', SC_Cart_Order::price_for( 'flat', 5.0, 20.0, '1' ), 5.0 );
+check( 'price percent of base', SC_Cart_Order::price_for( 'percent', 10.0, 20.0, '1' ), 2.0 );
+check( 'price percent uses given base (variation)', SC_Cart_Order::price_for( 'percent', 10.0, 50.0, '1' ), 5.0 );
+check( 'price qty multiplies value', SC_Cart_Order::price_for( 'qty', 3.0, 0.0, '4' ), 12.0 );
+check( 'price qty not flat', SC_Cart_Order::price_for( 'qty', 3.0, 0.0, '1' ), 3.0 );
+check( 'price qty array is zero', SC_Cart_Order::price_for( 'qty', 3.0, 0.0, array( 'x' ) ), 0.0 );
+check( 'price per_char', SC_Cart_Order::price_for( 'per_char', 0.5, 0.0, 'abcd' ), 2.0 );
+check( 'price negative flat (discount)', SC_Cart_Order::price_for( 'flat', -4.0, 20.0, '1' ), -4.0 );
+check( 'price unknown type zero', SC_Cart_Order::price_for( 'bogus', 5.0, 20.0, '1' ), 0.0 );
 
 /* ---- OrderBay numbering-format expander (pure; pins the configurable-numbering feature) ---- */
 $fts = gmmktime( 12, 0, 0, 8, 11, 2026 ); // 2026-08-11 UTC, deterministic
