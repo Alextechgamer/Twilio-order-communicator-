@@ -43,6 +43,7 @@ class TOC_License_API {
 	}
 
 	private function activate() {
+		$this->rate_guard( 'activate' );
 		$body = TOC_License_Helpers::json_input();
 		$key  = trim( (string) ( $body['license_key'] ?? $body['key'] ?? '' ) );
 		$site = TOC_License_Helpers::display_site_url( $body['site_url'] ?? '' );
@@ -117,6 +118,7 @@ class TOC_License_API {
 	}
 
 	private function validate() {
+		$this->rate_guard( 'validate' );
 		$body = TOC_License_Helpers::json_input();
 		$key  = trim( (string) ( $body['license_key'] ?? $body['key'] ?? '' ) );
 		$site = TOC_License_Helpers::display_site_url( $body['site_url'] ?? '' );
@@ -160,6 +162,7 @@ class TOC_License_API {
 	}
 
 	private function update_check() {
+		$this->rate_guard( 'update-check' );
 		$slug    = trim( (string) ( $_GET['slug'] ?? $this->config['item_slug'] ) ); // phpcs:ignore
 		$version = trim( (string) ( $_GET['version'] ?? '' ) ); // phpcs:ignore
 		$key     = $this->license_from_request();
@@ -271,7 +274,36 @@ class TOC_License_API {
 		if ( stripos( $auth, 'Bearer ' ) === 0 ) {
 			return trim( substr( $auth, 7 ) );
 		}
-		return trim( (string) ( $_GET['license_key'] ?? '' ) ); // phpcs:ignore
+		// Intentionally no ?license_key= query fallback: the plugin sends the key via the
+		// X-TOC-License header, and query strings leak keys into web-server access logs.
+		return '';
+	}
+
+	/**
+	 * Best-effort connecting IP for rate-limit buckets.
+	 *
+	 * @return string
+	 */
+	private function client_ip() {
+		$ip = $_SERVER['REMOTE_ADDR'] ?? '';
+		return filter_var( $ip, FILTER_VALIDATE_IP ) ? $ip : '0';
+	}
+
+	/**
+	 * Throttle an endpoint per client IP; respond 429 and exit when the window is
+	 * exhausted. Bounds license-key brute forcing. Tunable via config
+	 * rate_limit_max / rate_limit_window (per IP, per endpoint).
+	 *
+	 * @param string $name Endpoint name for the bucket.
+	 * @return void
+	 */
+	private function rate_guard( $name ) {
+		$max    = max( 1, (int) ( $this->config['rate_limit_max'] ?? 60 ) );
+		$window = max( 1, (int) ( $this->config['rate_limit_window'] ?? 3600 ) );
+		if ( ! $this->db->rate_hit( $name . '|' . $this->client_ip(), $max, $window ) ) {
+			header( 'Retry-After: ' . $window );
+			TOC_License_Helpers::respond( 429, array( 'success' => false, 'error' => 'Too many requests. Please try again later.' ) );
+		}
 	}
 
 	private function download_secret() {

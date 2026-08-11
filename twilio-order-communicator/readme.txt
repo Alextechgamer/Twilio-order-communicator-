@@ -4,7 +4,7 @@ Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
 WC requires at least: 7.0
-Stable tag: 1.14.0
+Stable tag: 1.14.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -85,6 +85,14 @@ No. The plugin includes its own tokenized TwiML endpoint.
 They text START or UNSTOP. Plain "YES" is intentionally not treated as re-subscribe.
 
 == Changelog ==
+
+= 1.14.1 =
+* Security: neutralize CSV formula injection in the dashboard communications export
+* Security: consent-audit IP is now server-derived (REMOTE_ADDR); X-Forwarded-For only trusted behind an opt-in proxy filter (toc_trust_proxy_ip)
+* Fix: shop managers with the toc_manage cap can now save Settings (options.php previously required manage_options)
+* Fix: scheduled pickup reminders honor the Local Pickup filter at schedule and fire time (no reminder for ship-to-home orders)
+* Add: strict E.164 validation of the From number (Settings) and every recipient (send time)
+* Compat: declare cart_checkout_blocks compatibility so WooCommerce no longer flags the plugin in the block-checkout UI
 
 = 1.14.0 =
 * Fix: block checkout SMS consent Yes no longer overwritten by missing field (unknown leaves meta alone)

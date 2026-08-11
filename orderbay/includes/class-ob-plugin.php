@@ -77,6 +77,7 @@ class OB_Plugin {
 			'footer_text' => __( 'Thank you for your order.', 'orderbay' ),
 			'paper'       => 'letter',
 			'tax_id'      => '',
+			'seller_country' => '',
 			'show_thumbs'     => '0',
 			'show_barcodes'   => '0',
 			'qr_enabled'      => '0',

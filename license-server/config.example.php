@@ -29,4 +29,9 @@ return array(
 
 	// CORS (usually leave empty; plugins call server-to-server).
 	'allowed_origins' => array(),
+
+	// Per-IP, per-endpoint rate limit for activate / validate / update-check.
+	// Generous for real stores (which validate ~daily) but blunts key brute forcing.
+	'rate_limit_max'    => 60,
+	'rate_limit_window' => 3600,
 );
