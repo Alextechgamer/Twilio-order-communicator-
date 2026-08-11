@@ -2,15 +2,15 @@
 
 WordPress / WooCommerce plugin for SMS and voice calls via **your own Twilio account**. Order communication is driven by custom statuses (**Ready for Pickup** and **Shipped**), with consent-aware SMS, quiet hours, bulk reminders, and order chat history.
 
-**Current version: 1.14.0** (plugin header / `TOC_VERSION`)
+**Current version: 1.14.1** (plugin header / `TOC_VERSION`)
 
 This monorepo also contains independent plugins:
 
 | Plugin | Path | Current |
 |--------|------|---------|
-| Twilio Order Communicator | `twilio-order-communicator/` | 1.14.0 |
-| StoreCanvas | `storecanvas/` | 1.2.0 |
-| Orderbay | `orderbay/` | 1.1.0 |
+| Twilio Order Communicator | `twilio-order-communicator/` | 1.14.1 |
+| StoreCanvas | `storecanvas/` | 1.2.1 |
+| Orderbay | `orderbay/` | 1.1.1 |
 
 ## Install
 
@@ -35,6 +35,16 @@ Seller docs: [`RELEASE.md`](./RELEASE.md) (build + deploy + keys) · [`license-s
 Release **zips are not stored in git** (see `.gitignore`). Build with the steps in [`RELEASE.md`](./RELEASE.md), or download assets from [GitHub Releases](https://github.com/Alextechgamer/Twilio-order-communicator-/releases) when published.
 
 Latest source is always on `main` under `twilio-order-communicator/`.
+
+## What's in 1.14.1
+
+Security & correctness hardening across all three plugins (see each `readme.txt` changelog).
+
+| Area | Notes |
+|------|--------|
+| TOC | CSV formula-injection guard; server-derived consent IP; shop-manager Settings save; Local Pickup guard on reminders; E.164 validation; `cart_checkout_blocks` declared |
+| StoreCanvas 1.2.1 | Real HTML escaper (XSS fix) + payload sanitize; layer-attachment IDOR gate; REST media exclusion; guest rate-limits; decompression-bomb guard; composite rotation |
+| Orderbay 1.1.1 | Atomic gapless invoice numbering; invoice/proforma fee lines + credit-note tax; SLA-stall fix; partial-fulfillment nonce + HPOS redirects; `load_plugin_textdomain` |
 
 ## What's in 1.14.0
 
