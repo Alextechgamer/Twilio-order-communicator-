@@ -16,6 +16,7 @@ require $root . '/license-server/src/Helpers.php';
 require $root . '/orderbay/includes/class-ob-einvoice.php';
 require $root . '/orderbay/includes/class-ob-invoicing.php';
 require $root . '/orderbay/includes/class-ob-documents.php';
+require $root . '/orderbay/includes/class-ob-qr.php';
 require $root . '/storecanvas/includes/class-sc-print-ready.php';
 require $root . '/storecanvas/includes/class-sc-export.php';
 require $root . '/storecanvas/includes/class-sc-cart-order.php';
@@ -297,6 +298,18 @@ check( 'tpl strips traversal', OB_Documents::template_candidates( '../../evil.ph
 	'/th/child/orderbay/evil.php',
 	'/plug/templates/evil.php',
 ) );
+
+/* ---- OrderBay QR version selection (pure; pins the no-truncation fix) ---- */
+check( 'qr v1 boundary', OB_QR::pick_version( 14 ), 1 );
+check( 'qr v2 boundary', OB_QR::pick_version( 26 ), 2 );
+check( 'qr v3 boundary', OB_QR::pick_version( 42 ), 3 );
+check( 'qr v2 mid', OB_QR::pick_version( 20 ), 2 );
+check( 'qr over capacity skips', OB_QR::pick_version( 43 ), 0 );
+check( 'qr order-url length skips built-in', OB_QR::pick_version( 47 ), 0 );
+check( 'qr empty skips', OB_QR::pick_version( 0 ), 0 );
+check( 'qr library absent here', OB_QR::library_available(), false );
+check( 'qr svg empty payload', OB_QR::svg( '' ), '' );
+check( 'qr svg long payload no library skips', OB_QR::svg( str_repeat( 'x', 47 ) ), '' );
 
 /* ---- OrderBay per-rate tax rows (pure; pins the tax-breakdown feature) ---- */
 $tax_obj = array(

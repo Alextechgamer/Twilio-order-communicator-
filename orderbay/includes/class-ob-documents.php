@@ -136,8 +136,12 @@ class OB_Documents {
 		echo '<tr><th>' . esc_html__( 'QR codes', 'orderbay' ) . '</th><td>';
 		echo '<input type="hidden" name="' . esc_attr( OB_Plugin::OPT_DOCS ) . '[qr_enabled]" value="0" />';
 		echo '<label><input type="checkbox" name="' . esc_attr( OB_Plugin::OPT_DOCS ) . '[qr_enabled]" value="1" ' . checked( ( $s['qr_enabled'] ?? '0' ), '1', false ) . ' /> ';
-		echo esc_html__( 'Show order QR on invoice + packing slip (default off; pure PHP SVG, no Composer)', 'orderbay' ) . '</label>';
-		echo '<p class="description" style="color:#b32d2e;">' . esc_html__( 'Experimental: the built-in QR encoder may not scan reliably on all readers yet. Test with your scanner before relying on it; the Code 128 barcode above is production-ready.', 'orderbay' ) . '</p></td></tr>';
+		echo esc_html__( 'Show order QR on invoice + packing slip (default off)', 'orderbay' ) . '</label>';
+		if ( class_exists( 'OB_QR' ) && OB_QR::library_available() ) {
+			echo '<p class="description" style="color:#1a7f37;">' . esc_html__( 'A QR library is installed — order QR codes are rendered through it (scannable for full order URLs).', 'orderbay' ) . '</p></td></tr>';
+		} else {
+			echo '<p class="description" style="color:#b32d2e;">' . esc_html__( 'No QR library installed: the built-in encoder is experimental and only handles short payloads (up to ~42 bytes) — a long order URL is skipped rather than rendered as an unscannable code. Install chillerlan/php-qrcode (or endroid/qr-code) via Composer for reliable QR, or test the built-in with your scanner. The Code 128 barcode above is production-ready.', 'orderbay' ) . '</p></td></tr>';
+		}
 		echo '<tr><th>' . esc_html__( 'Delivery note prices', 'orderbay' ) . '</th><td>';
 		echo '<input type="hidden" name="' . esc_attr( OB_Plugin::OPT_DOCS ) . '[delivery_prices]" value="0" />';
 		echo '<label><input type="checkbox" name="' . esc_attr( OB_Plugin::OPT_DOCS ) . '[delivery_prices]" value="1" ' . checked( ( $s['delivery_prices'] ?? '0' ), '1', false ) . ' /> ';

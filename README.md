@@ -10,7 +10,7 @@ This monorepo also contains independent plugins:
 |--------|------|---------|
 | Twilio Order Communicator | `twilio-order-communicator/` | 1.16.0 |
 | StoreCanvas | `storecanvas/` | 1.6.0 |
-| Orderbay | `orderbay/` | 1.6.1 |
+| Orderbay | `orderbay/` | 1.7.0 |
 
 ## Install
 
@@ -50,6 +50,7 @@ Latest source is always on `main` under `twilio-order-communicator/`.
 | i18n 1.15.1 / 1.5.1 / 1.6.1 | Translation templates (`languages/*.pot`) for all three plugins via `tools/make-pot.php`; wrapped the previously English-only TOC Twilio/AJAX strings; moved StoreCanvas customizer JS strings into the localized `i18n` table and **fixed a missing `load_plugin_textdomain`** in StoreCanvas |
 | TOC 1.16.0 | `{tracking}` / `{tracking_url}` merge tags for SMS/voice/email, resolved from OrderBay meta → WooCommerce Shipment Tracking → the `toc_order_tracking` filter. Pure `tracking_from_meta()` unit-tested |
 | StoreCanvas 1.6.0 | Prebuilt product templates (T-shirt / Mug / Sticker / Sign) — a "Start from a template" box seeds a working print area + option fields in one click. Pure `SC_Templates::templates()` / `apply()` unit-tested |
+| Orderbay 1.7.0 | QR fix — no more silent truncation to a dead Version-3 symbol (`pick_version()` rejects over-capacity payloads); optional `chillerlan/php-qrcode` or `endroid/qr-code` renders full order-URL QR correctly. Built-in stays experimental/off. `pick_version()` / `library_available()` unit-tested |
 
 ## What's in 1.14.2
 

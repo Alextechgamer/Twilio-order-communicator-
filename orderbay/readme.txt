@@ -3,12 +3,17 @@ Contributors: alextechgamer
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.6.1
+Stable tag: 1.7.0
 License: GPLv2 or later
 
 Self-hosted WooCommerce ops toolkit: documents, fulfillment, RMA, digests, search.
 
 == Changelog ==
+
+= 1.7.0 =
+* Fix: order QR is no longer silently truncated to a fixed Version 3 — the built-in encoder now rejects payloads over its ~42-byte capacity (a long order URL is skipped, not rendered as an unscannable code)
+* New: optional vetted QR library support — install chillerlan/php-qrcode or endroid/qr-code and order QR (incl. full order URLs) renders through it, correct by construction
+* Settings now report whether a QR library is active; the built-in remains experimental and off by default. Validate the built-in with a real scanner before relying on it
 
 = 1.6.1 =
 * i18n: ship a translation template (languages/orderbay.pot) covering all document, settings and admin strings
