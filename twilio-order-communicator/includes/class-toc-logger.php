@@ -747,6 +747,70 @@ class TOC_Logger {
 	}
 
 	/**
+	 * Aggregate SMS delivery outcomes + inbound replies over a window, for the analytics card.
+	 * Delivery statuses come from Twilio StatusCallbacks recorded via update_status_by_sid().
+	 *
+	 * @param int $days Lookback in days (0 = all time; otherwise clamped 1–365).
+	 * @return array{sent:int,delivered:int,failed:int,replies:int,window_days:int}
+	 */
+	public function delivery_stats( $days = 30 ) {
+		global $wpdb;
+
+		$days_raw = absint( $days );
+		$all_time = ( 0 === $days_raw );
+		$days     = $all_time ? 0 : max( 1, min( 365, $days_raw ) );
+
+		// Single pass with conditional sums. created_at is stored in store-local time (see
+		// get_stats), so bound the window with a store-local timestamp too.
+		$sql = "SELECT
+			SUM(CASE WHEN direction='outbound' THEN 1 ELSE 0 END) AS sent,
+			SUM(CASE WHEN direction='outbound' AND status='delivered' THEN 1 ELSE 0 END) AS delivered,
+			SUM(CASE WHEN direction='outbound' AND status IN ('failed','undelivered') THEN 1 ELSE 0 END) AS failed,
+			SUM(CASE WHEN direction='inbound' THEN 1 ELSE 0 END) AS replies
+			FROM {$this->table} WHERE type='sms'";
+
+		if ( $all_time ) {
+			$row = $wpdb->get_row( $sql, ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		} else {
+			$since = gmdate( 'Y-m-d H:i:s', (int) current_time( 'timestamp' ) - $days * DAY_IN_SECONDS ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
+			$row   = $wpdb->get_row( $wpdb->prepare( $sql . ' AND created_at >= %s', $since ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		}
+
+		$row = is_array( $row ) ? $row : array();
+		return array(
+			'sent'        => isset( $row['sent'] ) ? (int) $row['sent'] : 0,
+			'delivered'   => isset( $row['delivered'] ) ? (int) $row['delivered'] : 0,
+			'failed'      => isset( $row['failed'] ) ? (int) $row['failed'] : 0,
+			'replies'     => isset( $row['replies'] ) ? (int) $row['replies'] : 0,
+			'window_days' => $days,
+		);
+	}
+
+	/**
+	 * Delivered / failed / reply rates (percent, 1 dp) from a delivery_stats() count array (pure).
+	 * Rates are relative to outbound SMS sent; a zero denominator yields 0.0 (no division).
+	 *
+	 * @param array $counts Count array with sent/delivered/failed/replies keys.
+	 * @return array{delivered_rate:float,failed_rate:float,reply_rate:float}
+	 */
+	public static function compute_rates( $counts ) {
+		$sent      = isset( $counts['sent'] ) ? (int) $counts['sent'] : 0;
+		$delivered = isset( $counts['delivered'] ) ? (int) $counts['delivered'] : 0;
+		$failed    = isset( $counts['failed'] ) ? (int) $counts['failed'] : 0;
+		$replies   = isset( $counts['replies'] ) ? (int) $counts['replies'] : 0;
+
+		$pct = function ( $num, $den ) {
+			return $den > 0 ? round( $num / $den * 100, 1 ) : 0.0;
+		};
+
+		return array(
+			'delivered_rate' => $pct( $delivered, $sent ),
+			'failed_rate'    => $pct( $failed, $sent ),
+			'reply_rate'     => $pct( $replies, $sent ),
+		);
+	}
+
+	/**
 	 * Orders in the mapped Ready for Pickup status for bulk reminders.
 	 *
 	 * @param array $args {

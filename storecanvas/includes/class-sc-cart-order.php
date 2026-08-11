@@ -246,7 +246,7 @@ class SC_Cart_Order {
 					'label' => $field['label'] ?? $fid,
 					'value' => SC_Product_Options::format_value_label( $field, $val ),
 				);
-				$extra          += $this->field_price( $field, $val, $product_id );
+				$extra          += $this->field_price( $field, $val, $product_id, $variation_id );
 			}
 			if ( $options ) {
 				$cart_item_data[ SC_Plugin::CART_OPTIONS ] = $options;
@@ -311,7 +311,7 @@ class SC_Cart_Order {
 		return $cart_item_data;
 	}
 
-	private function field_price( $field, $value, $product_id ) {
+	private function field_price( $field, $value, $product_id, $variation_id = 0 ) {
 		$type = $field['price_type'] ?? 'none';
 		if ( 'none' === $type || '' === $value || null === $value ) {
 			return 0.0;
@@ -323,17 +323,78 @@ class SC_Cart_Order {
 			return 0.0;
 		}
 
-		$amount  = (float) ( $field['price'] ?? 0 );
-		$product = wc_get_product( $product_id );
-		$base    = $product ? (float) $product->get_price() : 0.0;
+		// Lookup-table pricing: the price comes from the selected choice(s), not a single amount.
+		if ( 'lookup' === $type ) {
+			return self::lookup_price( $field['choices'] ?? array(), $value );
+		}
 
+		$amount = (float) ( $field['price'] ?? 0 );
+
+		// Base for percent pricing: the selected variation's own price when a variation is
+		// chosen, else the product price. Using the parent price for a variation overcharged or
+		// undercharged whenever variations were priced differently from the parent.
+		$base = 0.0;
+		if ( 'percent' === $type ) {
+			$product = $variation_id ? wc_get_product( $variation_id ) : wc_get_product( $product_id );
+			if ( ! $product && $variation_id ) {
+				$product = wc_get_product( $product_id );
+			}
+			$base = $product ? (float) $product->get_price() : 0.0;
+		}
+
+		return self::price_for( $type, $amount, $base, $value );
+	}
+
+	/**
+	 * Pure price contribution for one option field. Extracted from field_price() so the
+	 * pricing rules are unit-testable without a WooCommerce runtime.
+	 *
+	 * - flat:     the configured amount (may be negative for a discount).
+	 * - percent:  amount% of the base product/variation price.
+	 * - qty:      amount multiplied by the numeric value the customer entered (per-unit),
+	 *             where it previously behaved identically to flat.
+	 * - per_char: amount per character of the entered text.
+	 *
+	 * @param string $type   Price type.
+	 * @param float  $amount Configured amount.
+	 * @param float  $base   Base price for percent pricing.
+	 * @param mixed  $value  Submitted field value.
+	 * @return float
+	 */
+	/**
+	 * Sum the per-choice prices for the selected value(s) of a lookup-priced field (pure).
+	 *
+	 * @param array $choices Field choices, each optionally carrying a numeric 'price'.
+	 * @param mixed $value   Selected value (scalar or array for multi-selects).
+	 * @return float
+	 */
+	public static function lookup_price( $choices, $value ) {
+		if ( ! is_array( $choices ) ) {
+			return 0.0;
+		}
+		$selected = is_array( $value ) ? array_map( 'strval', $value ) : array( (string) $value );
+		$total    = 0.0;
+		foreach ( $choices as $c ) {
+			if ( ! is_array( $c ) || ! isset( $c['price'] ) ) {
+				continue;
+			}
+			if ( in_array( (string) ( $c['value'] ?? '' ), $selected, true ) ) {
+				$total += (float) $c['price'];
+			}
+		}
+		return $total;
+	}
+
+	public static function price_for( $type, $amount, $base, $value ) {
+		$amount = (float) $amount;
 		switch ( $type ) {
 			case 'flat':
 				return $amount;
 			case 'percent':
-				return $base * ( $amount / 100 );
+				return (float) $base * ( $amount / 100 );
 			case 'qty':
-				return $amount;
+				$qty = is_array( $value ) ? 0.0 : (float) $value;
+				return $amount * $qty;
 			case 'per_char':
 				$text = is_array( $value ) ? implode( '', $value ) : (string) $value;
 				return $amount * strlen( $text );
@@ -347,11 +408,16 @@ class SC_Cart_Order {
 			return $cart_item;
 		}
 		$extra = (float) $cart_item['sc_price_extra'];
-		if ( $extra <= 0 ) {
+		if ( 0.0 === $extra ) {
 			return $cart_item;
 		}
-		$base = (float) $cart_item['data']->get_price( 'edit' );
-		$cart_item['data']->set_price( $base + $extra );
+		$base  = (float) $cart_item['data']->get_price( 'edit' );
+		$price = $base + $extra;
+		// A negative options total (a discount) may reduce the price but never below zero.
+		if ( $price < 0 ) {
+			$price = 0.0;
+		}
+		$cart_item['data']->set_price( $price );
 		return $cart_item;
 	}
 
@@ -418,7 +484,9 @@ class SC_Cart_Order {
 				'value' => (string) count( $cart_item[ SC_Plugin::CART_LAYERS ] ),
 			);
 		}
-		if ( ! empty( $cart_item['sc_price_extra'] ) && (float) $cart_item['sc_price_extra'] > 0 ) {
+		if ( ! empty( $cart_item['sc_price_extra'] ) ) {
+			// Show any non-zero options total, including a negative (discount) so the cart line
+			// matches what is actually charged.
 			$item_data[] = array(
 				'key'   => __( 'Options total', 'storecanvas' ),
 				'value' => wp_strip_all_tags( wc_price( (float) $cart_item['sc_price_extra'] ) ),

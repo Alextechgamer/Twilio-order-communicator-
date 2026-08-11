@@ -5,13 +5,29 @@
 		return typeof scLivePrice !== 'undefined' ? scLivePrice : null;
 	}
 
-	function fieldExtra(field, value, qty, base) {
+	// Per-unit price contribution for one field. Mirrors PHP SC_Cart_Order::price_for() exactly
+	// so the preview matches what the server charges: qty multiplies the configured amount by the
+	// number entered in the field (not the cart quantity); flat may be negative (a discount).
+	function fieldExtra(field, value, base) {
 		var type = field.price_type || 'none';
 		if (type === 'none' || value === '' || value === null || value === undefined) {
 			return 0;
 		}
 		if ((field.type || '') === 'checkbox' && !value) {
 			return 0;
+		}
+		if (type === 'lookup') {
+			// Sum the per-choice prices for the selected value(s), mirroring the server.
+			var prices = field.choice_prices || {};
+			var picked = Array.isArray(value) ? value : [value];
+			var sum = 0;
+			picked.forEach(function (v) {
+				var key = String(v);
+				if (Object.prototype.hasOwnProperty.call(prices, key)) {
+					sum += parseFloat(prices[key]) || 0;
+				}
+			});
+			return sum;
 		}
 		var amount = parseFloat(field.price) || 0;
 		switch (type) {
@@ -20,7 +36,7 @@
 			case 'percent':
 				return base * (amount / 100);
 			case 'qty':
-				return amount * (qty || 1);
+				return amount * (parseFloat(value) || 0);
 			case 'per_char':
 				return amount * String(value).length;
 			default:
@@ -83,45 +99,28 @@
 		var root = document.querySelector('.sc-options');
 		var values = readValues(root);
 		var qty = qtyValue();
-		var extra = 0;
-		fields.forEach(function (f) {
-			if (!f || !f.id) return;
-			// Hidden by show_if: skip pricing when not visible
-			var wrap = root
-				? root.querySelector('.sc-option-field[data-field-id="' + f.id + '"]')
-				: null;
-			if (wrap && wrap.style.display === 'none') return;
-			var val = values[f.id];
-			if (val === undefined) val = '';
-			extra += fieldExtra(f, val, qty, base);
-		});
-		// qty pricing is already * qty in fieldExtra; flat/percent/per_char are unit extras.
-		// Match PHP: sc_price_extra is unit extra; line multiplies by qty in WC.
-		// For display of "unit total": base + unit extras (flat/percent/per_char) + qty-type*1
-		// Recompute unit-style extra matching PHP field_price (qty type returns amount once):
+		// sc_price_extra is a per-unit total; WooCommerce multiplies the unit price by the cart
+		// quantity. Sum the per-unit field extras exactly as the server does.
 		var unitExtra = 0;
 		fields.forEach(function (f) {
 			if (!f || !f.id) return;
+			// Hidden by show_if: skip pricing when not visible.
 			var wrap = root
 				? root.querySelector('.sc-option-field[data-field-id="' + f.id + '"]')
 				: null;
 			if (wrap && wrap.style.display === 'none') return;
 			var val = values[f.id];
 			if (val === undefined) val = '';
-			var type = f.price_type || 'none';
-			if (type === 'none' || val === '' || val === null) return;
-			if ((f.type || '') === 'checkbox' && !val) return;
-			var amount = parseFloat(f.price) || 0;
-			if (type === 'flat') unitExtra += amount;
-			else if (type === 'percent') unitExtra += base * (amount / 100);
-			else if (type === 'qty') unitExtra += amount; // per unit
-			else if (type === 'per_char') unitExtra += amount * String(val).length;
+			unitExtra += fieldExtra(f, val, base);
 		});
+		// The server floors a discounted unit price at zero; mirror that so the preview agrees.
+		var unit = base + unitExtra;
+		if (unit < 0) unit = 0;
 		return {
 			base: base,
 			extra: unitExtra,
-			unit: base + unitExtra,
-			line: (base + unitExtra) * qty,
+			unit: unit,
+			line: unit * qty,
 			qty: qty,
 		};
 	}
@@ -175,7 +174,7 @@
 			': ' +
 			formatMoney(r.base) +
 			'</span>';
-		if (r.extra > 0.00001) {
+		if (Math.abs(r.extra) > 0.00001) {
 			html +=
 				' + <span class="sc-live-extra">' +
 				(c.i18n.extras || 'options') +

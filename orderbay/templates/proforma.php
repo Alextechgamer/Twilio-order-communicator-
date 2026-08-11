@@ -107,7 +107,18 @@ $paper = ( isset( $settings['paper'] ) && 'a4' === $settings['paper'] ) ? 'A4' :
 			<?php if ( (float) $order->get_shipping_total() > 0 ) : ?>
 				<div class="row"><span><?php esc_html_e( 'Shipping', 'orderbay' ); ?></span><span><?php echo wp_kses_post( wc_price( $order->get_shipping_total(), array( 'currency' => $order->get_currency() ) ) ); ?></span></div>
 			<?php endif; ?>
-			<?php if ( (float) $order->get_total_tax() > 0 ) : ?>
+			<?php
+			$ob_tax_rows = OB_Documents::normalize_tax_rows( $order->get_tax_totals() );
+			if ( $ob_tax_rows ) :
+				foreach ( $ob_tax_rows as $ob_tr ) :
+					?>
+					<div class="row"><span><?php echo esc_html( $ob_tr['label'] ); ?></span><span><?php echo wp_kses_post( wc_price( $ob_tr['amount'], array( 'currency' => $order->get_currency() ) ) ); ?></span></div>
+					<?php
+				endforeach;
+				$ob_incl = ( function_exists( 'wc_prices_include_tax' ) && wc_prices_include_tax() ) ? __( 'Prices include tax', 'orderbay' ) : __( 'Prices exclude tax', 'orderbay' );
+				?>
+				<div class="row"><span class="tax-basis"><small><?php echo esc_html( $ob_incl ); ?></small></span><span></span></div>
+			<?php elseif ( (float) $order->get_total_tax() > 0 ) : ?>
 				<div class="row"><span><?php esc_html_e( 'Tax', 'orderbay' ); ?></span><span><?php echo wp_kses_post( wc_price( $order->get_total_tax(), array( 'currency' => $order->get_currency() ) ) ); ?></span></div>
 			<?php endif; ?>
 			<?php foreach ( $order->get_fees() as $fee_item ) : ?>

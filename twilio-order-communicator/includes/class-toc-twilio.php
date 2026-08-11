@@ -35,6 +35,10 @@ class TOC_Twilio {
 			$stored = get_transient( 'toc_twiml_' . $token );
 			if ( is_string( $stored ) && $stored !== '' ) {
 				$message = $stored;
+				// One-time use: consume the token immediately so the URL — which exposes the
+				// customer name and order number — cannot be replayed for the rest of the
+				// transient's TTL by anyone who captures it. Twilio fetches the TwiML once.
+				delete_transient( 'toc_twiml_' . $token );
 			}
 		}
 

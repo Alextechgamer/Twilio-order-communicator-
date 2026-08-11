@@ -386,6 +386,19 @@ class TOC_Webhooks {
 			return;
 		}
 
+		// Idempotency: Twilio re-delivers a webhook when it doesn't receive a 200 in time.
+		// Without a guard, a retry would double-log the message, re-toggle opt-out, and duplicate
+		// order notes. Skip re-processing a MessageSid already handled (still return a valid 200).
+		if ( '' !== $sid ) {
+			$seen_key = 'toc_in_sid_' . md5( $sid );
+			if ( get_transient( $seen_key ) ) {
+				header( 'Content-Type: text/xml; charset=utf-8' );
+				echo '<?xml version="1.0" encoding="UTF-8"?><Response></Response>';
+				return;
+			}
+			set_transient( $seen_key, 1, DAY_IN_SECONDS );
+		}
+
 		$logger   = TOC_Logger::instance();
 		$twilio   = TOC_Twilio::instance();
 		$order_id = $logger->find_order_by_phone( $from );

@@ -334,7 +334,7 @@ class OB_RMA {
 		$settings = OB_Plugin::get_doc_settings();
 		$rma      = self::get_settings();
 		$orders   = array( $order );
-		include OB_PLUGIN_DIR . 'templates/rma-slip.php';
+		include OB_Documents::locate_template( 'rma-slip.php' );
 		exit;
 	}
 

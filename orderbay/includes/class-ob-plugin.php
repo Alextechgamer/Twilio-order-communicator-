@@ -14,10 +14,16 @@ class OB_Plugin {
 	const OPT_DIGEST          = 'ob_digest_settings';
 	const OPT_INVOICE_PREFIX  = 'ob_invoice_prefix';
 	const OPT_INVOICE_NEXT    = 'ob_invoice_next';
+	const OPT_INVOICE_FORMAT  = 'ob_invoice_format';
+	const OPT_INVOICE_RESET   = 'ob_invoice_reset';
 	const OPT_CREDIT_PREFIX   = 'ob_credit_prefix';
 	const OPT_CREDIT_NEXT     = 'ob_credit_next';
+	const OPT_CREDIT_FORMAT   = 'ob_credit_format';
+	const OPT_CREDIT_RESET    = 'ob_credit_reset';
 	const OPT_PROFORMA_PREFIX = 'ob_proforma_prefix';
 	const OPT_PROFORMA_NEXT   = 'ob_proforma_next';
+	const OPT_PROFORMA_FORMAT = 'ob_proforma_format';
+	const OPT_PROFORMA_RESET  = 'ob_proforma_reset';
 	const OPT_TRACKING_EMAIL  = 'ob_tracking_email_settings';
 	const OPT_AUTO_ATTENTION  = 'ob_auto_attention_statuses';
 	const OPT_RMA             = 'ob_rma_settings';

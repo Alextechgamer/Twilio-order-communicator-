@@ -133,6 +133,8 @@ trait TOC_Admin_Dashboard {
 	private function render_dashboard() {
 		$logger   = TOC_Logger::instance();
 		$stats    = $logger->get_stats();
+		$delivery = $logger->delivery_stats( 30 );
+		$rates    = TOC_Logger::compute_rates( $delivery );
 		$per_page = 40;
 		$page_num = isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
@@ -174,6 +176,14 @@ trait TOC_Admin_Dashboard {
 			<div class="toc-stat alert"><span class="num"><?php echo (int) $stats['unresolved']; ?></span><span class="lbl"><?php echo esc_html__( 'Unresolved', 'twilio-order-communicator' ); ?></span></div>
 			<div class="toc-stat"><span class="num"><?php echo (int) $stats['total']; ?></span><span class="lbl"><?php echo esc_html__( 'Total', 'twilio-order-communicator' ); ?></span></div>
 		</div>
+
+		<div class="toc-stats toc-delivery-analytics">
+			<div class="toc-stat"><span class="num"><?php echo (int) $delivery['sent']; ?></span><span class="lbl"><?php echo esc_html__( 'SMS sent (30d)', 'twilio-order-communicator' ); ?></span></div>
+			<div class="toc-stat"><span class="num"><?php echo esc_html( number_format_i18n( $rates['delivered_rate'], 1 ) ); ?>%</span><span class="lbl"><?php echo esc_html__( 'Delivered rate', 'twilio-order-communicator' ); ?></span></div>
+			<div class="toc-stat<?php echo $rates['failed_rate'] > 0 ? ' alert' : ''; ?>"><span class="num"><?php echo esc_html( number_format_i18n( $rates['failed_rate'], 1 ) ); ?>%</span><span class="lbl"><?php echo esc_html__( 'Failed rate', 'twilio-order-communicator' ); ?></span></div>
+			<div class="toc-stat"><span class="num"><?php echo esc_html( number_format_i18n( $rates['reply_rate'], 1 ) ); ?>%</span><span class="lbl"><?php echo esc_html__( 'Reply rate', 'twilio-order-communicator' ); ?></span></div>
+		</div>
+		<p class="description"><?php echo esc_html__( 'Delivery rates are over the last 30 days and rely on Twilio delivery StatusCallbacks; a message with no callback yet counts as sent but not delivered.', 'twilio-order-communicator' ); ?></p>
 
 		<form method="get" class="toc-filters">
 			<input type="hidden" name="page" value="toc-communicator" />

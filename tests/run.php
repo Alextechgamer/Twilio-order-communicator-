@@ -14,8 +14,13 @@ require $root . '/twilio-order-communicator/includes/class-toc-twilio.php';
 require $root . '/twilio-order-communicator/includes/class-toc-logger.php';
 require $root . '/license-server/src/Helpers.php';
 require $root . '/orderbay/includes/class-ob-einvoice.php';
+require $root . '/orderbay/includes/class-ob-invoicing.php';
+require $root . '/orderbay/includes/class-ob-documents.php';
 require $root . '/storecanvas/includes/class-sc-print-ready.php';
 require $root . '/storecanvas/includes/class-sc-export.php';
+require $root . '/storecanvas/includes/class-sc-cart-order.php';
+require $root . '/storecanvas/includes/class-sc-product-options.php';
+require $root . '/storecanvas/includes/class-sc-fpd-import.php';
 
 $pass  = 0;
 $fail  = 0;
@@ -157,6 +162,129 @@ if ( extension_loaded( 'dom' ) ) {
 } else {
 	echo "SKIP: ext-dom not loaded — e-invoice XML tests skipped\n";
 }
+
+/* ---- StoreCanvas FPD importer mapping (pure; modeled FPD schema) ---- */
+$fpd = array(
+	'title' => 'Classic Tee',
+	'views' => array(
+		array(
+			'title'       => 'Front',
+			'thumbnail'   => 'https://example.com/front.png',
+			'options'     => array( 'stageWidth' => 1000, 'stageHeight' => 1200 ),
+			'printingBox' => array( 'left' => 250, 'top' => 300, 'width' => 500, 'height' => 600 ),
+			'elements'    => array(
+				array( 'type' => 'image', 'source' => 'https://example.com/front.png', 'parameters' => array( 'width' => 1000, 'height' => 1200 ) ),
+				array( 'type' => 'text', 'title' => 'Your Name', 'parameters' => array( 'text' => 'Type here' ) ),
+				array( 'type' => 'text', 'title' => 'Your Name' ),
+				array( 'type' => 'image', 'source' => 'https://example.com/logo.png' ),
+			),
+		),
+		array(
+			'title'    => 'Back',
+			'elements' => array(),
+		),
+	),
+);
+$mapped = SC_FPD_Import::map( $fpd );
+check( 'fpd title', $mapped['title'], 'Classic Tee' );
+check( 'fpd enabled', $mapped['customizer']['enabled'], 1 );
+check( 'fpd two views', count( $mapped['customizer']['views'] ), 2 );
+check( 'fpd view label', $mapped['customizer']['views'][0]['label'], 'Front' );
+check( 'fpd view image url kept', $mapped['customizer']['views'][0]['image_url'], 'https://example.com/front.png' );
+check( 'fpd area x pct', $mapped['customizer']['areas'][0]['x'], 25.0 );
+check( 'fpd area w pct', $mapped['customizer']['areas'][0]['w'], 50.0 );
+check( 'fpd back default area', $mapped['customizer']['areas'][1]['w'], 60.0 );
+check( 'fpd one text field (deduped)', count( $mapped['options']['fields'] ), 1 );
+check( 'fpd text field id slug', $mapped['options']['fields'][0]['id'], 'your_name' );
+check( 'fpd text field type', $mapped['options']['fields'][0]['type'], 'text' );
+check( 'fpd notes present', count( $mapped['notes'] ) >= 1, true );
+check( 'fpd bare list of views', count( SC_FPD_Import::map( array( array( 'title' => 'Only', 'elements' => array() ) ) )['customizer']['views'] ), 1 );
+check( 'fpd empty input', SC_FPD_Import::map( 'nope' )['customizer']['enabled'], 0 );
+
+/* ---- StoreCanvas conditional logic (pure; AND/OR + operators) ---- */
+$opts = array( 'size' => 'L', 'color' => 'red', 'qty' => '5', 'name' => 'Bob', 'tags' => array( 'a', 'b' ) );
+check( 'rule is', SC_Product_Options::rule_matches( 'is', 'L', 'L' ), true );
+check( 'rule is_not', SC_Product_Options::rule_matches( 'is_not', 'L', 'M' ), true );
+check( 'rule contains', SC_Product_Options::rule_matches( 'contains', 'ob', 'Bob' ), true );
+check( 'rule not_contains', SC_Product_Options::rule_matches( 'not_contains', 'zz', 'Bob' ), true );
+check( 'rule gt', SC_Product_Options::rule_matches( 'gt', '3', '5' ), true );
+check( 'rule lt false', SC_Product_Options::rule_matches( 'lt', '3', '5' ), false );
+check( 'rule gt non-numeric', SC_Product_Options::rule_matches( 'gt', '3', 'abc' ), false );
+check( 'rule empty', SC_Product_Options::rule_matches( 'empty', '', '' ), true );
+check( 'rule not_empty', SC_Product_Options::rule_matches( 'not_empty', '', 'x' ), true );
+check( 'rule in', SC_Product_Options::rule_matches( 'in', 'red,blue', 'red' ), true );
+check( 'rule is array multi', SC_Product_Options::rule_matches( 'is', 'b', array( 'a', 'b' ) ), true );
+check( 'cond AND all true', SC_Product_Options::evaluate_conditions( array( 'logic' => 'and', 'rules' => array( array( 'field' => 'size', 'op' => 'is', 'value' => 'L' ), array( 'field' => 'qty', 'op' => 'gte', 'value' => '5' ) ) ), $opts ), true );
+check( 'cond AND one false', SC_Product_Options::evaluate_conditions( array( 'logic' => 'and', 'rules' => array( array( 'field' => 'size', 'op' => 'is', 'value' => 'M' ), array( 'field' => 'qty', 'op' => 'gte', 'value' => '5' ) ) ), $opts ), false );
+check( 'cond OR one true', SC_Product_Options::evaluate_conditions( array( 'logic' => 'or', 'rules' => array( array( 'field' => 'size', 'op' => 'is', 'value' => 'M' ), array( 'field' => 'color', 'op' => 'is', 'value' => 'red' ) ) ), $opts ), true );
+check( 'cond empty rules visible', SC_Product_Options::evaluate_conditions( array( 'rules' => array() ), $opts ), true );
+
+/* ---- StoreCanvas lookup-table pricing (pure) ---- */
+$lchoices = array(
+	array( 'value' => 's', 'label' => 'Small', 'price' => 0.0 ),
+	array( 'value' => 'm', 'label' => 'Medium', 'price' => 3.5 ),
+	array( 'value' => 'l', 'label' => 'Large', 'price' => 7.0 ),
+);
+check( 'lookup single', SC_Cart_Order::lookup_price( $lchoices, 'm' ), 3.5 );
+check( 'lookup multi sum', SC_Cart_Order::lookup_price( $lchoices, array( 'm', 'l' ) ), 10.5 );
+check( 'lookup unknown zero', SC_Cart_Order::lookup_price( $lchoices, 'xl' ), 0.0 );
+
+/* ---- TOC delivery-rate math (pure; pins the analytics card) ---- */
+check( 'rates zero sent', TOC_Logger::compute_rates( array() ), array( 'delivered_rate' => 0.0, 'failed_rate' => 0.0, 'reply_rate' => 0.0 ) );
+check( 'rates all delivered', TOC_Logger::compute_rates( array( 'sent' => 10, 'delivered' => 10, 'failed' => 0, 'replies' => 0 ) ), array( 'delivered_rate' => 100.0, 'failed_rate' => 0.0, 'reply_rate' => 0.0 ) );
+check( 'rates mixed', TOC_Logger::compute_rates( array( 'sent' => 8, 'delivered' => 6, 'failed' => 2, 'replies' => 2 ) ), array( 'delivered_rate' => 75.0, 'failed_rate' => 25.0, 'reply_rate' => 25.0 ) );
+check( 'rates rounding 1dp', TOC_Logger::compute_rates( array( 'sent' => 3, 'delivered' => 1, 'failed' => 0, 'replies' => 0 ) ), array( 'delivered_rate' => 33.3, 'failed_rate' => 0.0, 'reply_rate' => 0.0 ) );
+
+/* ---- StoreCanvas option pricing (pure; pins the percent/qty/negative fixes) ---- */
+check( 'price flat', SC_Cart_Order::price_for( 'flat', 5.0, 20.0, '1' ), 5.0 );
+check( 'price percent of base', SC_Cart_Order::price_for( 'percent', 10.0, 20.0, '1' ), 2.0 );
+check( 'price percent uses given base (variation)', SC_Cart_Order::price_for( 'percent', 10.0, 50.0, '1' ), 5.0 );
+check( 'price qty multiplies value', SC_Cart_Order::price_for( 'qty', 3.0, 0.0, '4' ), 12.0 );
+check( 'price qty not flat', SC_Cart_Order::price_for( 'qty', 3.0, 0.0, '1' ), 3.0 );
+check( 'price qty array is zero', SC_Cart_Order::price_for( 'qty', 3.0, 0.0, array( 'x' ) ), 0.0 );
+check( 'price per_char', SC_Cart_Order::price_for( 'per_char', 0.5, 0.0, 'abcd' ), 2.0 );
+check( 'price negative flat (discount)', SC_Cart_Order::price_for( 'flat', -4.0, 20.0, '1' ), -4.0 );
+check( 'price unknown type zero', SC_Cart_Order::price_for( 'bogus', 5.0, 20.0, '1' ), 0.0 );
+
+/* ---- OrderBay template override candidates (pure; theme → plugin lookup) ---- */
+check( 'tpl child theme first', OB_Documents::template_candidates( 'invoice.php', '/th/child', '/th/parent', '/plug/templates' ), array(
+	'/th/child/orderbay/invoice.php',
+	'/th/parent/orderbay/invoice.php',
+	'/plug/templates/invoice.php',
+) );
+check( 'tpl same child/parent dedupes', OB_Documents::template_candidates( 'invoice.php', '/th/x', '/th/x', '/plug/templates' ), array(
+	'/th/x/orderbay/invoice.php',
+	'/plug/templates/invoice.php',
+) );
+check( 'tpl no theme falls to plugin', OB_Documents::template_candidates( 'rma-slip.php', '', '', '/plug/templates' ), array( '/plug/templates/rma-slip.php' ) );
+check( 'tpl strips traversal', OB_Documents::template_candidates( '../../evil.php', '/th/child', '', '/plug/templates' ), array(
+	'/th/child/orderbay/evil.php',
+	'/plug/templates/evil.php',
+) );
+
+/* ---- OrderBay per-rate tax rows (pure; pins the tax-breakdown feature) ---- */
+$tax_obj = array(
+	(object) array( 'label' => 'VAT (20%)', 'amount' => 4.0 ),
+	(object) array( 'label' => 'VAT (5%)', 'amount' => 1.0 ),
+);
+check( 'tax rows from objects', OB_Documents::normalize_tax_rows( $tax_obj ), array(
+	array( 'label' => 'VAT (20%)', 'amount' => 4.0 ),
+	array( 'label' => 'VAT (5%)', 'amount' => 1.0 ),
+) );
+check( 'tax rows from arrays', OB_Documents::normalize_tax_rows( array( array( 'label' => 'GST', 'amount' => 2.5 ) ) ), array( array( 'label' => 'GST', 'amount' => 2.5 ) ) );
+check( 'tax rows empty label defaults', OB_Documents::normalize_tax_rows( array( array( 'amount' => 3.0 ) ) ), array( array( 'label' => 'Tax', 'amount' => 3.0 ) ) );
+check( 'tax rows non-array', OB_Documents::normalize_tax_rows( null ), array() );
+
+/* ---- OrderBay numbering-format expander (pure; pins the configurable-numbering feature) ---- */
+$fts = gmmktime( 12, 0, 0, 8, 11, 2026 ); // 2026-08-11 UTC, deterministic
+check( 'fmt back-compat default', OB_Invoicing::format_number( '{PREFIX}{SEQ}', 5, $fts, 'INV-' ), 'INV-5' );
+check( 'fmt empty template defaults', OB_Invoicing::format_number( '', 5, $fts, 'INV-' ), 'INV-5' );
+check( 'fmt year + padded seq', OB_Invoicing::format_number( '{PREFIX}{YYYY}-{SEQ:5}', 42, $fts, 'INV-' ), 'INV-2026-00042' );
+check( 'fmt short year + month', OB_Invoicing::format_number( '{YY}{MM}-{SEQ}', 7, $fts, '' ), '2608-7' );
+check( 'fmt day token', OB_Invoicing::format_number( '{DD}', 1, $fts, '' ), '11' );
+check( 'fmt pad never truncates', OB_Invoicing::format_number( '{SEQ:3}', 1234, $fts, '' ), '1234' );
+check( 'fmt unknown token kept', OB_Invoicing::format_number( 'X{FOO}{SEQ}', 3, $fts, '' ), 'X{FOO}3' );
+check( 'fmt all tokens', OB_Invoicing::format_number( '{PREFIX}{YYYY}{MM}{DD}-{SEQ:4}', 9, $fts, 'AC/' ), 'AC/20260811-0009' );
 
 /* ---- StoreCanvas print output: pHYs DPI + SVG + minimal PDF (pure) ---- */
 $png_1x1 = base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M8AAAMBAQDJ/pLvAAAAAElFTkSuQmCC' );

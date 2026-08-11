@@ -3,12 +3,28 @@ Contributors: alextechgamer
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.3.0
+Stable tag: 1.6.0
 License: GPLv2 or later
 
 Self-hosted WooCommerce ops toolkit: documents, fulfillment, RMA, digests, search.
 
 == Changelog ==
+
+= 1.6.0 =
+* New: theme template overrides — copy any document template into wp-content/themes/your-theme/orderbay/ (e.g. orderbay/invoice.php) to customize it without editing the plugin; your copy survives updates
+* New: ob_before_document / ob_after_document action hooks and an ob_locate_template filter for programmatic customization
+* All nine document render paths (invoice, proforma, credit note, packing slip, delivery note, shipping label, RMA slip, pick list) now resolve through the override lookup
+
+= 1.5.0 =
+* New: per-tax-rate breakdown on invoices and proformas (e.g. "VAT (20%)", "VAT (5%)") from the order's tax totals, instead of a single combined Tax line — required for EU VAT-compliant invoices with mixed rates
+* New: "Prices include/exclude tax" basis note under the tax rows
+* Falls back to the single combined Tax line when no per-rate data is present
+
+= 1.4.0 =
+* New: configurable numbering formats for invoice, proforma and credit note — template tokens {PREFIX} {YYYY} {YY} {MM} {DD} {SEQ} {SEQ:n} (zero-padded)
+* New: optional yearly / monthly counter reset per document type (period-scoped, atomic — restarts at 1 each period)
+* Back-compatible: the default {PREFIX}{SEQ} template with no reset reproduces existing numbers exactly; a sequence token is always enforced so numbers can never collide
+* Builds on the atomic gapless numbering from 1.1.1 (LAST_INSERT_ID); the format expander is unit-tested
 
 = 1.3.0 =
 * New: optional Factur-X PDF assembly — when a PDF engine (Dompdf/TCPDF) and the horstoeko/zugferd library are present, a "Factur-X PDF" button embeds the CII XML into the invoice PDF

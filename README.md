@@ -2,15 +2,15 @@
 
 WordPress / WooCommerce plugin for SMS and voice calls via **your own Twilio account**. Order communication is driven by custom statuses (**Ready for Pickup** and **Shipped**), with consent-aware SMS, quiet hours, bulk reminders, and order chat history.
 
-**Current version: 1.14.2** (plugin header / `TOC_VERSION`)
+**Current version: 1.15.0** (plugin header / `TOC_VERSION`)
 
 This monorepo also contains independent plugins:
 
 | Plugin | Path | Current |
 |--------|------|---------|
-| Twilio Order Communicator | `twilio-order-communicator/` | 1.14.2 |
-| StoreCanvas | `storecanvas/` | 1.3.0 |
-| Orderbay | `orderbay/` | 1.3.0 |
+| Twilio Order Communicator | `twilio-order-communicator/` | 1.15.0 |
+| StoreCanvas | `storecanvas/` | 1.5.0 |
+| Orderbay | `orderbay/` | 1.6.0 |
 
 ## Install
 
@@ -35,6 +35,18 @@ Seller docs: [`RELEASE.md`](./RELEASE.md) (build + deploy + keys) · [`license-s
 Release **zips are not stored in git** (see `.gitignore`). Build with the steps in [`RELEASE.md`](./RELEASE.md), or download assets from [GitHub Releases](https://github.com/Alextechgamer/Twilio-order-communicator-/releases) when published.
 
 Latest source is always on `main` under `twilio-order-communicator/`.
+
+## What's in this line (post-1.14.2)
+
+| Plugin | Notes |
+|--------|--------|
+| Orderbay 1.4.0 | Configurable invoice/proforma/credit-note numbering: `{PREFIX}{YYYY}{MM}{DD}{SEQ}` tokens + `{SEQ:n}` zero-padding, optional yearly/monthly counter reset (period-scoped, atomic). Back-compatible default `{PREFIX}{SEQ}`; sequence token always enforced |
+| StoreCanvas 1.3.1 | Pricing correctness: percent options use the selected variation's price (not the parent), qty options charge amount × quantity, and negative option totals reduce the price (floored at 0) and display consistently. Live preview mirrors the server; `price_for()` unit-tested |
+| TOC 1.15.0 | Delivery analytics dashboard card (SMS sent / delivered / failed / reply rates over 30d); inbound-webhook MessageSid idempotency (no double-processing of Twilio retries); single-use tokenized TwiML URL. `compute_rates()` unit-tested |
+| StoreCanvas 1.4.0 | Multi-rule conditional logic (AND/OR + operators) beyond single `show_if`; lookup-table pricing (per-choice prices, multi-select summed) with the live preview matched to the server. `evaluate_conditions()` / `rule_matches()` / `lookup_price()` unit-tested |
+| Orderbay 1.5.0 | Per-tax-rate breakdown on invoices & proformas (e.g. VAT 20% / VAT 5%) from the order's tax totals + a prices include/exclude tax note, replacing the single combined Tax line. `normalize_tax_rows()` unit-tested |
+| StoreCanvas 1.5.0 | One-click Fancy Product Designer importer — maps exported FPD product JSON (views, print zones → % areas, text fields) into a StoreCanvas config; view images re-uploaded on import. Pure `SC_FPD_Import::map()` unit-tested |
+| Orderbay 1.6.0 | Theme template overrides (`wp-content/themes/<theme>/orderbay/<template>.php`) across all 9 document types + `ob_before_document`/`ob_after_document` hooks and an `ob_locate_template` filter. Pure `template_candidates()` unit-tested |
 
 ## What's in 1.14.2
 
