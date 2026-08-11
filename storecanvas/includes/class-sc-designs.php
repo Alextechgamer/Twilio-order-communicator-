@@ -121,16 +121,34 @@ class SC_Designs {
 
 	public function ajax_save() {
 		check_ajax_referer( 'sc_designs', 'nonce' );
+
+		// Throttle unauthenticated saves so a visitor cannot flood transients / wp_options.
+		if ( ! is_user_logged_in()
+			&& ! $this->rate_ok( 'save', (int) apply_filters( 'sc_max_guest_saves_per_hour', 20 ), HOUR_IN_SECONDS ) ) {
+			wp_send_json_error( array( 'message' => 'too many saves, please try again later' ), 429 );
+		}
+
 		$product_id = isset( $_POST['product_id'] ) ? absint( $_POST['product_id'] ) : 0;
 		$payload    = isset( $_POST['payload'] ) ? wp_unslash( $_POST['payload'] ) : '';
 		$title      = isset( $_POST['title'] ) ? sanitize_text_field( wp_unslash( $_POST['title'] ) ) : '';
 		if ( ! $product_id || ! $payload ) {
 			wp_send_json_error( array( 'message' => 'missing data' ), 400 );
 		}
+
+		// Bound the stored payload size.
+		$max_bytes = (int) apply_filters( 'sc_max_design_bytes', 256 * 1024 );
+		if ( is_string( $payload ) && strlen( $payload ) > $max_bytes ) {
+			wp_send_json_error( array( 'message' => 'payload too large' ), 413 );
+		}
+
 		$decoded = json_decode( $payload, true );
 		if ( ! is_array( $decoded ) ) {
 			wp_send_json_error( array( 'message' => 'bad payload' ), 400 );
 		}
+
+		// Defense in depth vs stored/DOM XSS: strip tags from string leaves and bound the
+		// structure before it is persisted and later reflected into the product page.
+		$decoded = $this->sanitize_payload( $decoded );
 
 		if ( is_user_logged_in() ) {
 			if ( ! $title ) {
@@ -244,6 +262,12 @@ class SC_Designs {
 
 	public function ajax_email_design_link() {
 		check_ajax_referer( 'sc_designs', 'nonce' );
+
+		// Throttle this unauthenticated send-to-any-address endpoint (email relay abuse).
+		if ( ! $this->rate_ok( 'email', (int) apply_filters( 'sc_max_design_emails_per_hour', 10 ), HOUR_IN_SECONDS ) ) {
+			wp_send_json_error( array( 'message' => 'too many requests, please try again later' ), 429 );
+		}
+
 		$email      = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
 		$product_id = isset( $_POST['product_id'] ) ? absint( $_POST['product_id'] ) : 0;
 		$token      = isset( $_POST['token'] ) ? sanitize_text_field( wp_unslash( $_POST['token'] ) ) : '';
@@ -281,5 +305,72 @@ class SC_Designs {
 			wp_send_json_error( array( 'message' => 'mail failed' ) );
 		}
 		wp_send_json_success( array( 'message' => __( 'Link emailed.', 'storecanvas' ), 'url' => $url ) );
+	}
+
+	/**
+	 * Per-IP transient rate limiter for the guest endpoints. Returns false when the
+	 * caller has exceeded $max requests in $window seconds ($max <= 0 disables it).
+	 *
+	 * @param string $bucket Logical bucket (e.g. save|email).
+	 * @param int    $max    Max allowed in the window.
+	 * @param int    $window Window length in seconds.
+	 * @return bool
+	 */
+	private function rate_ok( $bucket, $max, $window ) {
+		$max = (int) $max;
+		if ( $max <= 0 ) {
+			return true;
+		}
+		$key   = 'sc_rl_' . preg_replace( '/[^a-z0-9_]/', '', (string) $bucket ) . '_' . md5( $this->client_ip() );
+		$count = (int) get_transient( $key );
+		if ( $count >= $max ) {
+			return false;
+		}
+		set_transient( $key, $count + 1, max( 60, (int) $window ) );
+		return true;
+	}
+
+	/**
+	 * Server-set connecting IP (not client-forgeable) for rate-limit keys.
+	 *
+	 * @return string
+	 */
+	private function client_ip() {
+		$ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+		return filter_var( $ip, FILTER_VALIDATE_IP ) ? $ip : '0';
+	}
+
+	/**
+	 * Bound and clean a decoded design payload before storage: strip tags from string
+	 * leaves (defense in depth against stored/DOM XSS), cap string length, and limit
+	 * nesting depth and node count so a hostile payload cannot bloat storage.
+	 *
+	 * @param mixed $value Decoded JSON value.
+	 * @param int   $depth Current recursion depth.
+	 * @return mixed
+	 */
+	private function sanitize_payload( $value, $depth = 0 ) {
+		if ( $depth > 8 ) {
+			return null;
+		}
+		if ( is_array( $value ) ) {
+			$out   = array();
+			$count = 0;
+			foreach ( $value as $k => $v ) {
+				if ( $count++ >= 2000 ) {
+					break;
+				}
+				$key         = is_int( $k ) ? $k : substr( sanitize_text_field( (string) $k ), 0, 100 );
+				$out[ $key ] = $this->sanitize_payload( $v, $depth + 1 );
+			}
+			return $out;
+		}
+		if ( is_string( $value ) ) {
+			return substr( wp_kses( $value, array() ), 0, 5000 );
+		}
+		if ( is_bool( $value ) || is_int( $value ) || is_float( $value ) ) {
+			return $value;
+		}
+		return null;
 	}
 }
