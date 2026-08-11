@@ -2,13 +2,13 @@
 
 WordPress / WooCommerce plugin for SMS and voice calls via **your own Twilio account**. Order communication is driven by custom statuses (**Ready for Pickup** and **Shipped**), with consent-aware SMS, quiet hours, bulk reminders, and order chat history.
 
-**Current version: 1.14.2** (plugin header / `TOC_VERSION`)
+**Current version: 1.15.0** (plugin header / `TOC_VERSION`)
 
 This monorepo also contains independent plugins:
 
 | Plugin | Path | Current |
 |--------|------|---------|
-| Twilio Order Communicator | `twilio-order-communicator/` | 1.14.2 |
+| Twilio Order Communicator | `twilio-order-communicator/` | 1.15.0 |
 | StoreCanvas | `storecanvas/` | 1.3.1 |
 | Orderbay | `orderbay/` | 1.4.0 |
 
@@ -42,6 +42,7 @@ Latest source is always on `main` under `twilio-order-communicator/`.
 |--------|--------|
 | Orderbay 1.4.0 | Configurable invoice/proforma/credit-note numbering: `{PREFIX}{YYYY}{MM}{DD}{SEQ}` tokens + `{SEQ:n}` zero-padding, optional yearly/monthly counter reset (period-scoped, atomic). Back-compatible default `{PREFIX}{SEQ}`; sequence token always enforced |
 | StoreCanvas 1.3.1 | Pricing correctness: percent options use the selected variation's price (not the parent), qty options charge amount × quantity, and negative option totals reduce the price (floored at 0) and display consistently. Live preview mirrors the server; `price_for()` unit-tested |
+| TOC 1.15.0 | Delivery analytics dashboard card (SMS sent / delivered / failed / reply rates over 30d); inbound-webhook MessageSid idempotency (no double-processing of Twilio retries); single-use tokenized TwiML URL. `compute_rates()` unit-tested |
 
 ## What's in 1.14.2
 

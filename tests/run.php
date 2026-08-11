@@ -160,6 +160,12 @@ if ( extension_loaded( 'dom' ) ) {
 	echo "SKIP: ext-dom not loaded — e-invoice XML tests skipped\n";
 }
 
+/* ---- TOC delivery-rate math (pure; pins the analytics card) ---- */
+check( 'rates zero sent', TOC_Logger::compute_rates( array() ), array( 'delivered_rate' => 0.0, 'failed_rate' => 0.0, 'reply_rate' => 0.0 ) );
+check( 'rates all delivered', TOC_Logger::compute_rates( array( 'sent' => 10, 'delivered' => 10, 'failed' => 0, 'replies' => 0 ) ), array( 'delivered_rate' => 100.0, 'failed_rate' => 0.0, 'reply_rate' => 0.0 ) );
+check( 'rates mixed', TOC_Logger::compute_rates( array( 'sent' => 8, 'delivered' => 6, 'failed' => 2, 'replies' => 2 ) ), array( 'delivered_rate' => 75.0, 'failed_rate' => 25.0, 'reply_rate' => 25.0 ) );
+check( 'rates rounding 1dp', TOC_Logger::compute_rates( array( 'sent' => 3, 'delivered' => 1, 'failed' => 0, 'replies' => 0 ) ), array( 'delivered_rate' => 33.3, 'failed_rate' => 0.0, 'reply_rate' => 0.0 ) );
+
 /* ---- StoreCanvas option pricing (pure; pins the percent/qty/negative fixes) ---- */
 check( 'price flat', SC_Cart_Order::price_for( 'flat', 5.0, 20.0, '1' ), 5.0 );
 check( 'price percent of base', SC_Cart_Order::price_for( 'percent', 10.0, 20.0, '1' ), 2.0 );
