@@ -2,13 +2,13 @@
 
 WordPress / WooCommerce plugin for SMS and voice calls via **your own Twilio account**. Order communication is driven by custom statuses (**Ready for Pickup** and **Shipped**), with consent-aware SMS, quiet hours, bulk reminders, and order chat history.
 
-**Current version: 1.18.0** (plugin header / `TOC_VERSION`)
+**Current version: 1.19.0** (plugin header / `TOC_VERSION`)
 
 This monorepo also contains independent plugins:
 
 | Plugin | Path | Current |
 |--------|------|---------|
-| Twilio Order Communicator | `twilio-order-communicator/` | 1.18.0 |
+| Twilio Order Communicator | `twilio-order-communicator/` | 1.19.0 |
 | StoreCanvas | `storecanvas/` | 1.6.1 |
 | Orderbay | `orderbay/` | 1.8.0 |
 
@@ -55,6 +55,7 @@ Latest source is always on `main` under `twilio-order-communicator/`.
 | TOC 1.17.0 | Performance: sargable opt-out lookups via an indexed `phone_last10` column (replaces non-indexable `RIGHT(phone_digits,10)`, added on upgrade + backfilled); bulk-tab consent batch-loads opt-outs in one query (N+1 fix). Behavior unchanged; pure `last10()` unit-tested |
 | TOC 1.18.0 | WhatsApp channel via the store's own Twilio WhatsApp sender (BYO, reuses the SMS opt-out/consent/merge/log path); optional `toc_whatsapp_from` setting + a "WhatsApp only" bulk mode. Pure `whatsapp_address()` unit-tested; live delivery needs a real WhatsApp sender |
 | Orderbay 1.8.0 | Item-level RMA (per-line return quantities on the panel + RMA slip) and optional customer status emails (on Approved/Received/Closed, once per transition, default off). Pure `sanitize_rma_items()` / `should_email()` unit-tested |
+| TOC 1.19.0 | Security hardening: order-screen SMS/call is bound to the order's own billing number (no arbitrary-number sends under an order id); the Role-permissions matrix and Twilio Auth Token changes are administrator-only, and plugin caps require a WooCommerce baseline. Pure `phones_match()` / `role_meets_baseline()` unit-tested |
 
 ## What's in 1.14.2
 

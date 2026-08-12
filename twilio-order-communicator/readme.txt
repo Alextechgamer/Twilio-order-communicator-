@@ -4,7 +4,7 @@ Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
 WC requires at least: 7.0
-Stable tag: 1.18.0
+Stable tag: 1.19.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -85,6 +85,11 @@ No. The plugin includes its own tokenized TwiML endpoint.
 They text START or UNSTOP. Plain "YES" is intentionally not treated as re-subscribe.
 
 == Changelog ==
+
+= 1.19.0 =
+* Security: the order screen's SMS/call now sends only to the order's own billing number — an operator-entered number must match it, so a send can no longer be directed at an arbitrary number under an order id
+* Security: editing the Role permissions matrix now requires an administrator (manage_options), and toc_manage/toc_send can only be granted to roles that already hold a WooCommerce baseline (manage_woocommerce or edit_shop_orders)
+* Security: changing the Twilio Auth Token now requires an administrator; defining TOC_AUTH_TOKEN as a constant remains the recommended path
 
 = 1.18.0 =
 * New: WhatsApp channel via your own Twilio WhatsApp sender (BYO, zero markup) — reuses the SMS opt-out, consent, merge-tag and logging path

@@ -266,6 +266,30 @@ class TOC_Order_Meta {
 		<?php
 	}
 
+	/**
+	 * Resolve the number to contact for an order.
+	 *
+	 * Defaults to the order's billing phone. An operator-supplied phone is honored only
+	 * when it matches that billing number (formatting-tolerant via TOC_Logger::phones_match),
+	 * so the order screen can never be used to message an arbitrary number under an
+	 * order_id. Returns '' when there is no usable, order-bound number.
+	 *
+	 * @param WC_Order $order  Order object.
+	 * @param string   $posted Operator-supplied phone (may be empty).
+	 * @return string
+	 */
+	private function resolve_order_phone( $order, $posted ) {
+		$billing = (string) $order->get_billing_phone();
+		$posted  = trim( (string) $posted );
+		if ( '' === $posted ) {
+			return $billing;
+		}
+		if ( '' !== $billing && TOC_Logger::phones_match( $posted, $billing ) ) {
+			return $posted;
+		}
+		return '';
+	}
+
 	public function ajax_sms() {
 		check_ajax_referer( 'toc_nonce', 'nonce' );
 		if ( ! current_user_can( TOC_Caps::send() ) ) {
@@ -274,11 +298,18 @@ class TOC_Order_Meta {
 
 		$order_id = absint( $_POST['order_id'] ?? 0 );
 		$message  = sanitize_textarea_field( wp_unslash( $_POST['message'] ?? '' ) );
-		$phone    = sanitize_text_field( wp_unslash( $_POST['phone'] ?? '' ) );
+		$posted   = sanitize_text_field( wp_unslash( $_POST['phone'] ?? '' ) );
 		$force    = ! empty( $_POST['force'] );
 
-		if ( empty( $message ) || empty( $phone ) ) {
-			wp_send_json_error( __( 'Message and phone required.', 'twilio-order-communicator' ) );
+		$order = wc_get_order( $order_id );
+		if ( ! $order ) {
+			wp_send_json_error( __( 'Order not found.', 'twilio-order-communicator' ) );
+		}
+		// Bind the destination to the order's own billing phone so a send can never be
+		// directed at an arbitrary number while attributed to this order.
+		$phone = $this->resolve_order_phone( $order, $posted );
+		if ( empty( $message ) || '' === $phone ) {
+			wp_send_json_error( __( 'A message is required, and the phone must match the order\'s billing number.', 'twilio-order-communicator' ) );
 		}
 
 		$result = TOC_Twilio::instance()->send_sms( $phone, $message, $order_id, $force ? true : false );
@@ -320,10 +351,16 @@ class TOC_Order_Meta {
 
 		$order_id = absint( $_POST['order_id'] ?? 0 );
 		$message  = sanitize_textarea_field( wp_unslash( $_POST['message'] ?? '' ) );
-		$phone    = sanitize_text_field( wp_unslash( $_POST['phone'] ?? '' ) );
+		$posted   = sanitize_text_field( wp_unslash( $_POST['phone'] ?? '' ) );
 
-		if ( empty( $message ) || empty( $phone ) ) {
-			wp_send_json_error( __( 'Message and phone required.', 'twilio-order-communicator' ) );
+		$order = wc_get_order( $order_id );
+		if ( ! $order ) {
+			wp_send_json_error( __( 'Order not found.', 'twilio-order-communicator' ) );
+		}
+		// Bind the destination to the order's own billing phone (see ajax_sms).
+		$phone = $this->resolve_order_phone( $order, $posted );
+		if ( empty( $message ) || '' === $phone ) {
+			wp_send_json_error( __( 'A message is required, and the phone must match the order\'s billing number.', 'twilio-order-communicator' ) );
 		}
 
 		$result = TOC_Twilio::instance()->make_call( $phone, $message, $order_id );

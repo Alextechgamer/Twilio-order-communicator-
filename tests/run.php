@@ -86,6 +86,14 @@ check( 'last10 short kept', TOC_Logger::last10( '5551234' ), '5551234' );
 check( 'last10 strips non-digits', TOC_Logger::last10( 'abc12-34' ), '1234' );
 check( 'last10 empty', TOC_Logger::last10( '' ), '' );
 
+/* ---- TOC_Logger::phones_match (pins M4: order-bound send target) ---- */
+check( 'match formatted vs bare', TOC_Logger::phones_match( '+1 (505) 555-1234', '5055551234' ), true );
+check( 'match cc vs national', TOC_Logger::phones_match( '+15055551234', '(505) 555-1234' ), true );
+check( 'match different numbers', TOC_Logger::phones_match( '5055551234', '5055559999' ), false );
+check( 'match empty a', TOC_Logger::phones_match( '', '5055551234' ), false );
+check( 'match empty b', TOC_Logger::phones_match( '5055551234', '' ), false );
+check( 'match both empty', TOC_Logger::phones_match( '', '' ), false );
+
 /* ---- TOC_Twilio::tracking_from_meta (pins the {tracking} merge tag precedence) ---- */
 check( 'tracking OB wins', TOC_Twilio::tracking_from_meta( '1Z999', 'https://t/1Z999', array( array( 'tracking_number' => 'WC1' ) ) ), array( 'number' => '1Z999', 'url' => 'https://t/1Z999' ) );
 check( 'tracking WC fallback', TOC_Twilio::tracking_from_meta( '', '', array( array( 'tracking_number' => 'WC1', 'custom_tracking_link' => 'https://c/WC1' ) ) ), array( 'number' => 'WC1', 'url' => 'https://c/WC1' ) );
