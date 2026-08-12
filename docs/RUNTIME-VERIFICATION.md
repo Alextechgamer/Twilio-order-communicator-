@@ -42,8 +42,8 @@ Reproduce with `tools/dev/setup-wp.sh` (see the "Local development" section of t
 | B3 | bulk tab: one batched opt-out query, not N | **PASS** |
 | B4 | role matrix: admin saves; shop_manager refused; subscriber floor; admin never locked out | **PASS** |
 | B5 | auth token: shop_manager can't change; admin can; TOC_AUTH_TOKEN constant wins | **FAIL → fixed** (token was protected, but the settings error was never displayed) |
-| B6 | order screen SMS/call bound to billing phone; force bypasses consent not number | — |
-| B7 | WhatsApp: clean degradation without sender; whatsapp: prefixes in payload | — |
+| B6 | order screen SMS/call bound to billing phone; force bypasses consent not number | **PASS** |
+| B7 | WhatsApp: clean degradation without sender; whatsapp: prefixes in payload | **PASS** (live delivery **BLOCKED** — no real approved WhatsApp sender) |
 | C1 | customized order creates artwork attachments with _sc_* markers | — |
 | C2 | admin Print files links go through sc_dl proxy and download | — |
 | C3 | sc_dl signature matrix (no/valid/expired/tampered sig, non-SC id) | — |
@@ -160,6 +160,39 @@ a single batched `IN` list, not one query per row.
 - `TOC_AUTH_TOKEN` constant defined in wp-config: effective credentials report the constant
   value, `credential_is_constant('token')` is true, and an admin save attempt neither
   changes the option nor the effective token. Constant removed afterwards; option value wins again.
+
+**B6 — PASS.** All requests were real `admin-ajax.php` POSTs from a logged-in
+administrator session with the page's `toc_nonce`; outbound Twilio HTTP was captured by
+the dev mock (`pre_http_request`) so payloads could be asserted without live credentials.
+Order #14, billing phone `+15055551000`:
+- `toc_send_sms` with `phone=+1 (505) 555-1000` (formatting variant of the billing number)
+  → `{"success":true}`; captured payload: `Messages.json`, `To=+15055551000`,
+  `From=+15005550006`, `Body=Your order is ready`.
+- Tampered `phone=+15055559999` → `{"success":false,"data":"A message is required, and
+  the phone must match the order's billing number."}` — **zero** outbound HTTP.
+- Consent: after a STOP webhook for the order's phone, un-forced send →
+  `{"code":"needs_force","message":"Phone number has opted out (STOP)."}`;
+  with `force=1` → sends (payload captured). `force=1` **plus** the tampered number →
+  still refused, zero outbound HTTP. (Force bypasses consent, never the number binding.)
+- `toc_send_call`: bare `5055551000` variant → success, payload `Calls.json`
+  `To=+15055551000`; tampered number → refused, no HTTP.
+- Bonus observed: creating the 10 Ready-for-Pickup orders fired status-based auto-notify —
+  the mock captured one `Calls.json` POST per order with the tokenized TwiML URL
+  (`?toc_twiml=1&token=…`) and REST status callbacks.
+
+**B7 — PASS (payloads); live delivery BLOCKED.**
+Note: the provisioned site had `toc_require_sms_consent=0`; it was set to `1` for these checks.
+- Consent gate: `toc_bulk_reminder` `mode=whatsapp` on an order without consent meta →
+  `"detail":"WhatsApp skipped (no consent)"`, zero outbound HTTP.
+- No `toc_whatsapp_from` configured (falls back to the SMS From): consented order →
+  captured payload `To=whatsapp:+15055551001`, `From=whatsapp:+15005550006` — `whatsapp:`
+  prefix on **both** addresses, same Messages API.
+- `toc_whatsapp_from=+14155238886` → `From=whatsapp:+14155238886`.
+- Degradation with no sender at all (`toc_whatsapp_from` and `toc_from_number` both empty)
+  → clean `"WhatsApp failed: Twilio credentials not configured."`, no fatal, zero outbound
+  HTTP. Options restored afterwards.
+- **BLOCKED:** actual WhatsApp delivery — requires a real, Twilio-approved WhatsApp sender,
+  which this sandbox does not have. The request payloads above are the verifiable surface.
 
 ### C. StoreCanvas
 
