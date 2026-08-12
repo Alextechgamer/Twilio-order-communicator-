@@ -1,0 +1,9 @@
+{
+  "name": "Twilio Order Communicator",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+  "user": "ubuntu",
+  "start": "bash .cursor/start-gstack-skills.sh"
+}

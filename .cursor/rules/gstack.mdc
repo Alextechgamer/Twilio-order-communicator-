@@ -1,0 +1,32 @@
+---
+description: How to invoke gstack skills from /opt/gstack (do not rely on Cursor auto-registration)
+alwaysApply: true
+---
+
+# gstack
+
+gstack is installed at `/opt/gstack` (baked into the environment image, not a per-session install).
+
+## How to run a gstack skill
+
+Do **not** improvise from memory or from AGENTS.md. To run a gstack skill:
+
+1. Read `/opt/gstack/<name>/SKILL.md`
+2. Follow that file exactly
+
+Use `/opt/gstack/browse/dist/browse` for all web browsing required by gstack skills.
+
+## Available skills
+
+| Skill | Path |
+| --- | --- |
+| office-hours | `/opt/gstack/office-hours/SKILL.md` |
+| autoplan | `/opt/gstack/autoplan/SKILL.md` |
+| review | `/opt/gstack/review/SKILL.md` |
+| qa | `/opt/gstack/qa/SKILL.md` |
+| cso | `/opt/gstack/cso/SKILL.md` |
+| ship | `/opt/gstack/ship/SKILL.md` |
+| investigate | `/opt/gstack/investigate/SKILL.md` |
+| document-release | `/opt/gstack/document-release/SKILL.md` |
+
+Slash commands like `/qa` mean: read and follow `/opt/gstack/qa/SKILL.md` (and likewise for the other names above).

@@ -7,7 +7,12 @@ Thumbs.db
 *~
 node_modules/
 vendor/
-.cursor/
+.cursor/*
+!.cursor/Dockerfile
+!.cursor/environment.json
+!.cursor/start-gstack-skills.sh
+!.cursor/rules/
+!.cursor/rules/**
 
 smoke-wp/
 license-server/config.php
