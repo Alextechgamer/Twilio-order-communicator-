@@ -10,7 +10,7 @@ This monorepo also contains independent plugins:
 |--------|------|---------|
 | Twilio Order Communicator | `twilio-order-communicator/` | 1.18.0 |
 | StoreCanvas | `storecanvas/` | 1.6.1 |
-| Orderbay | `orderbay/` | 1.7.1 |
+| Orderbay | `orderbay/` | 1.8.0 |
 
 ## Install
 
@@ -54,6 +54,7 @@ Latest source is always on `main` under `twilio-order-communicator/`.
 | Docs + tests 1.6.1 / 1.7.1 | Completed the StoreCanvas & OrderBay readmes (description/install/FAQ) and added regression tests for `OB_Barcode::code128_svg`, `OB_Fulfillment::sanitize_url_template`, and `SC_Product_Options::sanitize_field_row` (harness gained common sanitizer shims) |
 | TOC 1.17.0 | Performance: sargable opt-out lookups via an indexed `phone_last10` column (replaces non-indexable `RIGHT(phone_digits,10)`, added on upgrade + backfilled); bulk-tab consent batch-loads opt-outs in one query (N+1 fix). Behavior unchanged; pure `last10()` unit-tested |
 | TOC 1.18.0 | WhatsApp channel via the store's own Twilio WhatsApp sender (BYO, reuses the SMS opt-out/consent/merge/log path); optional `toc_whatsapp_from` setting + a "WhatsApp only" bulk mode. Pure `whatsapp_address()` unit-tested; live delivery needs a real WhatsApp sender |
+| Orderbay 1.8.0 | Item-level RMA (per-line return quantities on the panel + RMA slip) and optional customer status emails (on Approved/Received/Closed, once per transition, default off). Pure `sanitize_rma_items()` / `should_email()` unit-tested |
 
 ## What's in 1.14.2
 

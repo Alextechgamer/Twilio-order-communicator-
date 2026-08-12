@@ -3,7 +3,7 @@ Contributors: alextechgamer
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.7.1
+Stable tag: 1.8.0
 License: GPLv2 or later
 
 Self-hosted WooCommerce ops toolkit: documents, fulfillment, RMA, digests, search.
@@ -50,6 +50,11 @@ Yes — copy any template from the plugin's `templates/` folder into `wp-content
 Yes, Orderbay declares and supports WooCommerce High-Performance Order Storage.
 
 == Changelog ==
+
+= 1.8.0 =
+* New: item-level RMA — record how many of each line item are being returned; shown on the RMA slip (Return qty column)
+* New: optional customer RMA status emails — when enabled, the customer is emailed once when the RMA becomes Approved, Received or Closed (default off; wp_mail, store From)
+* The notify statuses are filterable (ob_rma_notify_states); existing whole-order RMA behavior is unchanged
 
 = 1.7.1 =
 * Docs: complete the readme (description, installation, FAQ, feature list)

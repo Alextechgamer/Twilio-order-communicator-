@@ -18,6 +18,7 @@ require $root . '/orderbay/includes/class-ob-invoicing.php';
 require $root . '/orderbay/includes/class-ob-documents.php';
 require $root . '/orderbay/includes/class-ob-barcode.php';
 require $root . '/orderbay/includes/class-ob-fulfillment.php';
+require $root . '/orderbay/includes/class-ob-rma.php';
 require $root . '/orderbay/includes/class-ob-qr.php';
 require $root . '/storecanvas/includes/class-sc-print-ready.php';
 require $root . '/storecanvas/includes/class-sc-export.php';
@@ -339,6 +340,18 @@ check( 'field price float', $scf['price'], 3.5 );
 check( 'field choices normalized', count( $scf['choices'] ), 2 );
 check( 'field choice per-price', $scf['choices'][0]['price'], 2.0 );
 check( 'field per_char downgrades on non-text', SC_Product_Options::sanitize_field_row( array( 'id' => 'x', 'type' => 'select', 'price_type' => 'per_char' ) )['price_type'], 'flat' );
+
+/* ---- OrderBay RMA item-level + status-email predicates (pure) ---- */
+$maxes = array( 10 => 3, 11 => 1, 12 => 5 );
+check( 'rma items clamp to max', OB_RMA::sanitize_rma_items( array( 10 => 5, 11 => 1, 12 => 2 ), $maxes ), array( 10 => 3, 11 => 1, 12 => 2 ) );
+check( 'rma items drop zero/neg', OB_RMA::sanitize_rma_items( array( 10 => 0, 11 => -2, 12 => 4 ), $maxes ), array( 12 => 4 ) );
+check( 'rma items drop unknown', OB_RMA::sanitize_rma_items( array( 99 => 2, 10 => 1 ), $maxes ), array( 10 => 1 ) );
+check( 'rma items non-array', OB_RMA::sanitize_rma_items( 'x', $maxes ), array() );
+$notify = array( 'approved', 'received', 'closed' );
+check( 'rma email on approve', OB_RMA::should_email( 'requested', 'approved', $notify ), true );
+check( 'rma email not on requested', OB_RMA::should_email( 'none', 'requested', $notify ), false );
+check( 'rma email not on same', OB_RMA::should_email( 'approved', 'approved', $notify ), false );
+check( 'rma email on closed', OB_RMA::should_email( 'received', 'closed', $notify ), true );
 
 /* ---- OrderBay QR version selection (pure; pins the no-truncation fix) ---- */
 check( 'qr v1 boundary', OB_QR::pick_version( 14 ), 1 );

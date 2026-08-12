@@ -37,7 +37,67 @@ class OB_RMA {
 			'attention_on_request'   => '0',
 			'customer_request'       => '0', // default off
 			'customer_statuses'      => array( 'completed', 'processing' ),
+			'notify_customer'        => '0', // email the customer on RMA status changes (default off)
 		);
+	}
+
+	/**
+	 * RMA statuses that trigger a customer notification email (filterable).
+	 *
+	 * @return string[]
+	 */
+	public static function notify_states() {
+		$states = array( 'approved', 'received', 'closed' );
+		/**
+		 * Filter which RMA statuses email the customer.
+		 *
+		 * @param string[] $states RMA status slugs.
+		 */
+		return (array) apply_filters( 'ob_rma_notify_states', $states );
+	}
+
+	/**
+	 * Clamp/validate a per-line RMA quantity map against each item's ordered quantity (pure).
+	 *
+	 * @param mixed $raw   Map of order_item_id => requested qty.
+	 * @param mixed $maxes Map of order_item_id => ordered qty (the allowed maximum).
+	 * @return array<int,int> Sanitized order_item_id => qty (1..max), zero/invalid dropped.
+	 */
+	public static function sanitize_rma_items( $raw, $maxes ) {
+		$out = array();
+		if ( ! is_array( $raw ) || ! is_array( $maxes ) ) {
+			return $out;
+		}
+		foreach ( $raw as $item_id => $qty ) {
+			$item_id = (int) $item_id;
+			$qty     = (int) $qty;
+			if ( $item_id <= 0 || $qty <= 0 || ! isset( $maxes[ $item_id ] ) ) {
+				continue;
+			}
+			$max = (int) $maxes[ $item_id ];
+			if ( $max < 1 ) {
+				continue;
+			}
+			$out[ $item_id ] = min( $qty, $max );
+		}
+		return $out;
+	}
+
+	/**
+	 * Whether an RMA status transition should email the customer (pure): a real change into a
+	 * notify state.
+	 *
+	 * @param string $prev          Previous status.
+	 * @param string $next          New status.
+	 * @param array  $notify_states Statuses that trigger an email.
+	 * @return bool
+	 */
+	public static function should_email( $prev, $next, $notify_states ) {
+		$next = (string) $next;
+		if ( (string) $prev === $next || ! is_array( $notify_states ) ) {
+			return false;
+		}
+		return in_array( $next, $notify_states, true );
 	}
 
 	public static function get_settings() {
@@ -92,6 +152,7 @@ class OB_RMA {
 		$out['return_address']       = isset( $input['return_address'] ) ? sanitize_textarea_field( $input['return_address'] ) : '';
 		$out['attention_on_request'] = ! empty( $input['attention_on_request'] ) ? '1' : '0';
 		$out['customer_request']     = ! empty( $input['customer_request'] ) ? '1' : '0';
+		$out['notify_customer']      = ! empty( $input['notify_customer'] ) ? '1' : '0';
 		$statuses = array();
 		if ( ! empty( $input['customer_statuses'] ) && is_array( $input['customer_statuses'] ) ) {
 			foreach ( $input['customer_statuses'] as $st ) {
@@ -133,6 +194,10 @@ class OB_RMA {
 		echo '<input type="hidden" name="' . esc_attr( OB_Plugin::OPT_RMA ) . '[customer_request]" value="0" />';
 		echo '<label><input type="checkbox" name="' . esc_attr( OB_Plugin::OPT_RMA ) . '[customer_request]" value="1" ' . checked( $s['customer_request'], '1', false ) . ' /> ';
 		echo esc_html__( 'Allow logged-in customers to request RMA on My Account (default off)', 'orderbay' ) . '</label></td></tr>';
+		echo '<tr><th>' . esc_html__( 'Customer emails', 'orderbay' ) . '</th><td>';
+		echo '<input type="hidden" name="' . esc_attr( OB_Plugin::OPT_RMA ) . '[notify_customer]" value="0" />';
+		echo '<label><input type="checkbox" name="' . esc_attr( OB_Plugin::OPT_RMA ) . '[notify_customer]" value="1" ' . checked( $s['notify_customer'] ?? '0', '1', false ) . ' /> ';
+		echo esc_html__( 'Email the customer when the RMA status becomes Approved, Received or Closed (default off)', 'orderbay' ) . '</label></td></tr>';
 		echo '<tr><th>' . esc_html__( 'Eligible order statuses', 'orderbay' ) . '</th><td><fieldset>';
 		$cs = is_array( $s['customer_statuses'] ?? null ) ? $s['customer_statuses'] : array( 'completed', 'processing' );
 		foreach ( wc_get_order_statuses() as $slug => $label ) {
@@ -204,6 +269,25 @@ class OB_RMA {
 			echo '<option value="' . esc_attr( $k ) . '" ' . selected( $status, $k, false ) . '>' . esc_html( $lab ) . '</option>';
 		}
 		echo '</select></label></p>';
+		// Per-line item selection (optional): how many of each item are being returned.
+		$rma_items = $order->get_meta( OB_Plugin::META_RMA_ITEMS );
+		$rma_items = is_array( $rma_items ) ? $rma_items : array();
+		$items     = $order->get_items();
+		if ( $items ) {
+			echo '<p><strong>' . esc_html__( 'Items to return', 'orderbay' ) . '</strong></p>';
+			foreach ( $items as $item_id => $item ) {
+				$ordered = (int) $item->get_quantity();
+				if ( $ordered < 1 ) {
+					continue;
+				}
+				$val = isset( $rma_items[ $item_id ] ) ? (int) $rma_items[ $item_id ] : 0;
+				echo '<p style="margin:2px 0;"><label>';
+				echo '<input type="number" min="0" max="' . esc_attr( (string) $ordered ) . '" name="ob_rma_items[' . esc_attr( (string) $item_id ) . ']" value="' . esc_attr( (string) $val ) . '" style="width:64px;" /> ';
+				/* translators: 1: item name, 2: ordered quantity. */
+				echo esc_html( sprintf( __( '%1$s (of %2$d)', 'orderbay' ), $item->get_name(), $ordered ) );
+				echo '</label></p>';
+			}
+		}
 		echo '<p><label>' . esc_html__( 'Reason', 'orderbay' ) . '<br />';
 		echo '<textarea name="ob_rma_reason" rows="3" style="width:100%;">' . esc_textarea( (string) $reason ) . '</textarea></label></p>';
 		echo '<p><strong>' . esc_html__( 'RMA #', 'orderbay' ) . ':</strong> ';
@@ -266,16 +350,81 @@ class OB_RMA {
 		} else {
 			$order->delete_meta_data( OB_Plugin::META_RMA_REASON );
 		}
+
+		// Per-line item selection, clamped to each item's ordered quantity.
+		if ( isset( $_POST['ob_rma_items'] ) && is_array( $_POST['ob_rma_items'] ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+			$maxes = array();
+			foreach ( $order->get_items() as $item_id => $item ) {
+				$maxes[ (int) $item_id ] = (int) $item->get_quantity();
+			}
+			$rma_items = self::sanitize_rma_items( wp_unslash( $_POST['ob_rma_items'] ), $maxes ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+			if ( $rma_items ) {
+				$order->update_meta_data( OB_Plugin::META_RMA_ITEMS, $rma_items );
+			} else {
+				$order->delete_meta_data( OB_Plugin::META_RMA_ITEMS );
+			}
+		}
 		$order->save();
 
+		$cfg = self::get_settings();
+
 		if ( 'requested' === $status && 'requested' !== $prev ) {
-			$cfg = self::get_settings();
 			if ( '1' === (string) $cfg['attention_on_request'] && ! $order->get_meta( OB_Plugin::META_ATTENTION ) ) {
 				$order->update_meta_data( OB_Plugin::META_ATTENTION, '1' );
 				$order->add_order_note( __( 'Orderbay: needs attention (RMA requested).', 'orderbay' ), false, true );
 				$order->save();
 			}
 		}
+
+		// Customer status email — once per real transition into a notify state.
+		if ( '1' === (string) ( $cfg['notify_customer'] ?? '0' )
+			&& self::should_email( $prev, $status, self::notify_states() )
+			&& (string) $order->get_meta( OB_Plugin::META_RMA_EMAILED ) !== $status ) {
+			if ( $this->send_customer_email( $order, $status ) ) {
+				$order->update_meta_data( OB_Plugin::META_RMA_EMAILED, $status );
+				$order->save();
+			}
+		}
+	}
+
+	/**
+	 * Email the customer a plain-text RMA status update. Returns true if wp_mail was attempted.
+	 *
+	 * @param WC_Order $order  Order.
+	 * @param string   $status New RMA status.
+	 * @return bool
+	 */
+	private function send_customer_email( $order, $status ) {
+		$to = $order->get_billing_email();
+		if ( ! $to || ! is_email( $to ) ) {
+			return false;
+		}
+		$store  = wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
+		$number = (string) $order->get_meta( OB_Plugin::META_RMA_NUMBER );
+		$labels = array(
+			'approved' => __( 'approved', 'orderbay' ),
+			'received' => __( 'received', 'orderbay' ),
+			'closed'   => __( 'closed', 'orderbay' ),
+		);
+		$label = $labels[ $status ] ?? $status;
+		/* translators: 1: store name, 2: order number. */
+		$subject = sprintf( __( '%1$s — return update for order #%2$s', 'orderbay' ), $store, $order->get_order_number() );
+		$lines   = array();
+		/* translators: 1: customer first name. */
+		$lines[] = sprintf( __( 'Hello %s,', 'orderbay' ), $order->get_billing_first_name() );
+		$lines[] = '';
+		if ( $number ) {
+			/* translators: 1: RMA number, 2: status label. */
+			$lines[] = sprintf( __( 'Your return %1$s is now %2$s.', 'orderbay' ), $number, $label );
+		} else {
+			/* translators: 1: status label. */
+			$lines[] = sprintf( __( 'Your return request is now %s.', 'orderbay' ), $label );
+		}
+		$lines[] = '';
+		$lines[] = $store;
+		$body    = implode( "\n", $lines );
+
+		return (bool) wp_mail( $to, $subject, $body );
 	}
 
 	/**

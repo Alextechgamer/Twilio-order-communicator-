@@ -62,21 +62,28 @@ $paper = ( isset( $settings['paper'] ) && 'a4' === $settings['paper'] ) ? 'A4' :
 					<th><?php esc_html_e( 'Item', 'orderbay' ); ?></th>
 					<th><?php esc_html_e( 'SKU', 'orderbay' ); ?></th>
 					<th><?php esc_html_e( 'Qty', 'orderbay' ); ?></th>
+					<th><?php esc_html_e( 'Return qty', 'orderbay' ); ?></th>
 				</tr>
 			</thead>
 			<tbody>
 			<?php if ( empty( $items ) ) : ?>
-				<tr><td colspan="3"><?php esc_html_e( 'No line items on this order.', 'orderbay' ); ?></td></tr>
+				<tr><td colspan="4"><?php esc_html_e( 'No line items on this order.', 'orderbay' ); ?></td></tr>
 			<?php else : ?>
-				<?php foreach ( $items as $item ) : ?>
+				<?php
+				$ob_rma_items = $order->get_meta( OB_Plugin::META_RMA_ITEMS );
+				$ob_rma_items = is_array( $ob_rma_items ) ? $ob_rma_items : array();
+				?>
+				<?php foreach ( $items as $ob_item_id => $item ) : ?>
 					<?php
 					$product = $item->get_product();
 					$sku     = $product ? $product->get_sku() : '';
+					$ret_qty = isset( $ob_rma_items[ $ob_item_id ] ) ? (int) $ob_rma_items[ $ob_item_id ] : 0;
 					?>
 					<tr>
 						<td><?php echo esc_html( $item->get_name() ); ?></td>
 						<td><?php echo esc_html( $sku ? $sku : '—' ); ?></td>
 						<td><?php echo esc_html( (string) $item->get_quantity() ); ?></td>
+						<td><?php echo $ret_qty > 0 ? esc_html( (string) $ret_qty ) : '—'; ?></td>
 					</tr>
 				<?php endforeach; ?>
 			<?php endif; ?>
