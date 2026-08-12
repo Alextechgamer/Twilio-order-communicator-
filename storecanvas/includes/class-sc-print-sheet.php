@@ -88,14 +88,14 @@ class SC_Print_Sheet {
 			}
 			echo '<div class="grid">';
 			if ( $art_id ) {
-				$url = wp_get_attachment_url( $art_id );
+				$url = SC_Print_Ready::instance()->proxy_url( $art_id );
 				if ( $url ) {
 					echo '<div><div>' . esc_html__( 'Original artwork', 'storecanvas' ) . '</div><img src="' . esc_url( $url ) . '" alt="" /></div>';
 				}
 			}
 			if ( is_array( $files ) ) {
 				foreach ( $files as $vid => $fid ) {
-					$url = wp_get_attachment_url( (int) $fid );
+					$url = SC_Print_Ready::instance()->proxy_url( (int) $fid );
 					if ( $url ) {
 						echo '<div><div>' . esc_html( sprintf( __( 'Composite: %s', 'storecanvas' ), $vid ) ) . '</div><img src="' . esc_url( $url ) . '" alt="" /></div>';
 					}

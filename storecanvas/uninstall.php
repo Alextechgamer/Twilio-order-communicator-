@@ -27,6 +27,9 @@ $options = array(
 	'sc_proof_email_body',
 	'sc_proof_email_status',
 	'sc_journey_enabled',
+	// Artwork-privacy proxy (H1): per-site signing secret fallback + one-time backfill flag.
+	'sc_dl_secret',
+	'sc_artwork_backfilled',
 );
 foreach ( $options as $opt ) {
 	delete_option( $opt );

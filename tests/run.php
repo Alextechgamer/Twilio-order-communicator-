@@ -12,7 +12,9 @@ require __DIR__ . '/bootstrap.php';
 $root = dirname( __DIR__ );
 require $root . '/twilio-order-communicator/includes/class-toc-twilio.php';
 require $root . '/twilio-order-communicator/includes/class-toc-logger.php';
+require $root . '/twilio-order-communicator/includes/class-toc-caps.php';
 require $root . '/license-server/src/Helpers.php';
+require $root . '/license-server/src/Api.php';
 require $root . '/orderbay/includes/class-ob-einvoice.php';
 require $root . '/orderbay/includes/class-ob-invoicing.php';
 require $root . '/orderbay/includes/class-ob-documents.php';
@@ -84,6 +86,14 @@ check( 'last10 short kept', TOC_Logger::last10( '5551234' ), '5551234' );
 check( 'last10 strips non-digits', TOC_Logger::last10( 'abc12-34' ), '1234' );
 check( 'last10 empty', TOC_Logger::last10( '' ), '' );
 
+/* ---- TOC_Logger::phones_match (pins M4: order-bound send target) ---- */
+check( 'match formatted vs bare', TOC_Logger::phones_match( '+1 (505) 555-1234', '5055551234' ), true );
+check( 'match cc vs national', TOC_Logger::phones_match( '+15055551234', '(505) 555-1234' ), true );
+check( 'match different numbers', TOC_Logger::phones_match( '5055551234', '5055559999' ), false );
+check( 'match empty a', TOC_Logger::phones_match( '', '5055551234' ), false );
+check( 'match empty b', TOC_Logger::phones_match( '5055551234', '' ), false );
+check( 'match both empty', TOC_Logger::phones_match( '', '' ), false );
+
 /* ---- TOC_Twilio::tracking_from_meta (pins the {tracking} merge tag precedence) ---- */
 check( 'tracking OB wins', TOC_Twilio::tracking_from_meta( '1Z999', 'https://t/1Z999', array( array( 'tracking_number' => 'WC1' ) ) ), array( 'number' => '1Z999', 'url' => 'https://t/1Z999' ) );
 check( 'tracking WC fallback', TOC_Twilio::tracking_from_meta( '', '', array( array( 'tracking_number' => 'WC1', 'custom_tracking_link' => 'https://c/WC1' ) ) ), array( 'number' => 'WC1', 'url' => 'https://c/WC1' ) );
@@ -126,6 +136,20 @@ check( 'license verify ok', TOC_License_Helpers::verify_download( $secret, 'toc'
 check( 'license verify tampered version', TOC_License_Helpers::verify_download( $secret, 'toc', '1.2.4', $future, $sig ), false );
 check( 'license verify wrong secret', TOC_License_Helpers::verify_download( 'other', 'toc', '1.2.3', $future, $sig ), false );
 check( 'license verify expired', TOC_License_Helpers::verify_download( $secret, 'toc', '1.2.3', time() - 10, $sig ), false );
+
+/* ---- license update-check download gate (pins H2: activated-site binding) ---- */
+check( 'dl allowed when activated', TOC_License_API::download_allowed( 'shop.example', 'inst-1', true ), true );
+check( 'dl blocked without activation', TOC_License_API::download_allowed( 'shop.example', 'inst-1', false ), false );
+check( 'dl blocked missing site', TOC_License_API::download_allowed( '', 'inst-1', true ), false );
+check( 'dl blocked missing instance', TOC_License_API::download_allowed( 'shop.example', '', true ), false );
+check( 'dl blocked bare key', TOC_License_API::download_allowed( '', '', false ), false );
+
+/* ---- TOC_Caps::role_meets_baseline (pins H4: cap-grant floor) ---- */
+check( 'baseline admin always', TOC_Caps::role_meets_baseline( 'administrator', false, false ), true );
+check( 'baseline via manage_woocommerce', TOC_Caps::role_meets_baseline( 'shop_manager', true, false ), true );
+check( 'baseline via edit_shop_orders', TOC_Caps::role_meets_baseline( 'fulfillment', false, true ), true );
+check( 'baseline subscriber blocked', TOC_Caps::role_meets_baseline( 'subscriber', false, false ), false );
+check( 'baseline editor blocked', TOC_Caps::role_meets_baseline( 'editor', false, false ), false );
 
 /* ---- license-server rate limiter (in-memory SQLite; skipped if pdo_sqlite absent) ---- */
 if ( extension_loaded( 'pdo_sqlite' ) ) {
@@ -254,6 +278,19 @@ check( 'fpd text field type', $mapped['options']['fields'][0]['type'], 'text' );
 check( 'fpd notes present', count( $mapped['notes'] ) >= 1, true );
 check( 'fpd bare list of views', count( SC_FPD_Import::map( array( array( 'title' => 'Only', 'elements' => array() ) ) )['customizer']['views'] ), 1 );
 check( 'fpd empty input', SC_FPD_Import::map( 'nope' )['customizer']['enabled'], 0 );
+
+/* ---- SC_FPD_Import::is_blocked_host (pins M7: SSRF host guard) ---- */
+check( 'ssrf blocks loopback', SC_FPD_Import::is_blocked_host( '127.0.0.1' ), true );
+check( 'ssrf blocks localhost', SC_FPD_Import::is_blocked_host( 'localhost' ), true );
+check( 'ssrf blocks sub localhost', SC_FPD_Import::is_blocked_host( 'db.localhost' ), true );
+check( 'ssrf blocks cloud metadata', SC_FPD_Import::is_blocked_host( '169.254.169.254' ), true );
+check( 'ssrf blocks rfc1918 10', SC_FPD_Import::is_blocked_host( '10.1.2.3' ), true );
+check( 'ssrf blocks rfc1918 192', SC_FPD_Import::is_blocked_host( '192.168.0.5' ), true );
+check( 'ssrf blocks ipv6 loopback', SC_FPD_Import::is_blocked_host( '::1' ), true );
+check( 'ssrf blocks ipv6 bracketed', SC_FPD_Import::is_blocked_host( '[::1]' ), true );
+check( 'ssrf blocks empty host', SC_FPD_Import::is_blocked_host( '' ), true );
+check( 'ssrf allows public ip', SC_FPD_Import::is_blocked_host( '8.8.8.8' ), false );
+check( 'ssrf allows public host', SC_FPD_Import::is_blocked_host( 'cdn.example.com' ), false );
 
 /* ---- StoreCanvas conditional logic (pure; AND/OR + operators) ---- */
 $opts = array( 'size' => 'L', 'color' => 'red', 'qty' => '5', 'name' => 'Bob', 'tags' => array( 'a', 'b' ) );
@@ -403,6 +440,20 @@ if ( false !== $pp ) {
 }
 check( 'phys decodes to 300 dpi', (int) round( $ppu * 0.0254 ), 300 );
 check( 'png_with_dpi rejects non-png', SC_Print_Ready::png_with_dpi( 'not a png', 300 ), '' );
+
+/* ---- SC_Print_Ready artwork download proxy (pins H1: signed token + marker classifier) ---- */
+$sc_secret = 'sc-unit-secret';
+$sc_future = time() + 3600;
+$sc_sig    = SC_Print_Ready::sign_token( $sc_secret, 123, $sc_future );
+check( 'sc token verify ok', SC_Print_Ready::verify_token( $sc_secret, 123, $sc_future, $sc_sig ), true );
+check( 'sc token wrong id', SC_Print_Ready::verify_token( $sc_secret, 124, $sc_future, $sc_sig ), false );
+check( 'sc token wrong secret', SC_Print_Ready::verify_token( 'other', 123, $sc_future, $sc_sig ), false );
+check( 'sc token expired', SC_Print_Ready::verify_token( $sc_secret, 123, time() - 5, $sc_sig ), false );
+check( 'sc marker uploaded (get_post_meta shape)', SC_Print_Ready::is_sc_artwork_meta( array( '_sc_uploaded' => array( '1' ) ) ), true );
+check( 'sc marker generated (flat)', SC_Print_Ready::is_sc_artwork_meta( array( '_sc_generated' => 1 ) ), true );
+check( 'sc marker plain attachment', SC_Print_Ready::is_sc_artwork_meta( array( '_wp_attached_file' => array( 'x.png' ) ) ), false );
+check( 'sc marker empty', SC_Print_Ready::is_sc_artwork_meta( array() ), false );
+check( 'sc marker non-array', SC_Print_Ready::is_sc_artwork_meta( 'nope' ), false );
 
 if ( extension_loaded( 'dom' ) ) {
 	$svg = SC_Export::svg_wrap( $png_1x1, 'image/png', 900, 600, 300, array( 'bleed_mm' => 3.0 ) );

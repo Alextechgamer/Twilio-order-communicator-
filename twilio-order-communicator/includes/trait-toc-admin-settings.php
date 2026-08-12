@@ -227,6 +227,18 @@ trait TOC_Admin_Settings {
 		if ( $value === '' ) {
 			return (string) get_option( 'toc_auth_token', '' );
 		}
+		// The Twilio Auth Token is a high-value secret: only full administrators may
+		// change it, so a toc_manage-only user (e.g. shop_manager) cannot swap in their
+		// own Twilio account and hijack sending. Defining TOC_AUTH_TOKEN as a constant
+		// stays the recommended path.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			add_settings_error(
+				'toc_auth_token',
+				'toc_auth_token_denied',
+				__( 'Only administrators can change the Twilio Auth Token. Your previous value was kept.', 'twilio-order-communicator' )
+			);
+			return (string) get_option( 'toc_auth_token', '' );
+		}
 		return sanitize_text_field( $value );
 	}
 
@@ -260,6 +272,11 @@ trait TOC_Admin_Settings {
 
 	/* ---------- SETTINGS ---------- */
 	private function render_settings() {
+		// This page lives under the WooCommerce menu, not Settings, so WordPress does not
+		// print add_settings_error() notices automatically (options-head.php never loads).
+		// Without this call the sanitize-time warnings — e.g. "Only administrators can
+		// change the Twilio Auth Token" — were silently dropped after the redirect.
+		settings_errors();
 		?>
 		<form method="post" action="options.php">
 			<?php settings_fields( 'toc_settings' ); ?>
@@ -674,7 +691,11 @@ trait TOC_Admin_Settings {
 	 * Separate form (not options.php) — updates WP_Role caps directly.
 	 */
 	private function render_role_permissions() {
-		if ( ! current_user_can( TOC_Caps::manage() ) ) {
+		// Deciding which roles hold the plugin's capabilities is an escalation-sensitive
+		// action, so it stays with full administrators (manage_options) — not merely
+		// whoever already holds toc_manage, who could otherwise grant caps to low
+		// privilege roles or lock others out.
+		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
 

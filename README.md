@@ -2,15 +2,39 @@
 
 WordPress / WooCommerce plugin for SMS and voice calls via **your own Twilio account**. Order communication is driven by custom statuses (**Ready for Pickup** and **Shipped**), with consent-aware SMS, quiet hours, bulk reminders, and order chat history.
 
-**Current version: 1.18.0** (plugin header / `TOC_VERSION`)
+**Current version: 1.19.1** (plugin header / `TOC_VERSION`)
 
 This monorepo also contains independent plugins:
 
 | Plugin | Path | Current |
 |--------|------|---------|
-| Twilio Order Communicator | `twilio-order-communicator/` | 1.18.0 |
-| StoreCanvas | `storecanvas/` | 1.6.1 |
-| Orderbay | `orderbay/` | 1.8.0 |
+| Twilio Order Communicator | `twilio-order-communicator/` | 1.19.1 |
+| StoreCanvas | `storecanvas/` | 1.7.1 |
+| Orderbay | `orderbay/` | 1.8.1 |
+
+## Local development
+
+No Docker needed — `tools/dev/setup-wp.sh` stands up WordPress + WooCommerce + MariaDB on
+PHP's built-in server with all three plugins symlinked from the repo and activated
+(idempotent; Ubuntu/PHP 8.3):
+
+```bash
+bash tools/dev/setup-wp.sh          # provision (or re-sync) ~/wordpress
+php -S 0.0.0.0:8080 -t ~/wordpress  # serve — admin at /wp-admin (admin/admin)
+```
+
+The script also installs two **development-only** mu-plugins from `tools/dev/mu-plugins/`:
+a Twilio HTTP mock (captures outbound `api.twilio.com` requests to `/tmp/toc-http.log` and
+fakes success, so send paths run without live credentials) and a `wp_mail` capture
+(`/tmp/wp-mail.log`). Remove them to talk to the real services.
+
+The license server runs standalone (needs `php8.3-sqlite3`): copy
+`license-server/config.example.php` to `config.php` (git-ignored), set real secrets, then
+`cd license-server/public && php -S 127.0.0.1:8081`.
+
+Tests + lint (the CI hard gate): `php tests/run.php` and `php -l` on every PHP file.
+What has actually been exercised against a live install is recorded in
+[`docs/RUNTIME-VERIFICATION.md`](./docs/RUNTIME-VERIFICATION.md).
 
 ## Install
 
@@ -55,6 +79,10 @@ Latest source is always on `main` under `twilio-order-communicator/`.
 | TOC 1.17.0 | Performance: sargable opt-out lookups via an indexed `phone_last10` column (replaces non-indexable `RIGHT(phone_digits,10)`, added on upgrade + backfilled); bulk-tab consent batch-loads opt-outs in one query (N+1 fix). Behavior unchanged; pure `last10()` unit-tested |
 | TOC 1.18.0 | WhatsApp channel via the store's own Twilio WhatsApp sender (BYO, reuses the SMS opt-out/consent/merge/log path); optional `toc_whatsapp_from` setting + a "WhatsApp only" bulk mode. Pure `whatsapp_address()` unit-tested; live delivery needs a real WhatsApp sender |
 | Orderbay 1.8.0 | Item-level RMA (per-line return quantities on the panel + RMA slip) and optional customer status emails (on Approved/Received/Closed, once per transition, default off). Pure `sanitize_rma_items()` / `should_email()` unit-tested |
+| Runtime verification 1.19.1 / 1.7.1 / 1.8.1 | Fixes found while exercising the suite against a real WordPress/WooCommerce install (see [`docs/RUNTIME-VERIFICATION.md`](./docs/RUNTIME-VERIFICATION.md)): **TOC** shows Settings save-time notices; **StoreCanvas** serves the admin/queue artwork preview via the signed proxy and drops an unsupported `meta_query` on the classic order datastore; **OrderBay** fixes RMA-save reentrancy. Uninstall option cleanup completed for TOC + SC |
+| TOC 1.19.0 | Security hardening: order-screen SMS/call is bound to the order's own billing number (no arbitrary-number sends under an order id); the Role-permissions matrix and Twilio Auth Token changes are administrator-only, and plugin caps require a WooCommerce baseline. Pure `phones_match()` / `role_meets_baseline()` unit-tested |
+| StoreCanvas 1.7.0 | Security hardening: customer artwork served via a signed, capability-checked download proxy (not a permanent public uploads URL) + one-time marker backfill; FPD-import SSRF guard on sideloaded image URLs; guest design-email no longer echoes the token in its JSON. Pure `sign_token()`/`verify_token()`/`is_sc_artwork_meta()`/`is_blocked_host()` unit-tested |
+| License-server | Security hardening: `/v1/update-check` now requires an activated site (matching `site_url`+`instance_id`) before issuing a signed download URL — a bare license key can no longer mint package URLs; nginx deny-rule docs for `data/`+`storage/` |
 
 ## What's in 1.14.2
 

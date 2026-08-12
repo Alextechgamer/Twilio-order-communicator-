@@ -181,15 +181,24 @@ class TOC_License_API {
 			TOC_License_Helpers::respond( 403, array( 'success' => false, 'status' => $status, 'error' => $msg ) );
 		}
 
+		// A signed download URL is bound to an activated site: require site_url +
+		// instance_id AND a matching activation before issuing one. A bare license key
+		// (no site binding) must never mint a package URL — that would let a stolen or
+		// shared key redistribute the plugin for the whole TTL window.
 		$site = TOC_License_Helpers::display_site_url( $_GET['site_url'] ?? '' ); // phpcs:ignore
 		$inst = trim( (string) ( $_GET['instance_id'] ?? '' ) ); // phpcs:ignore
-		if ( $site !== '' && $inst !== '' ) {
-			$act = $this->db->find_activation( $key, $site, $inst );
-			if ( ! $act ) {
-				TOC_License_Helpers::respond( 403, array( 'success' => false, 'status' => 'inactive', 'error' => 'Site not activated.' ) );
-			}
-			$this->db->touch_activation( $key, $site, $inst, $version );
+		$act  = ( $site !== '' && $inst !== '' ) ? $this->db->find_activation( $key, $site, $inst ) : null;
+		if ( ! self::download_allowed( $site, $inst, (bool) $act ) ) {
+			TOC_License_Helpers::respond(
+				403,
+				array(
+					'success' => false,
+					'status'  => 'inactive',
+					'error'   => 'Site not activated. Activate this site for the license before checking for updates.',
+				)
+			);
 		}
+		$this->db->touch_activation( $key, $site, $inst, $version );
 
 		$release = $this->db->latest_release( $slug !== '' ? $slug : $this->config['item_slug'] );
 		if ( ! $release ) {
@@ -227,6 +236,22 @@ class TOC_License_API {
 				),
 			)
 		);
+	}
+
+	/**
+	 * Whether an update-check request may be issued a signed download URL.
+	 *
+	 * The only way to earn a package URL is an activated site: both the site_url and
+	 * instance_id must be present AND resolve to a known activation for the license.
+	 * Pure decision (no I/O) so the invariant can be unit-tested without a running server.
+	 *
+	 * @param string $site             Normalized site URL from the request ('' if absent).
+	 * @param string $inst             Instance id from the request ('' if absent).
+	 * @param bool   $activation_found Whether the DB found a matching activation.
+	 * @return bool
+	 */
+	public static function download_allowed( $site, $inst, $activation_found ) {
+		return $site !== '' && $inst !== '' && (bool) $activation_found;
 	}
 
 	private function download() {

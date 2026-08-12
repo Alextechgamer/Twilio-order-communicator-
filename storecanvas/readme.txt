@@ -3,7 +3,7 @@ Contributors: alextechgamer
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.6.1
+Stable tag: 1.7.1
 License: GPLv2 or later
 
 Self-hosted WooCommerce personalization: product options, live mockup, print-ready, library, guest save.
@@ -44,10 +44,23 @@ Yes. Paste an exported FPD product JSON on the product screen and StoreCanvas ma
 = What print output does it produce? =
 True-to-size PNG with a DPI (pHYs) chunk, an SVG at physical millimetre size with bleed guides, and a minimal single-image PDF. The PDF is RGB/flattened (not CMYK/PDF-X); confirm color/DPI with your print provider.
 
+= Are customer artwork files private? =
+Uploaded artwork and generated print composites are marked and kept out of the public REST media listing, and StoreCanvas surfaces them through a signed, time-limited, capability-checked download proxy instead of a permanent public URL. To also block direct access to the underlying wp-content/uploads path (defense in depth), apply the Apache/nginx deny rules in docs/storecanvas-artwork-privacy.md.
+
 = Is it compatible with HPOS? =
 Yes, StoreCanvas declares and supports WooCommerce High-Performance Order Storage.
 
 == Changelog ==
+
+= 1.7.1 =
+* Fix: the customer artwork preview on the admin order screen and the production queue now goes through the signed download proxy too, instead of emitting a raw wp-content/uploads URL (completes the 1.7.0 artwork-privacy work)
+* Fix: the production queue no longer triggers a "meta_query is not supported" notice on the classic (non-HPOS) order datastore; the meta filter is used only under HPOS
+* Fix: uninstall now also removes the sc_dl_secret and sc_artwork_backfilled options
+
+= 1.7.0 =
+* Security: customer artwork and print composites are served through a signed, capability-checked download proxy instead of a permanent public uploads URL; a one-time backfill marks pre-existing artwork so the REST media filter and proxy cover it too (see docs/storecanvas-artwork-privacy.md for the host-level deny step)
+* Security: the FPD importer validates each view image URL before sideloading it server-side, blocking SSRF to private/reserved hosts (loopback, RFC1918, link-local incl. cloud metadata, IPv6 ::1)
+* Security: the guest "email me a design link" AJAX no longer echoes the design URL/token back in its JSON response (the link goes only to the emailed address)
 
 = 1.6.1 =
 * Docs: complete the readme (description, installation, FAQ, feature list)

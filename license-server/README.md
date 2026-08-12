@@ -43,7 +43,7 @@ Set `public_base_url` in `config.php` to the public URL (no trailing slash), e.g
 | POST | `/v1/activate` | Activate key for site + instance |
 | POST | `/v1/deactivate` | Remove activation |
 | POST | `/v1/validate` | Periodic re-check |
-| GET | `/v1/update-check` | Latest release if license allows (`X-TOC-License` header) |
+| GET | `/v1/update-check` | Latest release if license allows — requires `X-TOC-License` header **and** an activated `site_url`+`instance_id` |
 | GET | `/v1/download` | Signed zip download |
 
 ### Activate body (JSON)
@@ -77,6 +77,18 @@ Invalid/expired licenses **do not** disable SMS/voice — they only pause premiu
 - Use a long random `admin_token` / `download_secret`
 - Prefer HTTPS; the plugin verifies SSL when calling the server
 - Download URLs are HMAC-signed and time-limited
+- `/v1/update-check` only issues a signed download URL to an **activated** site (matching `site_url` + `instance_id`); a bare license key with no activation cannot mint package URLs
+- `data/` and `storage/` ship a deny-all Apache `.htaccess`. **nginx ignores `.htaccess`** — if you serve behind nginx, keep the document root at `public/` (so `data/` and `storage/` are outside it) and add explicit deny blocks:
+
+  ```nginx
+  # Never serve the SQLite database or release zips directly.
+  location ~* /(data|storage)/ {
+      deny all;
+      return 404;
+  }
+  ```
+
+  Confirm a direct request to `/data/licenses.sqlite` and `/storage/releases/<file>.zip` returns 404/403; downloads must go through the signed `/v1/download` endpoint.
 
 ## Create keys options
 

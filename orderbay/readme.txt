@@ -3,7 +3,7 @@ Contributors: alextechgamer
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.8.0
+Stable tag: 1.8.1
 License: GPLv2 or later
 
 Self-hosted WooCommerce ops toolkit: documents, fulfillment, RMA, digests, search.
@@ -50,6 +50,9 @@ Yes — copy any template from the plugin's `templates/` folder into `wp-content
 Yes, Orderbay declares and supports WooCommerce High-Performance Order Storage.
 
 == Changelog ==
+
+= 1.8.1 =
+* Fix: saving the RMA panel no longer re-enters its own save handler (the woocommerce_update_order hook re-fired $order->save() recursively); a single admin save now applies the RMA meta exactly once instead of thousands of nested saves
 
 = 1.8.0 =
 * New: item-level RMA — record how many of each line item are being returned; shown on the RMA slip (Return qty column)

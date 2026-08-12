@@ -68,6 +68,18 @@ class SC_Queue {
 	 * @param int    $page Page.
 	 * @return array{orders:WC_Order[],total:int}
 	 */
+	/**
+	 * Whether WooCommerce is using the High-Performance Order Storage (custom tables)
+	 * datastore, which supports meta_query in wc_get_orders(). The classic CPT datastore
+	 * does not.
+	 *
+	 * @return bool
+	 */
+	private static function hpos_active() {
+		return class_exists( '\Automattic\WooCommerce\Utilities\OrderUtil' )
+			&& \Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled();
+	}
+
 	public function query_orders( $tab = 'all', $page = 1 ) {
 		$page = max( 1, (int) $page );
 		// Pull a wider window then filter — reliable across HPOS/legacy without raw SQL joins.
@@ -78,18 +90,24 @@ class SC_Queue {
 			'return'   => 'objects',
 			'paginate' => false,
 		);
-		// Prefer stamped meta when present.
-		$args['meta_query'] = array(
-			'relation' => 'OR',
-			array(
-				'key'   => '_sc_has_custom_art',
-				'value' => '1',
-			),
-			array(
-				'key'     => self::META_PRINTED,
-				'compare' => 'EXISTS',
-			),
-		);
+		// Prefer stamped meta when present — but meta_query is only supported by the HPOS
+		// order datastore. On the classic (CPT) datastore wc_get_orders() emits a
+		// "called incorrectly" notice for it (WC 9.2+), so only add it under HPOS. Either
+		// way every result is re-checked with order_has_sc_art() below, and the
+		// recent-orders fallback covers the classic path, so the outcome is identical.
+		if ( self::hpos_active() ) {
+			$args['meta_query'] = array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+				'relation' => 'OR',
+				array(
+					'key'   => '_sc_has_custom_art',
+					'value' => '1',
+				),
+				array(
+					'key'     => self::META_PRINTED,
+					'compare' => 'EXISTS',
+				),
+			);
+		}
 
 		$orders = wc_get_orders( $args );
 		if ( ! is_array( $orders ) ) {
@@ -238,7 +256,9 @@ class SC_Queue {
 			echo '<td>' . esc_html( implode( '; ', $items ) ) . '</td>';
 			echo '<td>';
 			if ( $preview_id ) {
-				$url = wp_get_attachment_image_url( $preview_id, 'thumbnail' );
+				// Customer-artwork preview: always via the signed proxy, never the raw
+				// uploads URL (see docs/storecanvas-artwork-privacy.md).
+				$url = class_exists( 'SC_Print_Ready' ) ? SC_Print_Ready::instance()->proxy_url( $preview_id ) : '';
 				if ( $url ) {
 					echo '<img src="' . esc_url( $url ) . '" alt="" style="max-width:64px;height:auto;border:1px solid #ddd;" />';
 				} else {

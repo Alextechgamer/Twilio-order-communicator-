@@ -98,6 +98,24 @@ class TOC_Logger {
 	}
 
 	/**
+	 * Whether two phone numbers refer to the same subscriber, tolerant of formatting
+	 * (spaces, punctuation, country-code prefix). Compares the last-10-digit needle so
+	 * "+1 (505) 555-1234" and "5055551234" match. Empty inputs never match. Pure.
+	 *
+	 * @param string $a First phone.
+	 * @param string $b Second phone.
+	 * @return bool
+	 */
+	public static function phones_match( $a, $b ) {
+		$na = self::last10( $a );
+		$nb = self::last10( $b );
+		if ( '' === $na || '' === $nb ) {
+			return false;
+		}
+		return $na === $nb;
+	}
+
+	/**
 	 * One-time backfill of phone_last10 for rows created before the indexed column existed.
 	 * RIGHT() here is a single maintenance pass (not a hot path) run on upgrade.
 	 */
