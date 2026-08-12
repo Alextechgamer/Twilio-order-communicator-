@@ -1,16 +1,18 @@
-# Twilio Order Communicator
+# OrderRing (and sibling plugins)
 
-WordPress / WooCommerce plugin for SMS and voice calls via **your own Twilio account**. Order communication is driven by custom statuses (**Ready for Pickup** and **Shipped**), with consent-aware SMS, quiet hours, bulk reminders, and order chat history.
+WordPress / WooCommerce plugins. **OrderRing** is SMS, voice, and WhatsApp via **your own Twilio account** — Ready for Pickup and Shipped statuses, consent-aware SMS, quiet hours, bulk reminders, and order chat.
 
-**Current version: 1.19.1** (plugin header / `TOC_VERSION`)
+**Twilio and all related logos are trademarks of Twilio Inc. or its affiliates. OrderRing is not affiliated with, endorsed, or sponsored by Twilio Inc.** Bring your own Twilio account — you pay Twilio directly, zero markup.
 
-This monorepo also contains independent plugins:
+**Current versions**
 
 | Plugin | Path | Current |
 |--------|------|---------|
-| Twilio Order Communicator | `twilio-order-communicator/` | 1.19.1 |
-| StoreCanvas | `storecanvas/` | 1.7.1 |
-| Orderbay | `orderbay/` | 1.8.1 |
+| OrderRing | `twilio-order-communicator/` | 1.20.0 |
+| StoreCanvas | `storecanvas/` | 1.7.2 |
+| Orderbay | `orderbay/` | 1.8.2 |
+
+Launch (naming, license-server production, pricing, legal): [`docs/launch/`](./docs/launch/).
 
 ## Local development
 
@@ -38,7 +40,7 @@ What has actually been exercised against a live install is recorded in
 
 ## Install
 
-Upload `twilio-order-communicator/` to `/wp-content/plugins/`, activate, then open **WooCommerce → Order Communicator → Setup**.
+Upload `twilio-order-communicator/` to `/wp-content/plugins/`, activate, then open **WooCommerce → OrderRing → Setup**.
 
 Enter your Twilio Account SID, Auth Token, and From Number (or define `TOC_ACCOUNT_SID` / `TOC_AUTH_TOKEN` / `TOC_FROM_NUMBER` in `wp-config.php`). This plugin does not provide messaging services — Twilio bills you directly.
 
@@ -50,7 +52,7 @@ Premium updates use a **first-party** license server (not Freemius/EDD/Lemon Squ
 define( 'TOC_LICENSE_SERVER_URL', 'https://licenses.example.com' );
 ```
 
-Then activate a key under **Order Communicator → License**.
+Then activate a key under **OrderRing → License**.
 
 Seller docs: [`RELEASE.md`](./RELEASE.md) (build + deploy + keys) · [`license-server/README.md`](./license-server/README.md) (API reference)
 
@@ -58,12 +60,13 @@ Seller docs: [`RELEASE.md`](./RELEASE.md) (build + deploy + keys) · [`license-s
 
 Release **zips are not stored in git** (see `.gitignore`). Build with the steps in [`RELEASE.md`](./RELEASE.md), or download assets from [GitHub Releases](https://github.com/Alextechgamer/Twilio-order-communicator-/releases) when published.
 
-Latest source is always on `main` under `twilio-order-communicator/`.
+Latest source is always on `main` under `twilio-order-communicator/` (OrderRing).
 
 ## What's in this line (post-1.14.2)
 
 | Plugin | Notes |
 |--------|--------|
+| OrderRing 1.20.0 / StoreCanvas 1.7.2 / OrderBay 1.8.2 | **Launch pack:** TOC renamed to **OrderRing** (folder/text domain unchanged); Twilio attribution + A2P 10DLC + “zero markup” copy; StoreCanvas color/DPI disclaimer; OrderBay “not tax advice” + e-invoice export-only. License item slug `orderring`. See [`docs/launch/`](./docs/launch/) |
 | Orderbay 1.4.0 | Configurable invoice/proforma/credit-note numbering: `{PREFIX}{YYYY}{MM}{DD}{SEQ}` tokens + `{SEQ:n}` zero-padding, optional yearly/monthly counter reset (period-scoped, atomic). Back-compatible default `{PREFIX}{SEQ}`; sequence token always enforced |
 | StoreCanvas 1.3.1 | Pricing correctness: percent options use the selected variation's price (not the parent), qty options charge amount × quantity, and negative option totals reduce the price (floored at 0) and display consistently. Live preview mirrors the server; `price_for()` unit-tested |
 | TOC 1.15.0 | Delivery analytics dashboard card (SMS sent / delivered / failed / reply rates over 30d); inbound-webhook MessageSid idempotency (no double-processing of Twilio retries); single-use tokenized TwiML URL. `compute_rates()` unit-tested |

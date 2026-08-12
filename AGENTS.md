@@ -3,7 +3,7 @@
 ## Cursor Cloud specific instructions
 
 This repo is a **monorepo** of three standalone WordPress / WooCommerce plugins —
-`twilio-order-communicator/` ("Twilio Order Communicator"), `storecanvas/`
+`twilio-order-communicator/` ("OrderRing"), `storecanvas/`
 ("StoreCanvas"), and `orderbay/` ("OrderBay") — plus a `license-server/` PHP + SQLite
 backend. **These instructions cover the `twilio-order-communicator/` plugin**, which is
 what the VM snapshot below is provisioned to run; the sibling plugins are activated the

@@ -177,7 +177,7 @@ class OB_Digest {
 		$body .= sprintf( __( "Low-stock products (≤%d): %d\n", 'orderbay' ), $threshold, $low_stock_hits );
 		$body .= $this->attention_section();
 		$body .= "\n" . admin_url( 'admin.php?page=orderbay' ) . "\n";
-		$body .= __( "This email is independent of Twilio Order Communicator.\n", 'orderbay' );
+		$body .= __( "This email is independent of OrderRing.\n", 'orderbay' );
 
 		wp_mail( $email, $subject, $body, array( 'Content-Type: text/plain; charset=UTF-8' ) );
 		update_option( self::OPT_LAST, time(), false );

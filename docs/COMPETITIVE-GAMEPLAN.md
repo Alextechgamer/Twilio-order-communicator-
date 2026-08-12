@@ -1,6 +1,6 @@
 # Competitive Game Plan — Test, Benchmark & Paid-Launch Strategy
 
-**Repo:** WooCommerce plugin monorepo (Twilio Order Communicator, StoreCanvas, OrderBay) + first-party license server
+**Repo:** WooCommerce plugin monorepo (**OrderRing** — formerly Twilio Order Communicator, StoreCanvas, OrderBay) + first-party license server
 **Prepared:** 2026-08-11
 **Scope:** Full runtime + static test, live competitor benchmark, mined user reviews, and a prioritized commercial roadmap for all three products.
 
@@ -350,7 +350,7 @@ Legend: ✅ present · ⚠️ partial/via 2nd paid plugin · ➖ absent · ❔ u
 
 **[WEB]** Twilio's trademark policy explicitly says *"Don't use Twilio Trademarks as your own product or service name"* and prohibits composite marks. **"Twilio Order Communicator" leads with the Twilio mark and reads as a composite** — squarely against the guidelines. Compliant competitors use relational naming ("Twilio SMS Notifications *for WooCommerce*", "ShopMagic – Twilio SMS").
 
-- **Recommended:** rename to a distinct brand that says "for Twilio" relationally, e.g. **"OrderRing — SMS & Voice for WooCommerce (powered by Twilio)"**, **"PickupPing for Twilio"**, or **"Order Communicator for Twilio."** Keep "Bring your own Twilio account" as the tagline; add the required attribution line ("Twilio and all related logos are trademarks of Twilio Inc.…"). Consider emailing trademark@twilio.com for written permission before paid ads.
+- **Recommended (done):** **OrderRing** — distinct brand; subtitle “SMS & Voice for WooCommerce (for Twilio).” See [`docs/launch/NAMING.md`](./launch/NAMING.md). Keep “Bring your own Twilio account”; required attribution line is in the plugin admin footer and readme. Consider emailing trademark@twilio.com for written permission before paid ads.
 - StoreCanvas and OrderBay are already clean, distinct brands — no trademark exposure.
 
 ### 5.2 Pricing & packaging
@@ -367,13 +367,12 @@ Guardrails baked into pricing (each answers a mined grievance): **free-forever g
 
 ### 5.3 Launch checklist
 
-- [ ] **License server → production HTTPS host** (currently only smoke-tested locally). Fix before launch: the download-secret hardcoded fallback `'toc-download'` and `config.example.php` default make signed URLs forgeable (`license-server/src/Api.php:277-283`); move the license key out of the `update_check` GET query; add rate limiting on key validation; add `.htaccess`/nginx rules protecting `data/`+`storage/`.
-- [ ] Rename TOC + add Twilio attribution notice; register the new brand domain(s).
-- [ ] Marketing site per product: home (problem/CTA), features, pricing, docs, changelog, support, legal (Terms/Privacy/Refund), account/downloads.
-- [ ] Screenshots + 60–90s demo per product (TOC: Ready-for-Pickup + STOP chat; StoreCanvas: canvas → print file; OrderBay: ops dashboard + document set).
-- [ ] Complete each `readme.txt` (StoreCanvas + OrderBay are stubs; add description/install/FAQ/screenshots).
-- [ ] Twilio cost disclaimer (TOC), print-fidelity disclaimer (StoreCanvas), tax/legal disclaimer (OrderBay).
-- [ ] Tag releases + register zips with `license-server/bin/add-release.php`.
+- [ ] **License server → production HTTPS host** — runbook in [`docs/launch/LICENSE-SERVER-DEPLOY.md`](./launch/LICENSE-SERVER-DEPLOY.md). Local smoke is done (`docs/RUNTIME-VERIFICATION.md` A1–A5); a public DNS name is still required.
+- [x] Rename TOC to **OrderRing** + Twilio attribution notice (`docs/launch/NAMING.md`). Register the brand domain separately.
+- [x] Marketing copy per product in [`docs/launch/site/`](./launch/site/) (host on a real domain). Screenshots + 60–90s demos still outstanding.
+- [x] Complete each `readme.txt` (StoreCanvas + OrderBay description/install/FAQ).
+- [x] Twilio cost / A2P disclaimer (OrderRing), print-fidelity disclaimer (StoreCanvas), tax/legal + export-only e-invoice (OrderBay).
+- [ ] Tag releases + register zips with `license-server/bin/add-release.php` (after production host is live). `tools/build-release.sh` cuts the zips.
 
 ---
 

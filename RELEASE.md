@@ -1,8 +1,10 @@
 # Release & Deployment Guide
 
-How to cut a customer release of **Twilio Order Communicator**, run the license server, and hand a key to a customer.
+How to cut a customer release of **OrderRing** (folder `twilio-order-communicator/`), StoreCanvas, or OrderBay; run the license server; and hand a key to a customer.
 
-> **Licensing never blocks messaging.** SMS, voice calls, order chat, and status-based auto-notify all work with **no license at all** — they run on the store's own Twilio account. A license only enables **premium plugin updates**. An expired or invalid license pauses updates and shows a dismissible admin notice; it never locks a store out mid-operation.
+> **Licensing never blocks messaging.** SMS, voice calls, WhatsApp, order chat, and status-based auto-notify all work with **no license at all** — they run on the store's own Twilio account. A license only enables **premium plugin updates**. An expired or invalid license pauses updates and shows a dismissible admin notice; it never locks a store out mid-operation.
+
+Production license-server HTTPS: [`docs/launch/LICENSE-SERVER-DEPLOY.md`](./docs/launch/LICENSE-SERVER-DEPLOY.md). Naming: [`docs/launch/NAMING.md`](./docs/launch/NAMING.md).
 
 ---
 
@@ -12,10 +14,13 @@ Run from the repo root. The zip contains **only** the plugin folder — `license
 
 ```bash
 cd /path/to/repo
-VERSION=1.12.0
-rm -f twilio-order-communicator-${VERSION}.zip
+# Or: bash tools/build-release.sh   (builds all three plugins)
 
-zip -r -X twilio-order-communicator-${VERSION}.zip twilio-order-communicator \
+VERSION=1.20.0
+rm -f orderring-${VERSION}.zip twilio-order-communicator-${VERSION}.zip
+
+# The zip's top-level folder must remain twilio-order-communicator/ (WordPress plugin basename).
+zip -r -X orderring-${VERSION}.zip twilio-order-communicator \
   -x '*/.git/*' '*/.git' \
   -x '*/node_modules/*' \
   -x '*.DS_Store' '*/.DS_Store' \
@@ -27,13 +32,13 @@ zip -r -X twilio-order-communicator-${VERSION}.zip twilio-order-communicator \
 Verify before shipping:
 
 ```bash
-unzip -l twilio-order-communicator-${VERSION}.zip | head -5   # single top-level folder
-unzip -l twilio-order-communicator-${VERSION}.zip | grep -c license-server   # must be 0
+unzip -l orderring-${VERSION}.zip | head -5   # single top-level folder
+unzip -l orderring-${VERSION}.zip | grep -c license-server   # must be 0
 ```
 
 WordPress requires exactly one top-level directory (`twilio-order-communicator/`) inside the archive.
 
-**Version markers must agree before building** — `twilio-order-communicator.php` header `Version:`, the `TOC_VERSION` constant, and `readme.txt` `Stable tag:`.
+**Version markers must agree before building** — `twilio-order-communicator.php` header `Version:`, the `TOC_VERSION` constant, and `readme.txt` `Stable tag:`. Same for StoreCanvas (`storecanvas.php` / `SC_VERSION`) and OrderBay (`orderbay.php` / `OB_VERSION`).
 
 ---
 
@@ -76,11 +81,16 @@ cd /path/to/license-server
 # One key per customer. Prints the key once — store it in your records.
 php bin/create-key.php --email=customer@example.com --sites=1 --expires=lifetime
 
-# Register 1.12.0 so licensed sites can update to it
+# Register 1.20.0 so licensed sites can update to it
 php bin/add-release.php \
-  --version=1.12.0 \
-  --file=/path/to/twilio-order-communicator-1.12.0.zip \
-  --changelog="Role permissions UI; delivery alerts; CSV export; mark as collected; scheduled reminders"
+  --slug=orderring \
+  --version=1.20.0 \
+  --file=/path/to/orderring-1.20.0.zip \
+  --changelog="OrderRing rename; A2P 10DLC guidance; Twilio attribution"
+
+# Same server, other products (manual zip delivery until those plugins ship a license client):
+php bin/add-release.php --slug=storecanvas --version=1.7.2 --file=/path/to/storecanvas-1.7.2.zip --changelog="…"
+php bin/add-release.php --slug=orderbay --version=1.8.2 --file=/path/to/orderbay-1.8.2.zip --changelog="…"
 ```
 
 Key options:
@@ -104,10 +114,10 @@ Send the customer the zip, their key, and the server URL.
 ```php
 define( 'TOC_LICENSE_SERVER_URL', 'https://licenses.example.com' );
 // optional, defaults to the plugin slug:
-define( 'TOC_LICENSE_ITEM_SLUG', 'twilio-order-communicator' );
+define( 'TOC_LICENSE_ITEM_SLUG', 'orderring' );
 ```
 
-3. Go to **WooCommerce → Order Communicator → License**, paste the key, click **Activate**.
+3. Go to **WooCommerce → OrderRing → License**, paste the key, click **Activate**.
 
 Status should read **Active** with "premium updates enabled". The key is masked after saving and never re-rendered in full.
 
@@ -124,7 +134,7 @@ The customer still needs their **own Twilio** Account SID, Auth Token, and From 
 # 2. Add a changelog entry in readme.txt
 # 3. Rebuild the zip (section 1) with the new version in the filename
 # 4. Register it:
-php bin/add-release.php --version=1.12.0 --file=/path/to/twilio-order-communicator-1.12.0.zip --changelog="..."
+php bin/add-release.php --slug=orderring --version=1.20.0 --file=/path/to/orderring-1.20.0.zip --changelog="..."
 ```
 
 Licensed sites pick it up on their next update check. The plugin caches the result for 6 hours, so allow for that delay (or have the customer visit **Dashboard → Updates** and click **Check again**).

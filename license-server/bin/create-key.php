@@ -4,7 +4,7 @@
  *
  * Usage:
  *   php bin/create-key.php [--email=a@b.c] [--sites=1] [--expires=2027-01-01|lifetime] [--notes="..."]
- *   php bin/add-release.php --version=1.8.0 --file=twilio-order-communicator-1.8.0.zip [--changelog="..."]
+ *   php bin/add-release.php --version=1.20.0 --file=orderring-1.20.0.zip [--slug=orderring] [--changelog="..."]
  */
 
 declare(strict_types=1);

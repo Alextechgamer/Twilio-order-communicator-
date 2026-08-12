@@ -295,7 +295,7 @@ class OB_Fulfillment {
 		$pack_on  = get_option( OB_Plugin::OPT_CUSTOMER_PACKING, '0' );
 
 		echo '<div class="wrap"><h1>' . esc_html__( 'Orderbay fulfillment', 'orderbay' ) . '</h1>';
-		echo '<p class="description">' . esc_html__( 'Tracking emails use wp_mail only and are independent of Twilio Order Communicator (no SMS/voice). Default tracking email is off.', 'orderbay' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Tracking emails use wp_mail only and are independent of OrderRing (no SMS/voice). Default tracking email is off.', 'orderbay' ) . '</p>';
 		echo '<form method="post" action="options.php">';
 		settings_fields( 'ob_fulfillment' );
 
@@ -329,7 +329,7 @@ class OB_Fulfillment {
 		echo '<input type="hidden" name="' . esc_attr( OB_Plugin::OPT_CUSTOMER_PACKING ) . '" value="0" />';
 		echo '<label><input type="checkbox" name="' . esc_attr( OB_Plugin::OPT_CUSTOMER_PACKING ) . '" value="1" ' . checked( (string) $pack_on, '1', false ) . ' /> ';
 		echo esc_html__( 'Allow customers to open a packing slip for their own orders (default off)', 'orderbay' ) . '</label>';
-		echo '<p class="description">' . esc_html__( 'Owner-only + nonce. Independent of Twilio Order Communicator.', 'orderbay' ) . '</p></td></tr></table>';
+		echo '<p class="description">' . esc_html__( 'Owner-only + nonce. Independent of OrderRing.', 'orderbay' ) . '</p></td></tr></table>';
 
 		echo '<h2>' . esc_html__( 'Auto needs-attention', 'orderbay' ) . '</h2>';
 		echo '<p class="description">' . esc_html__( 'When an order enters one of these statuses, set Needs attention. Empty / none selected = off. Attention is never auto-cleared.', 'orderbay' ) . '</p>';

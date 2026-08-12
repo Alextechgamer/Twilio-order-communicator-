@@ -1,0 +1,31 @@
+# OrderRing license server — Apache 2.4 vhost.
+# Copy to /etc/apache2/sites-available/license-server.conf
+# Enable: a2enmod rewrite ssl headers && a2ensite license-server
+# Then: sudo certbot --apache -d licenses.example.com
+#
+# Document root MUST be .../license-server/public.
+# data/.htaccess and storage/.htaccess are deny-all (see those files).
+
+<VirtualHost *:80>
+	ServerName licenses.example.com
+	DocumentRoot /var/www/license-server/public
+
+	<Directory /var/www/license-server/public>
+		AllowOverride All
+		Require all granted
+	</Directory>
+
+	# Extra deny if Alias/misconfig exposes the parent tree.
+	<Directory /var/www/license-server/data>
+		Require all denied
+	</Directory>
+	<Directory /var/www/license-server/storage>
+		Require all denied
+	</Directory>
+	<Files "config.php">
+		Require all denied
+	</Files>
+
+	ErrorLog ${APACHE_LOG_DIR}/license-server-error.log
+	CustomLog ${APACHE_LOG_DIR}/license-server-access.log combined
+</VirtualHost>

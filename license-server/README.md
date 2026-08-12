@@ -1,7 +1,9 @@
-# TOC License Server
+# OrderRing License Server
 
-Minimal PHP license + update API for **Twilio Order Communicator**.  
+Minimal PHP license + update API for **OrderRing** (and optional StoreCanvas / OrderBay zip registry).  
 Host this on your own domain (e.g. `https://licenses.example.com`). Payments stay on your marketing site — this only activates keys and serves licensed zip updates.
+
+**Production HTTPS:** [`docs/launch/LICENSE-SERVER-DEPLOY.md`](../docs/launch/LICENSE-SERVER-DEPLOY.md) (nginx + Apache vhosts, secrets, smoke + H2).
 
 ## Requirements
 
@@ -14,13 +16,14 @@ Host this on your own domain (e.g. `https://licenses.example.com`). Payments sta
 ```bash
 cd license-server
 cp config.example.php config.php
-# Edit config.php: admin_token, public_base_url
+# Edit config.php: admin_token, download_secret, public_base_url
+# or: php bin/generate-secrets.php --write
 
 # Create a license key (1 site, lifetime)
 php bin/create-key.php --email=customer@example.com --sites=1 --expires=lifetime
 
 # Register a release package
-php bin/add-release.php --version=1.8.0 --file=/path/to/twilio-order-communicator-1.8.0.zip --changelog="Custom licensing"
+php bin/add-release.php --slug=orderring --version=1.20.0 --file=/path/to/orderring-1.20.0.zip --changelog="OrderRing rename"
 ```
 
 Point your vhost **document root** at `license-server/public/` (Apache `.htaccess` included).
@@ -64,10 +67,10 @@ In the WordPress site’s `wp-config.php`:
 ```php
 define( 'TOC_LICENSE_SERVER_URL', 'https://licenses.example.com' );
 // optional:
-define( 'TOC_LICENSE_ITEM_SLUG', 'twilio-order-communicator' );
+define( 'TOC_LICENSE_ITEM_SLUG', 'orderring' );
 ```
 
-Then: **WooCommerce → Order Communicator → License** → paste key → Activate.
+Then: **WooCommerce → OrderRing → License** → paste key → Activate.
 
 Invalid/expired licenses **do not** disable SMS/voice — they only pause premium updates.
 

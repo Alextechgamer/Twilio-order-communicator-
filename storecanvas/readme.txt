@@ -3,7 +3,7 @@ Contributors: alextechgamer
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.7.1
+Stable tag: 1.7.2
 License: GPLv2 or later
 
 Self-hosted WooCommerce personalization: product options, live mockup, print-ready, library, guest save.
@@ -21,7 +21,7 @@ StoreCanvas is a self-hosted product personalizer and options engine for WooComm
 * Security-first: per-customer artwork authorization, private print files, upload/decompression guards, guest rate limits
 * HPOS (custom order tables) compatible
 
-Independent of Twilio Order Communicator and Orderbay.
+Independent of OrderRing and Orderbay.
 
 == Installation ==
 
@@ -42,7 +42,7 @@ No. StoreCanvas is self-hosted with no per-order fees and no cloud dependency â€
 Yes. Paste an exported FPD product JSON on the product screen and StoreCanvas maps its views, print zones and text fields into a config. Review the result and set the product view image before selling.
 
 = What print output does it produce? =
-True-to-size PNG with a DPI (pHYs) chunk, an SVG at physical millimetre size with bleed guides, and a minimal single-image PDF. The PDF is RGB/flattened (not CMYK/PDF-X); confirm color/DPI with your print provider.
+True-to-size PNG with a DPI (pHYs) chunk, an SVG at physical millimetre size with bleed guides, and a minimal single-image PDF. **Color/DPI disclaimer:** output is RGB (PDFs are flattened RGB, not CMYK or PDF-X). Estimated DPI is pixel size vs target print width â€” confirm color and resolution with your print provider before production.
 
 = Are customer artwork files private? =
 Uploaded artwork and generated print composites are marked and kept out of the public REST media listing, and StoreCanvas surfaces them through a signed, time-limited, capability-checked download proxy instead of a permanent public URL. To also block direct access to the underlying wp-content/uploads path (defense in depth), apply the Apache/nginx deny rules in docs/storecanvas-artwork-privacy.md.
@@ -51,6 +51,9 @@ Uploaded artwork and generated print composites are marked and kept out of the p
 Yes, StoreCanvas declares and supports WooCommerce High-Performance Order Storage.
 
 == Changelog ==
+
+= 1.7.2 =
+* Docs: color/DPI fidelity disclaimer on the product Print validation box and the production queue (RGB / flattened, not CMYK/PDF-X; confirm with your print provider)
 
 = 1.7.1 =
 * Fix: the customer artwork preview on the admin order screen and the production queue now goes through the signed download proxy too, instead of emitting a raw wp-content/uploads URL (completes the 1.7.0 artwork-privacy work)

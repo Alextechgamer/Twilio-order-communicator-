@@ -17,7 +17,7 @@ $plugins = array(
 	array(
 		'slug'   => 'twilio-order-communicator',
 		'domain' => 'twilio-order-communicator',
-		'name'   => 'Twilio Order Communicator',
+		'name'   => 'OrderRing',
 		'dir'    => $root . '/twilio-order-communicator',
 	),
 	array(

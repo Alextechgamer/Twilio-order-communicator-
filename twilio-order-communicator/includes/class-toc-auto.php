@@ -401,7 +401,7 @@ class TOC_Auto {
 			$order->add_order_note(
 				sprintf(
 					/* translators: %s: notification label */
-					__( 'Auto SMS skipped (%s): SMS toggle is disabled in Order Communicator → Settings.', 'twilio-order-communicator' ),
+					__( 'Auto SMS skipped (%s): SMS toggle is disabled in OrderRing → Settings.', 'twilio-order-communicator' ),
 					$config['label']
 				)
 			);

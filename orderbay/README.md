@@ -2,7 +2,7 @@
 
 Self-hosted **WooCommerce ops toolkit** — invoices, packing slips, fulfillment, RMA, digests, catalog helpers, and dashboard.
 
-**Independent of** [Twilio Order Communicator](../twilio-order-communicator/) (SMS/voice) and [StoreCanvas](../storecanvas/) (product personalization). Soft detection only for StoreCanvas custom-art counts on the dashboard.
+**Independent of** [OrderRing](../twilio-order-communicator/) (SMS/voice) and [StoreCanvas](../storecanvas/) (product personalization). Soft detection only for StoreCanvas custom-art counts on the dashboard.
 
 ## Requirements
 

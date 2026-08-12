@@ -60,7 +60,7 @@ class TOC_Order_Meta {
 			return false;
 		}
 		$order->update_meta_data( self::META_COLLECTED, time() );
-		$order->add_order_note( __( 'Order marked as collected (Order Communicator). Auto-notify and pickup reminders are suppressed.', 'twilio-order-communicator' ) );
+		$order->add_order_note( __( 'Order marked as collected (OrderRing). Auto-notify and pickup reminders are suppressed.', 'twilio-order-communicator' ) );
 		$order->save();
 
 		if ( class_exists( 'TOC_Reminders' ) ) {
@@ -83,7 +83,7 @@ class TOC_Order_Meta {
 			return false;
 		}
 		$order->delete_meta_data( self::META_COLLECTED );
-		$order->add_order_note( __( 'Collected flag cleared (Order Communicator).', 'twilio-order-communicator' ) );
+		$order->add_order_note( __( 'Collected flag cleared (OrderRing).', 'twilio-order-communicator' ) );
 		$order->save();
 		return true;
 	}
@@ -107,9 +107,9 @@ class TOC_Order_Meta {
 		}
 
 		if ( $order && self::is_collected( $order ) ) {
-			$actions['toc_unmark_collected'] = __( 'Unmark collected (Order Communicator)', 'twilio-order-communicator' );
+			$actions['toc_unmark_collected'] = __( 'Unmark collected (OrderRing)', 'twilio-order-communicator' );
 		} else {
-			$actions['toc_mark_collected'] = __( 'Mark as collected (Order Communicator)', 'twilio-order-communicator' );
+			$actions['toc_mark_collected'] = __( 'Mark as collected (OrderRing)', 'twilio-order-communicator' );
 		}
 		return $actions;
 	}

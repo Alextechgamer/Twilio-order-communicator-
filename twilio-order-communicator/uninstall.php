@@ -1,6 +1,6 @@
 <?php
 /**
- * Uninstall cleanup for Twilio Order Communicator.
+ * Uninstall cleanup for OrderRing.
  */
 
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {

@@ -179,7 +179,7 @@ class OB_RMA {
 		}
 		$s = self::get_settings();
 		echo '<div class="wrap"><h1>' . esc_html__( 'Orderbay returns / RMA', 'orderbay' ) . '</h1>';
-		echo '<p class="description">' . esc_html__( 'Self-hosted RMA meta and print slips only — no payment or refund automation. Use credit notes for refunds. Independent of Twilio Order Communicator.', 'orderbay' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Self-hosted RMA meta and print slips only — no payment or refund automation. Use credit notes for refunds. Independent of OrderRing.', 'orderbay' ) . '</p>';
 		echo '<form method="post" action="options.php">';
 		settings_fields( 'ob_rma' );
 		echo '<table class="form-table">';
