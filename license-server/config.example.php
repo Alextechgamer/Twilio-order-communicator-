@@ -10,7 +10,7 @@ return array(
 	'db_path'         => __DIR__ . '/data/licenses.sqlite',
 
 	// Product slug this server licenses.
-	'item_slug'       => 'twilio-order-communicator',
+	'item_slug'       => 'orderring',
 
 	// Directory for zip packages referenced by releases.package_path (relative filenames).
 	'releases_dir'    => __DIR__ . '/storage/releases',

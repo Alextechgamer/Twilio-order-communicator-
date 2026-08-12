@@ -353,7 +353,7 @@ class TOC_License_API {
 			'instance_id'    => $activation['instance_id'] ?? '',
 			'activated_at'   => $activation['activated_at'] ?? '',
 			'last_seen_at'   => $activation['last_seen_at'] ?? '',
-			'item_slug'      => $this->config['item_slug'] ?? 'twilio-order-communicator',
+			'item_slug'      => $this->config['item_slug'] ?? 'orderring',
 		);
 	}
 }

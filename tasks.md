@@ -1,4 +1,4 @@
-# Twilio Order Communicator — Tasks & Roadmap
+# OrderRing — Tasks & Roadmap
 
 **Plugin version baseline:** 1.13.0 (Polly voice map + Ready/Shipped customer emails)  
 **Last updated:** 2026-08-02  
@@ -183,12 +183,12 @@ No PHPUnit suite added (deferred). `phpcs.xml.dist` documents that only `twilio-
 
 ## Packaging & Go-to-Market Notes
 
-- [ ] Final product name (watch “Twilio” trademark usage in the title)
-- [ ] Marketing site + docs: **Bring your own Twilio account**
+- [x] Final product name: **OrderRing** (see `docs/launch/NAMING.md`; Twilio attribution in-plugin)
+- [ ] Marketing site + docs: **Bring your own Twilio account** (`docs/launch/site/` is the copy; host it)
 - [ ] Screenshots of Ready for Pickup + Shipped flows
-- [ ] Pricing (suggested $59–$79 / year per site)
-- [ ] 30-day money-back, Terms, Privacy, Refund policy
-- [ ] Deploy `license-server/` to a real HTTPS host (currently only smoke-tested locally)
+- [x] Pricing decision recorded (`docs/launch/PRICING.md`)
+- [x] 30-day money-back, Terms, Privacy, Refund policy (`docs/launch/legal/`)
+- [ ] Deploy `license-server/` to a real HTTPS host (`docs/launch/LICENSE-SERVER-DEPLOY.md` — needs a domain)
 - [ ] Tag a release and register the zip with `bin/add-release.php`
 
 ---

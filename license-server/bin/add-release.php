@@ -3,7 +3,7 @@
  * CLI: register a plugin release package for licensed updates.
  *
  * Usage:
- *   php bin/add-release.php --version=1.8.0 --file=/path/to/plugin.zip [--changelog="..."] [--php=7.4] [--wp=6.0]
+ *   php bin/add-release.php --version=1.20.0 --file=/path/to/plugin.zip [--slug=orderring] [--changelog="..."] [--php=7.4] [--wp=6.0]
  */
 
 declare(strict_types=1);
@@ -42,15 +42,20 @@ if ( ! is_dir( $releases_dir ) ) {
 	mkdir( $releases_dir, 0755, true );
 }
 
-$basename = 'twilio-order-communicator-' . $version . '.zip';
+$db   = new TOC_License_DB( $config['db_path'] );
+$slug = isset( $args['slug'] ) ? (string) $args['slug'] : (string) ( $config['item_slug'] ?? 'orderring' );
+$slug = strtolower( preg_replace( '/[^a-zA-Z0-9._-]/', '', $slug ) );
+if ( $slug === '' ) {
+	fwrite( STDERR, "Invalid --slug (use letters, numbers, dot, underscore, hyphen).\n" );
+	exit( 1 );
+}
+
+$basename = $slug . '-' . $version . '.zip';
 $dest     = $releases_dir . '/' . $basename;
 if ( ! copy( $file, $dest ) ) {
 	fwrite( STDERR, "Failed to copy package to {$dest}\n" );
 	exit( 1 );
 }
-
-$db   = new TOC_License_DB( $config['db_path'] );
-$slug = (string) ( $config['item_slug'] ?? 'twilio-order-communicator' );
 
 $stmt = $db->pdo()->prepare(
 	'INSERT INTO releases (slug, version, required_php, required_wp, package_path, changelog, released_at)

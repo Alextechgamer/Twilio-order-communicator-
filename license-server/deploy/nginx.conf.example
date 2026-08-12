@@ -1,0 +1,47 @@
+# OrderRing license server — nginx site.
+# Copy to /etc/nginx/sites-available/license-server and replace the two placeholders.
+# Document root MUST be .../license-server/public (not the parent).
+#
+#   sudo certbot --nginx -d licenses.example.com
+
+server {
+	listen 80;
+	listen [::]:80;
+	server_name licenses.example.com;
+
+	root /var/www/license-server/public;
+	index index.php;
+
+	# Defense in depth: never serve the SQLite DB or raw release zips,
+	# even if the document root is later pointed at the parent directory.
+	location ^~ /data/ {
+		deny all;
+		return 404;
+	}
+	location ^~ /storage/ {
+		deny all;
+		return 404;
+	}
+	location = /config.php {
+		deny all;
+		return 404;
+	}
+	location ~* \.sqlite(-wal|-shm)?$ {
+		deny all;
+		return 404;
+	}
+
+	location / {
+		try_files $uri $uri/ /index.php?$query_string;
+	}
+
+	location ~ \.php$ {
+		include snippets/fastcgi-php.conf;
+		fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+	}
+
+	location ~ /\. {
+		deny all;
+		return 404;
+	}
+}
