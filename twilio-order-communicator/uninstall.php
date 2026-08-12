@@ -42,6 +42,7 @@ $options = array(
 	'toc_account_sid',
 	'toc_auth_token',
 	'toc_from_number',
+	'toc_whatsapp_from',
 	'toc_voice',
 	'toc_auto_on_completed',
 	'toc_auto_voice',

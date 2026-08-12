@@ -56,9 +56,9 @@ Reproduce with `tools/dev/setup-wp.sh` (see the "Local development" section of t
 | D2 | RMA slip renders Return-qty column | **PASS** |
 | D3 | RMA status emails once per transition; default off | **PASS** |
 | D4 | document endpoints enforce login + order ownership | **PASS** |
-| E1 | activate → deactivate → uninstall clean (options/tables/cron) | — |
-| E2 | WP_DEBUG log clean across main flows | — |
-| E3 | HPOS enabled AND disabled both work | — |
+| E1 | activate → deactivate → uninstall clean (options/tables/cron) | **FAIL → fixed** (TOC + SC uninstall left a few options behind) |
+| E2 | WP_DEBUG log clean across main flows | **FAIL → fixed** (SC queue passed unsupported meta_query on the CPT datastore) |
+| E3 | HPOS enabled AND disabled both work | **PASS** |
 
 ## Evidence
 
@@ -318,4 +318,55 @@ The slip's item table has a **Return qty** column and shows the clamped values:
 
 ### E. Cross-cutting
 
-_(pending)_
+Uninstall was exercised **without** `wp plugin uninstall` (which would delete the symlinked
+source in `/workspace`). Instead each plugin's `uninstall.php` was run with
+`WP_UNINSTALL_PLUGIN` defined via `wp eval-file`, then options/tables/cron were inspected,
+then the plugin was re-activated.
+
+**E1 — FAIL → fixed.**
+- TOC: after deactivate, no `toc_*` cron/Action Scheduler jobs remained. Running
+  `uninstall.php` dropped both tables (`wp_toc_communications`, `wp_toc_sms_opt_outs`),
+  cleared the `_site_transient_toc_update_check_*` rows, and removed the `toc_*` options —
+  **except `toc_whatsapp_from`** (the Batch-4 WhatsApp sender setting was never added to the
+  uninstall list). **Fix:** added `toc_whatsapp_from` to `uninstall.php`. Re-ran → `toc_*`
+  option count 0.
+- StoreCanvas: `uninstall.php` dropped `wp_sc_journey` and removed `sc_proof_email_*` /
+  `sc_journey_enabled`, **but left `sc_artwork_backfilled`** (and would leave `sc_dl_secret`
+  on hosts without `wp_salt`) — both introduced by the Batch-5 artwork proxy. **Fix:** added
+  `sc_dl_secret` + `sc_artwork_backfilled` to `uninstall.php`. Re-ran → only ActionScheduler's
+  own `schema-*` options remain (not StoreCanvas).
+- OrderBay: `uninstall.php` removed all real `ob_*` options and left no `ob_*` cron. (Clean;
+  the one leftover seen during testing, `ob_fulfillment_customer_packing`, was a typo option
+  I had set by hand — not written by the plugin, confirmed by grep.)
+- Re-activating all three: front page + wp-admin both HTTP 200, TOC tables recreated, and the
+  only debug-log line was WordPress core's `_load_textdomain_just_in_time` nag for the
+  **woocommerce** domain during WP-CLI activation (not emitted on web requests and not from
+  these three plugins).
+
+**E2 — FAIL → fixed.** With `WP_DEBUG=true` + `WP_DEBUG_LOG`, truncated `debug.log` and
+exercised the main flows over HTTP (front page; the TOC dashboard/bulk/settings/tools/license
+tabs; the SC production queue; SC and OB order-edit screens; the OB documents settings; TOC
+auto-notify to Ready/Shipped; the customer invoice). The **only** plugin-originated entry was:
+> `WC_Order_Data_Store_CPT::query was called incorrectly. Order query argument (meta_query)
+> is not supported on the current order datastore … SC_Queue->query_orders`
+
+i.e. `SC_Queue::query_orders()` passed `meta_query` to `wc_get_orders()`, which the classic
+(CPT) datastore rejects with a doing-it-wrong notice (WC 9.2+). **Fix:** `query_orders()` now
+adds `meta_query` only when HPOS is active (`hpos_active()` helper); on the CPT datastore it
+relies on the existing recent-orders scan + `order_has_sc_art()` PHP filter, so results are
+identical. Re-ran all three queue tabs + the sweep → the queue still lists the customized
+order #29 and `debug.log` is **empty** (0 lines).
+
+**E3 — PASS.** Enabled HPOS (`wp wc hpos sync` then `enable`; confirmed
+`custom_orders_table_usage_is_enabled()` true) and re-ran a representative subset:
+- TOC auto-notify: moving order #23 into Ready-for-Pickup fired the notify hook, stamped
+  `_toc_notified_ready_for_pickup_at`, wrote order notes, and the Twilio mock captured one
+  `…/Calls.json` POST with `To=+15055551009` (the order's phone).
+- SC: production queue (now on the `meta_query` path) rendered HTTP 200 and still listed
+  order #29; the signed proxy served attachment 27 (HTTP 200).
+- OB RMA: saving via the HPOS order editor (`page=wc-orders&action=edit_order`) stored the
+  clamped `{"3":3,"4":2}` (9→3, bogus 999 dropped), completed in 0.34 s (reentrancy guard
+  holds under HPOS too), and the status email fired once on the `approved → received`
+  transition. `debug.log` empty throughout.
+- Reverted to HPOS disabled (the provisioned default) and re-swept the SC queue + order
+  screens — `debug.log` still empty. Both datastores verified.
