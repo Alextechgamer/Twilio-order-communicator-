@@ -19,21 +19,21 @@ build() {
     -x '*.map' \
     -x '*/vendor/*' \
     -x '*.zip' >/dev/null
-  local top
-  top="$(unzip -Z -1 "$zipname" | head -1)"
-  if [[ "$top" != "$folder/" ]]; then
-    echo "ERROR: $zipname top-level is '$top' (want $folder/)" >&2
-    exit 1
-  fi
-  if unzip -l "$zipname" | grep -q license-server; then
-    echo "ERROR: $zipname contains license-server" >&2
-    exit 1
-  fi
-  if unzip -Z -1 "$zipname" | grep -qE '(^|/)\.git(/|$)'; then
-    echo "ERROR: $zipname contains .git" >&2
-    exit 1
-  fi
-  echo "OK $zipname  ($(unzip -l "$zipname" | tail -1))"
+  python3 - "$zipname" "$folder" <<'PY'
+import sys, zipfile
+path, folder = sys.argv[1], sys.argv[2]
+names = zipfile.ZipFile(path).namelist()
+if not names:
+    sys.exit("empty zip: " + path)
+top = names[0]
+if top != folder + "/":
+    sys.exit("ERROR: %s top-level is %r (want %s/)" % (path, top, folder))
+if any("license-server" in n for n in names):
+    sys.exit("ERROR: %s contains license-server" % path)
+if any(n == ".git" or n.endswith("/.git") or "/.git/" in n or n.startswith(".git/") for n in names):
+    sys.exit("ERROR: %s contains .git" % path)
+print("OK", path, "(%d files)" % len(names))
+PY
 }
 
 build twilio-order-communicator "orderring-${toc_ver}.zip"
