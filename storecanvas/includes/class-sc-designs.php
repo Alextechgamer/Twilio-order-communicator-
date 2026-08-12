@@ -304,7 +304,10 @@ class SC_Designs {
 		if ( ! wp_mail( $email, $subject, $body, $headers ) ) {
 			wp_send_json_error( array( 'message' => 'mail failed' ) );
 		}
-		wp_send_json_success( array( 'message' => __( 'Link emailed.', 'storecanvas' ), 'url' => $url ) );
+		// Do not echo the design URL (which carries the guest token) back in the JSON —
+		// the link goes only to the emailed address. Defense in depth against the token
+		// leaking via browser devtools / proxy logs of the AJAX response.
+		wp_send_json_success( array( 'message' => __( 'Link emailed.', 'storecanvas' ) ) );
 	}
 
 	/**

@@ -9,7 +9,7 @@ This monorepo also contains independent plugins:
 | Plugin | Path | Current |
 |--------|------|---------|
 | Twilio Order Communicator | `twilio-order-communicator/` | 1.19.0 |
-| StoreCanvas | `storecanvas/` | 1.6.1 |
+| StoreCanvas | `storecanvas/` | 1.7.0 |
 | Orderbay | `orderbay/` | 1.8.0 |
 
 ## Install
@@ -56,6 +56,8 @@ Latest source is always on `main` under `twilio-order-communicator/`.
 | TOC 1.18.0 | WhatsApp channel via the store's own Twilio WhatsApp sender (BYO, reuses the SMS opt-out/consent/merge/log path); optional `toc_whatsapp_from` setting + a "WhatsApp only" bulk mode. Pure `whatsapp_address()` unit-tested; live delivery needs a real WhatsApp sender |
 | Orderbay 1.8.0 | Item-level RMA (per-line return quantities on the panel + RMA slip) and optional customer status emails (on Approved/Received/Closed, once per transition, default off). Pure `sanitize_rma_items()` / `should_email()` unit-tested |
 | TOC 1.19.0 | Security hardening: order-screen SMS/call is bound to the order's own billing number (no arbitrary-number sends under an order id); the Role-permissions matrix and Twilio Auth Token changes are administrator-only, and plugin caps require a WooCommerce baseline. Pure `phones_match()` / `role_meets_baseline()` unit-tested |
+| StoreCanvas 1.7.0 | Security hardening: customer artwork served via a signed, capability-checked download proxy (not a permanent public uploads URL) + one-time marker backfill; FPD-import SSRF guard on sideloaded image URLs; guest design-email no longer echoes the token in its JSON. Pure `sign_token()`/`verify_token()`/`is_sc_artwork_meta()`/`is_blocked_host()` unit-tested |
+| License-server | Security hardening: `/v1/update-check` now requires an activated site (matching `site_url`+`instance_id`) before issuing a signed download URL — a bare license key can no longer mint package URLs; nginx deny-rule docs for `data/`+`storage/` |
 
 ## What's in 1.14.2
 
