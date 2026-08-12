@@ -52,10 +52,10 @@ Reproduce with `tools/dev/setup-wp.sh` (see the "Local development" section of t
 | C6 | webserver deny rules: direct uploads 403, proxy still serves | **PASS** |
 | C7 | proof email attaches files by path | **PASS** |
 | C8 | FPD import: public https OK; loopback/metadata/private/IPv6 URLs skipped | **PASS** |
-| D1 | RMA per-line quantities clamped; bogus ids dropped | — |
-| D2 | RMA slip renders Return-qty column | — |
-| D3 | RMA status emails once per transition; default off | — |
-| D4 | document endpoints enforce login + order ownership | — |
+| D1 | RMA per-line quantities clamped; bogus ids dropped | **FAIL → fixed** (save recursed 23,502× — reentrancy; data itself was correct) |
+| D2 | RMA slip renders Return-qty column | **PASS** |
+| D3 | RMA status emails once per transition; default off | **PASS** |
+| D4 | document endpoints enforce login + order ownership | **PASS** |
 | E1 | activate → deactivate → uninstall clean (options/tables/cron) | — |
 | E2 | WP_DEBUG log clean across main flows | — |
 | E3 | HPOS enabled AND disabled both work | — |
@@ -277,7 +277,44 @@ public `https://s.w.org/…png`, `http://127.0.0.1/…`, `http://169.254.169.254
 
 ### D. OrderBay
 
-_(pending)_
+Test order #33 (classic `shop_order`, HPOS off) with two line items — item 3 (RMA Widget,
+qty 3), item 4 (RMA Gadget, qty 2). All saves were real admin `post.php?action=editpost`
+submissions with the WordPress edit nonce, `woocommerce_meta_nonce`, and the RMA nonce.
+
+**D1 — FAIL → fixed.**
+- The per-line sanitization is correct: posting `ob_rma_items[3]=5` (over the ordered 3),
+  `[4]=1`, plus a bogus id `[999]=2` and a negative `[-7]=3` → stored
+  `{"3":3,"4":1}` — item 3 clamped to its ordered qty, item 4 kept, bogus/negative dropped.
+- **Observed bug:** the save took **53 seconds** and `debug.log` recorded a
+  `Maximum execution time exceeded`. Tracing showed `woocommerce_update_order` firing
+  **23,502 times** for a single admin save: `OB_RMA::save_hpos()` (hooked to
+  `woocommerce_update_order`) calls `apply_posted()`, which calls `$order->save()`, which
+  re-fires `woocommerce_update_order` → `save_hpos()` again (the RMA nonce is still in
+  `$_POST`, so `verify_save()` keeps passing) — unbounded reentrancy on every RMA save.
+  **Fix:** added a static `$applying` reentrancy guard around `apply_posted()`
+  (`class-ob-rma.php`). Re-ran the identical save: completes in **0.30 s**, HTTP 302,
+  `debug.log` empty, stored data still `{"3":3,"4":1}`.
+
+**D2 — PASS.** `admin-post.php?action=ob_print_rma&order_id=33` (session nonce) → HTTP 200.
+The slip's item table has a **Return qty** column and shows the clamped values:
+`RMA Widget | 3 | 3` and `RMA Gadget | 2 | 1` (columns: Item, SKU, Qty, Return qty).
+
+**D3 — PASS** (wp_mail captured by the dev mail mu-plugin):
+- Default settings (`notify_customer=0`): transition into `approved` → **0** emails.
+- After enabling `notify_customer=1`:
+  - `requested → approved` → **1** email ("TOC Dev — return update for order #33").
+  - re-saving `approved` (no transition) → **0** emails (gated by `_ob_rma_emailed`).
+  - `approved → received` → **1**; `received → closed` → **1**.
+
+**D4 — PASS.** Two real customers (custa #4, custb #5) each with their own completed order
+(A=#34, B=#35). Nonces minted inside custa's real browser session:
+- Invoice: custa opens own `#34` → **200** (invoice renders); custa opens B's `#35` with a
+  valid custa-session nonce → **403** "You cannot view this invoice"; logged-out → **302**
+  to `wp-login.php`.
+- Packing slip (after enabling `ob_customer_packing_slip_enabled`): own `#34` → **200**;
+  B's `#35` → **403** "You cannot view this packing slip". Both paths gate on
+  `OB_Invoicing::customer_can_view_invoice()` (customer id / billing-email match, staff
+  bypass), so a swapped order id is refused even with a valid nonce.
 
 ### E. Cross-cutting
 

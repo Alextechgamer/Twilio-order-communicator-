@@ -10,6 +10,9 @@ class OB_RMA {
 
 	private static $instance = null;
 
+	/** Reentrancy guard for apply_posted() — see the note there. */
+	private static $applying = false;
+
 	const STATUSES = array( 'none', 'requested', 'approved', 'received', 'closed' );
 
 	public static function instance() {
@@ -333,6 +336,15 @@ class OB_RMA {
 	 * @param WC_Order $order Order.
 	 */
 	private function apply_posted( $order ) {
+		// Reentrancy guard: apply_posted() calls $order->save(), which fires
+		// woocommerce_update_order → save_hpos() again. Without this flag a single admin
+		// save recursed thousands of times (each nested save re-entered because the RMA
+		// nonce is still present in $_POST). Guard so the meta is applied exactly once.
+		if ( self::$applying ) {
+			return;
+		}
+		self::$applying = true;
+
 		$prev   = $order->get_meta( OB_Plugin::META_RMA_STATUS );
 		$status = isset( $_POST['ob_rma_status'] ) ? sanitize_key( wp_unslash( $_POST['ob_rma_status'] ) ) : 'none'; // phpcs:ignore
 		if ( ! in_array( $status, self::STATUSES, true ) ) {
@@ -385,6 +397,8 @@ class OB_RMA {
 				$order->save();
 			}
 		}
+
+		self::$applying = false;
 	}
 
 	/**
