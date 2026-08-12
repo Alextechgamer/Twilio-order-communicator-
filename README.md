@@ -12,6 +12,30 @@ This monorepo also contains independent plugins:
 | StoreCanvas | `storecanvas/` | 1.7.0 |
 | Orderbay | `orderbay/` | 1.8.0 |
 
+## Local development
+
+No Docker needed — `tools/dev/setup-wp.sh` stands up WordPress + WooCommerce + MariaDB on
+PHP's built-in server with all three plugins symlinked from the repo and activated
+(idempotent; Ubuntu/PHP 8.3):
+
+```bash
+bash tools/dev/setup-wp.sh          # provision (or re-sync) ~/wordpress
+php -S 0.0.0.0:8080 -t ~/wordpress  # serve — admin at /wp-admin (admin/admin)
+```
+
+The script also installs two **development-only** mu-plugins from `tools/dev/mu-plugins/`:
+a Twilio HTTP mock (captures outbound `api.twilio.com` requests to `/tmp/toc-http.log` and
+fakes success, so send paths run without live credentials) and a `wp_mail` capture
+(`/tmp/wp-mail.log`). Remove them to talk to the real services.
+
+The license server runs standalone (needs `php8.3-sqlite3`): copy
+`license-server/config.example.php` to `config.php` (git-ignored), set real secrets, then
+`cd license-server/public && php -S 127.0.0.1:8081`.
+
+Tests + lint (the CI hard gate): `php tests/run.php` and `php -l` on every PHP file.
+What has actually been exercised against a live install is recorded in
+[`docs/RUNTIME-VERIFICATION.md`](./docs/RUNTIME-VERIFICATION.md).
+
 ## Install
 
 Upload `twilio-order-communicator/` to `/wp-content/plugins/`, activate, then open **WooCommerce → Order Communicator → Setup**.
