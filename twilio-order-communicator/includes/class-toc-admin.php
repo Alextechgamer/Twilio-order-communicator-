@@ -48,7 +48,9 @@ class TOC_Admin {
 	 * Save role capability matrix from Settings.
 	 */
 	public function handle_save_role_caps() {
-		if ( ! current_user_can( TOC_Caps::manage() ) ) {
+		// Editing the capability matrix is administrator-only (see render_role_permissions):
+		// a toc_manage holder must not be able to grant caps to other roles.
+		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'Permission denied', 'twilio-order-communicator' ), 403 );
 		}
 		check_admin_referer( 'toc_save_role_caps' );

@@ -12,6 +12,7 @@ require __DIR__ . '/bootstrap.php';
 $root = dirname( __DIR__ );
 require $root . '/twilio-order-communicator/includes/class-toc-twilio.php';
 require $root . '/twilio-order-communicator/includes/class-toc-logger.php';
+require $root . '/twilio-order-communicator/includes/class-toc-caps.php';
 require $root . '/license-server/src/Helpers.php';
 require $root . '/license-server/src/Api.php';
 require $root . '/orderbay/includes/class-ob-einvoice.php';
@@ -134,6 +135,13 @@ check( 'dl blocked without activation', TOC_License_API::download_allowed( 'shop
 check( 'dl blocked missing site', TOC_License_API::download_allowed( '', 'inst-1', true ), false );
 check( 'dl blocked missing instance', TOC_License_API::download_allowed( 'shop.example', '', true ), false );
 check( 'dl blocked bare key', TOC_License_API::download_allowed( '', '', false ), false );
+
+/* ---- TOC_Caps::role_meets_baseline (pins H4: cap-grant floor) ---- */
+check( 'baseline admin always', TOC_Caps::role_meets_baseline( 'administrator', false, false ), true );
+check( 'baseline via manage_woocommerce', TOC_Caps::role_meets_baseline( 'shop_manager', true, false ), true );
+check( 'baseline via edit_shop_orders', TOC_Caps::role_meets_baseline( 'fulfillment', false, true ), true );
+check( 'baseline subscriber blocked', TOC_Caps::role_meets_baseline( 'subscriber', false, false ), false );
+check( 'baseline editor blocked', TOC_Caps::role_meets_baseline( 'editor', false, false ), false );
 
 /* ---- license-server rate limiter (in-memory SQLite; skipped if pdo_sqlite absent) ---- */
 if ( extension_loaded( 'pdo_sqlite' ) ) {

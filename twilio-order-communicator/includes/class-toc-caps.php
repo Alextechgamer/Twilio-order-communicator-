@@ -120,6 +120,27 @@ class TOC_Caps {
 	}
 
 	/**
+	 * Whether a role is eligible to hold toc_manage / toc_send.
+	 *
+	 * Guards against escalating a low-privilege role (e.g. subscriber) into plugin
+	 * management — reading Twilio secrets, exporting PII, granting further caps. A role
+	 * may receive the caps only if it is the administrator or already holds a WooCommerce
+	 * shop baseline (manage_woocommerce or edit_shop_orders). Pure so the rule is
+	 * unit-testable without a WP runtime.
+	 *
+	 * @param string $role_key        Role slug.
+	 * @param bool   $has_manage_woo  Whether the role holds manage_woocommerce.
+	 * @param bool   $has_edit_orders Whether the role holds edit_shop_orders.
+	 * @return bool
+	 */
+	public static function role_meets_baseline( $role_key, $has_manage_woo, $has_edit_orders ) {
+		if ( 'administrator' === $role_key ) {
+			return true;
+		}
+		return (bool) $has_manage_woo || (bool) $has_edit_orders;
+	}
+
+	/**
 	 * Apply a role matrix from Settings (manage / send checkboxes per role).
 	 *
 	 * @param array $posted Expected shape: [ role_key => [ 'manage' => '1'|0, 'send' => '1'|0 ], … ]
@@ -177,8 +198,16 @@ class TOC_Caps {
 				continue;
 			}
 
+			// A role can only be granted the plugin caps if it clears the shop baseline;
+			// this blocks escalating subscriber (or another bare role) into management.
+			$eligible = self::role_meets_baseline(
+				$role_key,
+				$role->has_cap( 'manage_woocommerce' ),
+				$role->has_cap( 'edit_shop_orders' )
+			);
+
 			// Manage.
-			if ( ! empty( $want_manage[ $role_key ] ) ) {
+			if ( ! empty( $want_manage[ $role_key ] ) && $eligible ) {
 				$role->add_cap( self::CAP_MANAGE );
 			} else {
 				// Never strip administrator manage.
@@ -188,7 +217,7 @@ class TOC_Caps {
 			}
 
 			// Send.
-			if ( ! empty( $want_send[ $role_key ] ) ) {
+			if ( ! empty( $want_send[ $role_key ] ) && $eligible ) {
 				$role->add_cap( self::CAP_SEND );
 			} else {
 				$role->remove_cap( self::CAP_SEND );
