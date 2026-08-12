@@ -92,8 +92,8 @@ class TOC_Admin {
 	public function menu() {
 		add_submenu_page(
 			'woocommerce',
-			__( 'Order Communicator', 'twilio-order-communicator' ),
-			__( 'Order Communicator', 'twilio-order-communicator' ),
+			__( 'OrderRing', 'twilio-order-communicator' ),
+			__( 'OrderRing', 'twilio-order-communicator' ),
 			TOC_Caps::manage(),
 			'toc-communicator',
 			array( $this, 'page' )
@@ -185,7 +185,8 @@ class TOC_Admin {
 		$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'dashboard'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		?>
 		<div class="wrap toc-wrap">
-			<h1><?php echo esc_html__( 'Twilio Order Communicator', 'twilio-order-communicator' ); ?></h1>
+			<h1><?php echo esc_html( TOC_BRAND_NAME ); ?></h1>
+			<p class="description"><?php echo esc_html__( 'SMS and voice for WooCommerce (for Twilio). Bring your own Twilio account — you pay Twilio directly, zero markup.', 'twilio-order-communicator' ); ?></p>
 			<nav class="nav-tab-wrapper">
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator&tab=dashboard' ) ); ?>" class="nav-tab <?php echo $tab === 'dashboard' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__( 'Dashboard', 'twilio-order-communicator' ); ?></a>
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator&tab=bulk' ) ); ?>" class="nav-tab <?php echo $tab === 'bulk' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__( 'Bulk Reminders', 'twilio-order-communicator' ); ?></a>
@@ -211,6 +212,9 @@ class TOC_Admin {
 				}
 				?>
 			</div>
+			<p class="description" style="margin-top:2em;max-width:52em;">
+				<?php echo esc_html__( 'Twilio and all related logos are trademarks of Twilio Inc. or its affiliates. OrderRing is not affiliated with, endorsed, or sponsored by Twilio Inc.', 'twilio-order-communicator' ); ?>
+			</p>
 		</div>
 		<?php
 	}

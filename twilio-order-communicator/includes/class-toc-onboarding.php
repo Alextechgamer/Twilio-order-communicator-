@@ -63,7 +63,7 @@ class TOC_Onboarding {
 			sprintf(
 				/* translators: 1: plugin name, 2: opening link, 3: closing link */
 				__( '<strong>%1$s</strong> — finish setup in under five minutes: %2$sStart setup wizard%3$s', 'twilio-order-communicator' ),
-				'Twilio Order Communicator',
+				TOC_BRAND_NAME,
 				'<a href="' . esc_url( $url ) . '">',
 				'</a>'
 			)

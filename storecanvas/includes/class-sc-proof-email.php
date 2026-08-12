@@ -65,7 +65,7 @@ class SC_Proof_Email {
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'StoreCanvas customer proof email', 'storecanvas' ); ?></h1>
-			<p><?php esc_html_e( 'Optional email with print composite when an order has StoreCanvas artwork. Default off. Independent of Twilio Order Communicator.', 'storecanvas' ); ?></p>
+			<p><?php esc_html_e( 'Optional email with print composite when an order has StoreCanvas artwork. Default off. Independent of OrderRing.', 'storecanvas' ); ?></p>
 			<form method="post" action="options.php">
 				<?php settings_fields( 'sc_proof_email' ); ?>
 				<table class="form-table" role="presentation">

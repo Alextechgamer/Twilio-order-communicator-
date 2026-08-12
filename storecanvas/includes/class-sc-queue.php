@@ -187,6 +187,7 @@ class SC_Queue {
 
 		echo '<div class="wrap">';
 		echo '<h1>' . esc_html__( 'StoreCanvas production queue', 'storecanvas' ) . '</h1>';
+		echo '<p class="description">' . esc_html__( 'Print files are RGB (PDFs are flattened RGB, not CMYK or PDF-X). Confirm color and DPI with your print provider before production.', 'storecanvas' ) . '</p>';
 
 		echo '<ul class="subsubsub">';
 		$tabs = array(

@@ -125,7 +125,7 @@ class OB_Dashboard {
 		echo '<li><a href="' . esc_url( admin_url( 'edit.php?post_type=product' ) ) . '">' . esc_html__( 'Products (bulk price/stock/duplicate)', 'orderbay' ) . '</a></li>';
 		echo '</ul>';
 
-		echo '<p class="description">' . esc_html__( 'Orderbay does not send SMS or voice — that is Twilio Order Communicator. StoreCanvas art count appears only when StoreCanvas is active.', 'orderbay' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Orderbay does not send SMS or voice — that is OrderRing. StoreCanvas art count appears only when StoreCanvas is active.', 'orderbay' ) . '</p>';
 		echo '</div>';
 	}
 

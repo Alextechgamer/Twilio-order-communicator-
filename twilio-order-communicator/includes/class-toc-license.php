@@ -59,7 +59,7 @@ class TOC_License {
 		if ( defined( 'TOC_LICENSE_ITEM_SLUG' ) && TOC_LICENSE_ITEM_SLUG ) {
 			return (string) TOC_LICENSE_ITEM_SLUG;
 		}
-		return 'twilio-order-communicator';
+		return 'orderring';
 	}
 
 	/**
@@ -555,7 +555,7 @@ class TOC_License {
 		echo esc_html(
 			sprintf(
 				/* translators: %s: license status label */
-				__( 'Twilio Order Communicator license status: %s. Messaging still works; premium plugin updates are paused until the license is active.', 'twilio-order-communicator' ),
+				__( 'OrderRing license status: %s. Messaging still works; premium plugin updates are paused until the license is active.', 'twilio-order-communicator' ),
 				$this->status_label( $status )
 			)
 		);

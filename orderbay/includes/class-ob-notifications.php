@@ -185,7 +185,7 @@ class OB_Notifications {
 		if ( ! empty( $_GET['updated'] ) ) { // phpcs:ignore
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Settings saved.', 'orderbay' ) . '</p></div>';
 		}
-		echo '<p class="description">' . esc_html__( 'wp_mail only — completely independent of Twilio Order Communicator (no SMS/voice). All rules default off. Enabled rules require subject + body; custom recipient needs a valid email. Merge tags: {order_number} {customer_first_name} {customer_email} {store_name} {order_status} {order_total}', 'orderbay' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'wp_mail only — completely independent of OrderRing (no SMS/voice). All rules default off. Enabled rules require subject + body; custom recipient needs a valid email. Merge tags: {order_number} {customer_first_name} {customer_email} {store_name} {order_status} {order_total}', 'orderbay' ) . '</p>';
 
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		echo '<input type="hidden" name="action" value="ob_save_email_rules" />';

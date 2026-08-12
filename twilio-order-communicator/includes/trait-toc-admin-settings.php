@@ -282,7 +282,8 @@ trait TOC_Admin_Settings {
 			<?php settings_fields( 'toc_settings' ); ?>
 
 			<h2><?php echo esc_html__( 'Twilio Credentials', 'twilio-order-communicator' ); ?></h2>
-			<p class="description"><?php echo esc_html__( 'Use your own Twilio account. This plugin does not provide or resell SMS, voice, or calling services — Twilio bills you directly.', 'twilio-order-communicator' ); ?></p>
+			<p class="description"><?php echo esc_html__( 'Bring your own Twilio account. This plugin does not provide or resell SMS, voice, WhatsApp, or calling services — you pay Twilio directly, zero markup.', 'twilio-order-communicator' ); ?></p>
+			<p class="description"><?php echo esc_html__( 'US A2P 10DLC: register your brand and campaign in the Twilio Console before texting US mobiles. This plugin does not file 10DLC for you. See Tools & Docs.', 'twilio-order-communicator' ); ?></p>
 			<?php
 			$twilio    = TOC_Twilio::instance();
 			$creds     = array(
@@ -713,7 +714,7 @@ trait TOC_Admin_Settings {
 		<hr />
 		<h2><?php echo esc_html__( 'Role permissions', 'twilio-order-communicator' ); ?></h2>
 		<p class="description">
-			<?php echo esc_html__( 'Control which WordPress roles can open Order Communicator admin pages, and which can send SMS or place calls from orders. Messaging is never gated by license — these are WordPress capabilities only.', 'twilio-order-communicator' ); ?>
+			<?php echo esc_html__( 'Control which WordPress roles can open OrderRing admin pages, and which can send SMS or place calls from orders. Messaging is never gated by license — these are WordPress capabilities only.', 'twilio-order-communicator' ); ?>
 		</p>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<input type="hidden" name="action" value="toc_save_role_caps" />
@@ -724,7 +725,7 @@ trait TOC_Admin_Settings {
 						<th><?php echo esc_html__( 'Role', 'twilio-order-communicator' ); ?></th>
 						<th style="width:40%">
 							<?php echo esc_html__( 'Manage plugin', 'twilio-order-communicator' ); ?>
-							<br><span class="description" style="font-weight:normal"><?php echo esc_html__( 'Who can open Order Communicator admin pages', 'twilio-order-communicator' ); ?></span>
+							<br><span class="description" style="font-weight:normal"><?php echo esc_html__( 'Who can open OrderRing admin pages', 'twilio-order-communicator' ); ?></span>
 						</th>
 						<th style="width:40%">
 							<?php echo esc_html__( 'Send SMS & calls', 'twilio-order-communicator' ); ?>

@@ -3,7 +3,7 @@ Contributors: alextechgamer
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.8.1
+Stable tag: 1.8.2
 License: GPLv2 or later
 
 Self-hosted WooCommerce ops toolkit: documents, fulfillment, RMA, digests, search.
@@ -23,7 +23,7 @@ Orderbay is a self-hosted operations desk for WooCommerce — every order docume
 * Theme template overrides (wp-content/themes/your-theme/orderbay/*.php) + document hooks
 * HPOS (custom order tables) compatible
 
-Independent of Twilio Order Communicator and StoreCanvas.
+Independent of OrderRing and StoreCanvas.
 
 == Installation ==
 
@@ -38,10 +38,10 @@ Independent of Twilio Order Communicator and StoreCanvas.
 No. The default path is browser Print → Save as PDF, which uses the operating-system font stack (so Bengali/CJK/RTL render). If Dompdf or TCPDF is installed on the host, an optional server-side PDF download is offered.
 
 = Is the invoice numbering safe for tax/legal use? =
-Numbering is database-atomic (LAST_INSERT_ID) so concurrent prints never collide or skip. Formats always include a sequence token, and yearly/monthly reset is optional.
+Numbering is database-atomic (LAST_INSERT_ID) so concurrent prints never collide or skip. Formats always include a sequence token, and yearly/monthly reset is optional. **This is not tax advice** — confirm legal requirements with your accountant before using invoices in production.
 
 = Does it do EU e-invoicing? =
-It exports UBL 2.1 (Peppol BIS Billing 3.0) and CII (Factur-X EN16931), and can assemble a Factur-X PDF/A-3 when a PDF engine and the horstoeko/zugferd library are installed. Validate output against an official validator before production; Peppol network transmission is out of scope (export the file for your access point).
+It **exports** UBL 2.1 (Peppol BIS Billing 3.0) and CII (Factur-X EN16931), and can assemble a Factur-X PDF/A-3 when a PDF engine and the horstoeko/zugferd library are installed. It does **not** connect to the Peppol network or any PDP/access point — export the file and hand it to your access point. Validate output against an official validator before production.
 
 = Can I customize the documents? =
 Yes — copy any template from the plugin's `templates/` folder into `wp-content/themes/your-theme/orderbay/` and edit your copy; it survives updates. `ob_before_document` / `ob_after_document` actions and an `ob_locate_template` filter are also available.
@@ -50,6 +50,10 @@ Yes — copy any template from the plugin's `templates/` folder into `wp-content
 Yes, Orderbay declares and supports WooCommerce High-Performance Order Storage.
 
 == Changelog ==
+
+= 1.8.2 =
+* Docs: “not tax advice / consult your accountant” on the Documents settings screen
+* Docs: e-invoice copy states export-only (no Peppol network / PDP delivery)
 
 = 1.8.1 =
 * Fix: saving the RMA panel no longer re-enters its own save handler (the woocommerce_update_order hook re-fired $order->save() recursively); a single admin save now applies the RMA meta exactly once instead of thousands of nested saves

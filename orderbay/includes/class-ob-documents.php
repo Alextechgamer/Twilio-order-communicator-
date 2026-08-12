@@ -105,6 +105,7 @@ class OB_Documents {
 		$eng = self::detect_pdf_engine();
 		echo '<div class="wrap"><h1>' . esc_html__( 'Orderbay documents', 'orderbay' ) . '</h1>';
 		echo '<p class="description">' . esc_html__( 'Primary path: open print view → browser Print / Save as PDF. No Dompdf/TCPDF bundled. Bulk print requires edit_shop_orders. Documents: invoice, proforma, packing slip, delivery note, shipping label.', 'orderbay' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Not tax advice. Invoice layout, numbering, VAT lines, and e-invoice files are tools — confirm legal requirements with your accountant or tax adviser before using them in production.', 'orderbay' ) . '</p>';
 		echo '<form method="post" action="options.php">';
 		settings_fields( 'ob_documents' );
 		echo '<h2>' . esc_html__( 'Document appearance', 'orderbay' ) . '</h2>';
@@ -162,7 +163,7 @@ class OB_Documents {
 
 		if ( class_exists( 'OB_EInvoice' ) ) {
 			echo '<h2>' . esc_html__( 'E-invoicing (UBL / Factur-X)', 'orderbay' ) . '</h2>';
-			echo '<p class="description">' . esc_html__( 'Download UBL (Peppol BIS 3.0) or CII (Factur-X EN16931) invoice XML from the order screen. EN16931 baseline — validate against an official validator before relying on it. A "Factur-X PDF" button also appears when a PDF engine (Dompdf/TCPDF) and the horstoeko/zugferd library are installed on the host; its output must pass a Factur-X validator. Peppol network transmission is not included.', 'orderbay' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'Download UBL (Peppol BIS 3.0) or CII (Factur-X EN16931) invoice XML from the order screen. Export only — Orderbay does not connect to the Peppol network or any PDP/access point. EN16931 baseline: validate against an official validator before relying on it. A "Factur-X PDF" button also appears when a PDF engine (Dompdf/TCPDF) and the horstoeko/zugferd library are installed on the host; its output must pass a Factur-X validator.', 'orderbay' ) . '</p>';
 			$seller_issues = OB_EInvoice::seller_issues( OB_EInvoice::seller_data() );
 			if ( $seller_issues ) {
 				echo '<div class="notice notice-warning inline"><p><strong>' . esc_html__( 'Seller details needed for compliant e-invoices:', 'orderbay' ) . '</strong></p><ul style="list-style:disc;margin-left:20px;">';

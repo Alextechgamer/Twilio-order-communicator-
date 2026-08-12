@@ -58,6 +58,18 @@ trait TOC_Admin_Tools {
 
 		<hr>
 
+		<h2><?php echo esc_html__( 'US A2P 10DLC (and similar registration)', 'twilio-order-communicator' ); ?></h2>
+		<p><?php echo esc_html__( 'If you text US mobile numbers, carriers require A2P 10DLC brand and campaign registration (or a verified toll-free number). OrderRing does not register this for you and does not resell messaging.', 'twilio-order-communicator' ); ?></p>
+		<ul>
+			<li><?php echo esc_html__( 'Register your brand and campaign in the Twilio Console (The Campaign Registry). Toll-free senders need Twilio toll-free verification instead.', 'twilio-order-communicator' ); ?></li>
+			<li><?php echo esc_html__( 'Use this plugin’s checkout consent, STOP/HELP/START handling, and optional SMS footer so your campaign matches what you file.', 'twilio-order-communicator' ); ?></li>
+			<li><?php echo esc_html__( 'You pay Twilio directly for messages, calls, WhatsApp, and registration fees — zero markup from this plugin.', 'twilio-order-communicator' ); ?></li>
+			<li><?php echo esc_html__( 'Non-US routes have their own sender-ID / DLT / CASL rules; follow Twilio’s docs for your destination country.', 'twilio-order-communicator' ); ?></li>
+		</ul>
+		<p class="description"><?php echo esc_html__( 'Twilio and all related logos are trademarks of Twilio Inc. or its affiliates. OrderRing is not affiliated with, endorsed, or sponsored by Twilio Inc.', 'twilio-order-communicator' ); ?></p>
+
+		<hr>
+
 		<h2><?php echo esc_html__( 'How Automatic Notifications Work', 'twilio-order-communicator' ); ?></h2>
 		<ul>
 			<li><?php echo esc_html__( 'Primary trigger is order status (mapped Ready for Pickup and/or Shipped), not shipping method.', 'twilio-order-communicator' ); ?></li>

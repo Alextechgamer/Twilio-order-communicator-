@@ -360,7 +360,7 @@ class TOC_Webhooks {
 			$lines[] = __( 'Message:', 'twilio-order-communicator' ) . ' ' . $body_snippet;
 		}
 		$lines[] = '';
-		$lines[] = __( 'This alert was sent by Twilio Order Communicator. Messaging is not blocked by license state.', 'twilio-order-communicator' );
+		$lines[] = __( 'This alert was sent by OrderRing. Messaging is not blocked by license state.', 'twilio-order-communicator' );
 
 		$body = implode( "\n", $lines );
 

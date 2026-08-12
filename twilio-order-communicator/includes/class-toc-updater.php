@@ -114,7 +114,7 @@ class TOC_Updater {
 		}
 
 		return (object) array(
-			'name'          => 'Twilio Order Communicator',
+			'name'          => TOC_BRAND_NAME,
 			'slug'          => 'twilio-order-communicator',
 			'version'       => $info->new_version,
 			'author'        => '<a href="https://github.com/Alextechgamer">Alextechgamer</a>',

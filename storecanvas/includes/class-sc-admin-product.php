@@ -145,6 +145,7 @@ class SC_Admin_Product {
 
 			<div class="options_group">
 				<h4 style="padding-left:12px;"><?php esc_html_e( 'Print validation', 'storecanvas' ); ?></h4>
+				<p class="description" style="padding-left:12px;max-width:42em;"><?php esc_html_e( 'Print files are RGB (and PDFs are flattened RGB, not CMYK or PDF-X). DPI is estimated from pixel size vs target print width. Confirm color and resolution with your print provider before production.', 'storecanvas' ); ?></p>
 				<?php
 				woocommerce_wp_text_input(
 					array(

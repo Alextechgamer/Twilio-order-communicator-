@@ -1,18 +1,20 @@
-=== Twilio Order Communicator ===
+=== OrderRing ===
 Contributors: alextechgamer
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
 WC requires at least: 7.0
-Stable tag: 1.19.1
+Stable tag: 1.20.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Send SMS and place voice calls from WooCommerce orders using your own Twilio account. Status-based Ready for Pickup and Shipped notifications, chat history, bulk reminders, and consent-aware messaging.
+SMS and voice for WooCommerce (for Twilio). Bring your own Twilio account — you pay Twilio directly, zero markup.
 
 == Description ==
 
-Twilio Order Communicator turns every WooCommerce order into a communication hub. **You bring your own Twilio account** (Account SID, Auth Token, From Number). The plugin does not sell or provide messaging services — Twilio bills you directly.
+OrderRing turns every WooCommerce order into a communication hub. **Bring your own Twilio account** (Account SID, Auth Token, From Number). The plugin does not sell or provide messaging services — **you pay Twilio directly, zero markup.**
+
+Twilio and all related logos are trademarks of Twilio Inc. or its affiliates. OrderRing is not affiliated with, endorsed, or sponsored by Twilio Inc.
 
 * Chat-style history of SMS and voice calls (sent + received)
 * Send custom SMS or place voice calls directly from the order screen
@@ -46,7 +48,7 @@ Twilio Order Communicator turns every WooCommerce order into a communication hub
 
 1. Upload the plugin folder to `/wp-content/plugins/`
 2. Activate through the Plugins menu
-3. Go to WooCommerce → Order Communicator → Setup (or Settings) and enter **your** Twilio credentials
+3. Go to WooCommerce → OrderRing → Setup (or Settings) and enter **your** Twilio credentials
 4. Map Ready for Pickup / Shipped statuses (defaults are registered by the plugin)
 5. Enable voice and/or SMS per status as needed (SMS defaults off)
 6. Configure the Incoming SMS webhook (preferred REST URL on the Tools & Docs tab)
@@ -55,7 +57,13 @@ Twilio Order Communicator turns every WooCommerce order into a communication hub
 == Frequently Asked Questions ==
 
 = Do I need a Twilio account? =
-Yes. This plugin connects to **your** Twilio account. You provide Account SID, Auth Token, and From Number. Message and call costs are billed by Twilio.
+Yes. This plugin connects to **your** Twilio account. You provide Account SID, Auth Token, and From Number. Message and call costs are billed by Twilio to you — OrderRing adds zero markup.
+
+= Do I need A2P 10DLC? =
+If you text US mobile numbers, carriers require A2P 10DLC brand and campaign registration (or a verified toll-free number). Register that in the Twilio Console; this plugin does not file it for you. Use the built-in checkout consent, STOP/HELP/START handling, and optional SMS footer so your campaign matches what you file. See WooCommerce → OrderRing → Tools & Docs.
+
+= Is OrderRing affiliated with Twilio? =
+No. Twilio and all related logos are trademarks of Twilio Inc. or its affiliates. OrderRing is not affiliated with, endorsed, or sponsored by Twilio Inc.
 
 = Do I need a license key to send SMS? =
 No. A license only unlocks premium plugin updates from the seller’s update server. Core SMS, voice, chat, and auto-notify keep working without a license.
@@ -85,6 +93,12 @@ No. The plugin includes its own tokenized TwiML endpoint.
 They text START or UNSTOP. Plain "YES" is intentionally not treated as re-subscribe.
 
 == Changelog ==
+
+= 1.20.0 =
+* Brand: product name is OrderRing (SMS and voice for WooCommerce, for Twilio). Folder and text domain unchanged so existing installs keep working
+* Compliance: US A2P 10DLC guidance on Settings and Tools & Docs; “you pay Twilio directly, zero markup” on the admin header
+* Compliance: required Twilio trademark attribution (Twilio and all related logos are trademarks of Twilio Inc. or its affiliates)
+* License: default item slug is `orderring` (override with TOC_LICENSE_ITEM_SLUG)
 
 = 1.19.1 =
 * Fix: the Settings tab now renders its admin notices, so the "Only administrators can change the Twilio Auth Token" warning (and other save-time messages) are actually shown instead of being silently dropped

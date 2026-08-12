@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<ruleset name="Twilio Order Communicator">
+<ruleset name="OrderRing monorepo">
 	<description>
 		WordPress coding standards for the plugins in this monorepo
 		(twilio-order-communicator/, storecanvas/, orderbay/). The sibling
