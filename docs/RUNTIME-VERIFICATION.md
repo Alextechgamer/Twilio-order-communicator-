@@ -60,6 +60,23 @@ Reproduce with `tools/dev/setup-wp.sh` (see the "Local development" section of t
 | E2 | WP_DEBUG log clean across main flows | **FAIL → fixed** (SC queue passed unsupported meta_query on the CPT datastore) |
 | E3 | HPOS enabled AND disabled both work | **PASS** |
 
+## Phase 3 — launch readiness
+
+- **Version consistency (all 5 places each).** After the runtime fixes, each plugin was
+  bumped a patch level and verified across plugin header, `*_VERSION` constant,
+  `readme.txt` Stable tag, `readme.txt` changelog top entry, and the root README table:
+  **TOC 1.19.1**, **StoreCanvas 1.7.1**, **OrderBay 1.8.1**.
+- **Release zips (per RELEASE.md).** Built all three; each has exactly **one** top-level
+  folder, **0** `license-server` entries, and no `.git` directory (only a `languages/.gitkeep`).
+- **Install-from-zip smoke test.** Removed the TOC symlink, `wp plugin install
+  twilio-order-communicator-1.19.1.zip --activate` on the live site → installed as a real
+  directory, `TOC_VERSION` reports 1.19.1, the opt-out/comms tables were recreated, the
+  Settings and Dashboard tabs load (HTTP 200), and `debug.log` stayed empty. The symlinked
+  dev setup was then restored.
+- **Translations.** `php tools/make-pot.php` produced only line-number/date churn — none of
+  the runtime fixes added or changed a translatable string — so the committed `.pot` files
+  were left unchanged (churn discarded), per the release process.
+
 ## Evidence
 
 ### A. license-server
