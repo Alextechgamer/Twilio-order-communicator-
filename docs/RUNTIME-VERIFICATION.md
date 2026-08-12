@@ -49,9 +49,9 @@ Reproduce with `tools/dev/setup-wp.sh` (see the "Local development" section of t
 | C3 | sc_dl signature matrix (no/valid/expired/tampered sig, non-SC id) | **PASS** |
 | C4 | anonymous REST media hides SC artwork; shop manager sees it | **PASS** |
 | C5 | backfill re-marks pre-marker artwork | **PASS** |
-| C6 | webserver deny rules: direct uploads 403, proxy still serves | — |
-| C7 | proof email attaches files by path | — |
-| C8 | FPD import: public https OK; loopback/metadata/private/IPv6 URLs skipped | — |
+| C6 | webserver deny rules: direct uploads 403, proxy still serves | **PASS** |
+| C7 | proof email attaches files by path | **PASS** |
+| C8 | FPD import: public https OK; loopback/metadata/private/IPv6 URLs skipped | **PASS** |
 | D1 | RMA per-line quantities clamped; bogus ids dropped | — |
 | D2 | RMA slip renders Return-qty column | — |
 | D3 | RMA status emails once per transition; default off | — |
@@ -244,6 +244,36 @@ state: anonymous REST **listed all three** and the proxy 404'd even with a valid
 signature. One administrator wp-admin page load ran the `admin_init` backfill:
 all three re-marked `_sc_generated=1`, flag set, anonymous REST hides them again, and the
 signed proxy serves id 27 with HTTP 200.
+
+**C6 — PASS.** Installed nginx + php8.3-fpm (run as `ubuntu` so they can read `~/wordpress`)
+and served the same WP root on `:8082` with the `docs/storecanvas-artwork-privacy.md`
+deny block adapted to the actual uploads path
+(`location ~* ^/wp-content/uploads/2026/08/sc- { deny all; return 403; }`):
+- Direct hit on the composite `…/uploads/2026/08/sc-print-25-front-…png` via nginx → **403**
+  (same URL via the plain `php -S :8080` control, with no deny rule → 200, confirming the
+  file is otherwise reachable).
+- The uploaded artwork and preview files direct URLs → **403** too.
+- The signed proxy URL (`admin-post.php?action=sc_dl…`) through nginx → **200** and streamed
+  the 2560×1920 PNG. So the deny closes the raw path while the proxy still serves.
+
+**C7 — PASS.** Enabled `sc_proof_email_enabled=1`; the proof email fired on the
+processing transition. The `wp_mail` capture recorded:
+`to=cara@example.com`, subject "Your print proof for order 29",
+`attachments=[{"path":"…/wp-content/uploads/2026/08/sc-print-25-front-…png","exists":true}]`
+— a real server file path (not a URL), and the file exists. (Re-invoking `maybe_send()`
+did not send again — `_sc_proof_emailed_at` gates it once per order.)
+
+**C8 — PASS.** Ran the real importer (`admin-post.php?action=sc_fpd_import`, valid nonce,
+as admin) with an FPD JSON of five views whose base-image sources were, respectively, a
+public `https://s.w.org/…png`, `http://127.0.0.1/…`, `http://169.254.169.254/latest/meta-data/`,
+`http://10.0.0.1/…`, and `http://[::1]/…`:
+- The POST returned **302** with an "Imported 5 view(s)" notice — the import **completed,
+  not aborted**.
+- Only **one** view got an `image_id` (View0, the public https image → attachment 30,
+  `WordPress-logotype-wmark.png`); the loopback, cloud-metadata, RFC1918 and IPv6-loopback
+  URLs were all skipped. `wp-content/debug.log` had **zero** entries.
+- `SC_FPD_Import::is_safe_sideload_url()` independently returns `true` only for the public
+  URL and `false` for all four blocked hosts.
 
 ### D. OrderBay
 
