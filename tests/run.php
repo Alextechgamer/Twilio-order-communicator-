@@ -16,6 +16,8 @@ require $root . '/license-server/src/Helpers.php';
 require $root . '/orderbay/includes/class-ob-einvoice.php';
 require $root . '/orderbay/includes/class-ob-invoicing.php';
 require $root . '/orderbay/includes/class-ob-documents.php';
+require $root . '/orderbay/includes/class-ob-barcode.php';
+require $root . '/orderbay/includes/class-ob-fulfillment.php';
 require $root . '/orderbay/includes/class-ob-qr.php';
 require $root . '/storecanvas/includes/class-sc-print-ready.php';
 require $root . '/storecanvas/includes/class-sc-export.php';
@@ -298,6 +300,31 @@ check( 'tpl strips traversal', OB_Documents::template_candidates( '../../evil.ph
 	'/th/child/orderbay/evil.php',
 	'/plug/templates/evil.php',
 ) );
+
+/* ---- OrderBay barcode (Code 128B) — regression pins ---- */
+$bc = OB_Barcode::code128_svg( 'INV-42' );
+check( 'barcode svg well-formed', false !== @simplexml_load_string( $bc ), true );
+check( 'barcode has bars', strpos( $bc, '<rect' ) !== false, true );
+check( 'barcode aria-label', strpos( $bc, 'aria-label="INV-42"' ) !== false, true );
+check( 'barcode rejects non-ascii', OB_Barcode::code128_svg( "bad\xC3\xA9" ), '' );
+check( 'barcode empty is start+check+stop', strpos( OB_Barcode::code128_svg( '' ), '<svg' ) === 0, true );
+
+/* ---- OrderBay tracking-URL template sanitizer — regression pins ---- */
+check( 'url tpl keeps token', OB_Fulfillment::sanitize_url_template( 'https://track.example.com/{tracking}' ), 'https://track.example.com/{tracking}' );
+check( 'url tpl uppercase token normalized', OB_Fulfillment::sanitize_url_template( 'https://t/x?c={TRACKING}' ), 'https://t/x?c={tracking}' );
+check( 'url tpl rejects non-http', OB_Fulfillment::sanitize_url_template( 'javascript:alert(1){tracking}' ), '' );
+check( 'url tpl strips quotes/brackets', OB_Fulfillment::sanitize_url_template( 'https://t/<x>"q\'/{tracking}' ), 'https://t/xq/{tracking}' );
+check( 'url tpl empty', OB_Fulfillment::sanitize_url_template( '' ), '' );
+
+/* ---- StoreCanvas field-row sanitizer — regression pins ---- */
+$scf = SC_Product_Options::sanitize_field_row( array( 'id' => 'My Field!', 'type' => 'Select', 'label' => ' Pick ', 'price_type' => 'flat', 'price' => '3.50', 'choices' => array( array( 'value' => 'a', 'label' => 'A', 'price' => '2' ), 'b' ) ) );
+check( 'field id sanitized', $scf['id'], 'myfield' );
+check( 'field type sanitized', $scf['type'], 'select' );
+check( 'field label trimmed', $scf['label'], 'Pick' );
+check( 'field price float', $scf['price'], 3.5 );
+check( 'field choices normalized', count( $scf['choices'] ), 2 );
+check( 'field choice per-price', $scf['choices'][0]['price'], 2.0 );
+check( 'field per_char downgrades on non-text', SC_Product_Options::sanitize_field_row( array( 'id' => 'x', 'type' => 'select', 'price_type' => 'per_char' ) )['price_type'], 'flat' );
 
 /* ---- OrderBay QR version selection (pure; pins the no-truncation fix) ---- */
 check( 'qr v1 boundary', OB_QR::pick_version( 14 ), 1 );
