@@ -2,15 +2,15 @@
 
 WordPress / WooCommerce plugin for SMS and voice calls via **your own Twilio account**. Order communication is driven by custom statuses (**Ready for Pickup** and **Shipped**), with consent-aware SMS, quiet hours, bulk reminders, and order chat history.
 
-**Current version: 1.16.0** (plugin header / `TOC_VERSION`)
+**Current version: 1.18.0** (plugin header / `TOC_VERSION`)
 
 This monorepo also contains independent plugins:
 
 | Plugin | Path | Current |
 |--------|------|---------|
-| Twilio Order Communicator | `twilio-order-communicator/` | 1.16.0 |
-| StoreCanvas | `storecanvas/` | 1.6.0 |
-| Orderbay | `orderbay/` | 1.7.0 |
+| Twilio Order Communicator | `twilio-order-communicator/` | 1.18.0 |
+| StoreCanvas | `storecanvas/` | 1.6.1 |
+| Orderbay | `orderbay/` | 1.8.0 |
 
 ## Install
 
@@ -51,6 +51,10 @@ Latest source is always on `main` under `twilio-order-communicator/`.
 | TOC 1.16.0 | `{tracking}` / `{tracking_url}` merge tags for SMS/voice/email, resolved from OrderBay meta → WooCommerce Shipment Tracking → the `toc_order_tracking` filter. Pure `tracking_from_meta()` unit-tested |
 | StoreCanvas 1.6.0 | Prebuilt product templates (T-shirt / Mug / Sticker / Sign) — a "Start from a template" box seeds a working print area + option fields in one click. Pure `SC_Templates::templates()` / `apply()` unit-tested |
 | Orderbay 1.7.0 | QR fix — no more silent truncation to a dead Version-3 symbol (`pick_version()` rejects over-capacity payloads); optional `chillerlan/php-qrcode` or `endroid/qr-code` renders full order-URL QR correctly. Built-in stays experimental/off. `pick_version()` / `library_available()` unit-tested |
+| Docs + tests 1.6.1 / 1.7.1 | Completed the StoreCanvas & OrderBay readmes (description/install/FAQ) and added regression tests for `OB_Barcode::code128_svg`, `OB_Fulfillment::sanitize_url_template`, and `SC_Product_Options::sanitize_field_row` (harness gained common sanitizer shims) |
+| TOC 1.17.0 | Performance: sargable opt-out lookups via an indexed `phone_last10` column (replaces non-indexable `RIGHT(phone_digits,10)`, added on upgrade + backfilled); bulk-tab consent batch-loads opt-outs in one query (N+1 fix). Behavior unchanged; pure `last10()` unit-tested |
+| TOC 1.18.0 | WhatsApp channel via the store's own Twilio WhatsApp sender (BYO, reuses the SMS opt-out/consent/merge/log path); optional `toc_whatsapp_from` setting + a "WhatsApp only" bulk mode. Pure `whatsapp_address()` unit-tested; live delivery needs a real WhatsApp sender |
+| Orderbay 1.8.0 | Item-level RMA (per-line return quantities on the panel + RMA slip) and optional customer status emails (on Approved/Received/Closed, once per transition, default off). Pure `sanitize_rma_items()` / `should_email()` unit-tested |
 
 ## What's in 1.14.2
 

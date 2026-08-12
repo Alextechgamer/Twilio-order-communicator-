@@ -3,12 +3,62 @@ Contributors: alextechgamer
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.7.0
+Stable tag: 1.8.0
 License: GPLv2 or later
 
 Self-hosted WooCommerce ops toolkit: documents, fulfillment, RMA, digests, search.
 
+== Description ==
+
+Orderbay is a self-hosted operations desk for WooCommerce — every order document plus the whole back-office workflow in one plugin, with no per-order fees and no second add-on to buy.
+
+* Documents: invoice, proforma, credit note, packing slip, delivery note, shipping label, RMA slip, pick list
+* Configurable, atomic gapless numbering ({PREFIX}{YYYY}{MM}{DD}{SEQ} tokens, {SEQ:n} padding, optional yearly/monthly reset)
+* Per-tax-rate breakdown on invoices/proformas (EU VAT compliant) with an include/exclude note
+* E-invoicing export: UBL 2.1 (Peppol BIS Billing 3.0) and CII (Factur-X EN16931); optional Factur-X PDF/A-3 assembly when a PDF engine + horstoeko/zugferd are present
+* Fulfillment: tracking numbers + carrier URL templates, partial fulfillment, bin locations
+* Returns/RMA workflow with per-line selection and optional customer status emails
+* SLA aging, staff attention digests, low-stock alerts, an ops dashboard, and meta search
+* Optional host PDF (Dompdf/TCPDF) when installed; the default is browser Print → Save as PDF (OS font stack, no font-subsetting traps)
+* Theme template overrides (wp-content/themes/your-theme/orderbay/*.php) + document hooks
+* HPOS (custom order tables) compatible
+
+Independent of Twilio Order Communicator and StoreCanvas.
+
+== Installation ==
+
+1. Upload the `orderbay` folder to `/wp-content/plugins/`
+2. Activate through the Plugins menu (WooCommerce must be active)
+3. Open WooCommerce → Orderbay (and the Documents settings) to set your invoice prefix/format, seller details and options
+4. Print documents from the order screen; assign tracking and manage returns from the order panels
+
+== Frequently Asked Questions ==
+
+= Do I need Dompdf or TCPDF? =
+No. The default path is browser Print → Save as PDF, which uses the operating-system font stack (so Bengali/CJK/RTL render). If Dompdf or TCPDF is installed on the host, an optional server-side PDF download is offered.
+
+= Is the invoice numbering safe for tax/legal use? =
+Numbering is database-atomic (LAST_INSERT_ID) so concurrent prints never collide or skip. Formats always include a sequence token, and yearly/monthly reset is optional.
+
+= Does it do EU e-invoicing? =
+It exports UBL 2.1 (Peppol BIS Billing 3.0) and CII (Factur-X EN16931), and can assemble a Factur-X PDF/A-3 when a PDF engine and the horstoeko/zugferd library are installed. Validate output against an official validator before production; Peppol network transmission is out of scope (export the file for your access point).
+
+= Can I customize the documents? =
+Yes — copy any template from the plugin's `templates/` folder into `wp-content/themes/your-theme/orderbay/` and edit your copy; it survives updates. `ob_before_document` / `ob_after_document` actions and an `ob_locate_template` filter are also available.
+
+= Is it compatible with HPOS? =
+Yes, Orderbay declares and supports WooCommerce High-Performance Order Storage.
+
 == Changelog ==
+
+= 1.8.0 =
+* New: item-level RMA — record how many of each line item are being returned; shown on the RMA slip (Return qty column)
+* New: optional customer RMA status emails — when enabled, the customer is emailed once when the RMA becomes Approved, Received or Closed (default off; wp_mail, store From)
+* The notify statuses are filterable (ob_rma_notify_states); existing whole-order RMA behavior is unchanged
+
+= 1.7.1 =
+* Docs: complete the readme (description, installation, FAQ, feature list)
+* Tests: pin the Code 128 barcode encoder and the tracking-URL template sanitizer with unit tests (no code change)
 
 = 1.7.0 =
 * Fix: order QR is no longer silently truncated to a fixed Version 3 — the built-in encoder now rejects payloads over its ~42-byte capacity (a long order URL is skipped, not rendered as an unscannable code)

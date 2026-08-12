@@ -104,6 +104,9 @@ trait TOC_Admin_Bulk {
 						<label><input type="radio" name="mode" value="call" checked> <?php echo esc_html__( 'Voice call only', 'twilio-order-communicator' ); ?></label>
 						<label><input type="radio" name="mode" value="sms"> <?php echo esc_html__( 'SMS only', 'twilio-order-communicator' ); ?> <span class="description">(<?php echo esc_html__( 'consent required', 'twilio-order-communicator' ); ?>)</span></label>
 						<label><input type="radio" name="mode" value="both"> <?php echo esc_html__( 'Call + SMS when consented', 'twilio-order-communicator' ); ?></label>
+						<?php if ( get_option( 'toc_whatsapp_from', '' ) || get_option( 'toc_from_number', '' ) ) : ?>
+							<label><input type="radio" name="mode" value="whatsapp"> <?php echo esc_html__( 'WhatsApp only', 'twilio-order-communicator' ); ?> <span class="description">(<?php echo esc_html__( 'consent required; needs a WhatsApp sender', 'twilio-order-communicator' ); ?>)</span></label>
+						<?php endif; ?>
 					</p>
 					<p>
 						<label for="toc-bulk-delay"><strong><?php echo esc_html__( 'Delay between each order', 'twilio-order-communicator' ); ?></strong></label>
@@ -127,9 +130,16 @@ trait TOC_Admin_Bulk {
 						</tr>
 					</thead>
 					<tbody>
-					<?php foreach ( $orders as $order ) :
+					<?php
+					// Batch-load opt-outs once for all rendered orders (avoids a per-row query).
+					$toc_bulk_phones = array();
+					foreach ( $orders as $order ) {
+						$toc_bulk_phones[] = $order->get_billing_phone();
+					}
+					$toc_bulk_opted = TOC_Logger::instance()->opted_out_last10_set( $toc_bulk_phones );
+					foreach ( $orders as $order ) :
 						$oid       = $order->get_id();
-						$consented = $twilio->customer_consented_sms( $oid );
+						$consented = $twilio->consent_for_order( $order, $toc_bulk_opted );
 						$last      = $order->get_meta( '_toc_last_reminder_at' );
 						$last_lbl  = '—';
 						if ( $last ) {

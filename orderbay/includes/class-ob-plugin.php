@@ -46,6 +46,8 @@ class OB_Plugin {
 	const META_RMA_STATUS     = '_ob_rma_status';
 	const META_RMA_NUMBER     = '_ob_rma_number';
 	const META_RMA_REASON     = '_ob_rma_reason';
+	const META_RMA_ITEMS      = '_ob_rma_items';
+	const META_RMA_EMAILED    = '_ob_rma_emailed_status';
 	const META_SLA_AGED       = '_ob_sla_aged_at';
 	const META_BIN            = '_ob_bin_location';
 	const META_QTY_FULFILLED  = '_ob_qty_fulfilled';

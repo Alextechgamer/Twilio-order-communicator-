@@ -6,8 +6,16 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-11 23:27+0000\n"
+"POT-Creation-Date: 2026-08-12 02:18+0000\n"
 "X-Domain: orderbay\n"
+
+#: includes/class-ob-rma.php:287
+msgid "%1$s (of %2$d)"
+msgstr ""
+
+#: includes/class-ob-rma.php:411
+msgid "%1$s — return update for order #%2$s"
+msgstr ""
 
 #: templates/delivery-note.php:43
 msgid "%d delivery note(s)"
@@ -77,7 +85,7 @@ msgstr ""
 msgid "Allow customers to open a packing slip for their own orders (default off)"
 msgstr ""
 
-#: includes/class-ob-rma.php:135
+#: includes/class-ob-rma.php:196
 msgid "Allow logged-in customers to request RMA on My Account (default off)"
 msgstr ""
 
@@ -89,7 +97,7 @@ msgstr ""
 msgid "Any"
 msgstr ""
 
-#: includes/class-ob-rma.php:199
+#: includes/class-ob-rma.php:264
 msgid "Approved"
 msgstr ""
 
@@ -101,7 +109,7 @@ msgstr ""
 msgid "Attention (all)"
 msgstr ""
 
-#: includes/class-ob-rma.php:128
+#: includes/class-ob-rma.php:189
 msgid "Auto attention"
 msgstr ""
 
@@ -152,7 +160,7 @@ msgstr ""
 msgid "Carrier tracking URL templates"
 msgstr ""
 
-#: includes/class-ob-rma.php:201
+#: includes/class-ob-rma.php:266
 msgid "Closed"
 msgstr ""
 
@@ -206,16 +214,20 @@ msgstr ""
 msgid "Customer"
 msgstr ""
 
-#: includes/class-ob-rma.php:132
+#: includes/class-ob-rma.php:193
 msgid "Customer RMA requests"
 msgstr ""
 
-#: includes/class-ob-rma.php:420
+#: includes/class-ob-rma.php:569
 msgid "Customer RMA requests are disabled."
 msgstr ""
 
 #: includes/class-ob-dashboard.php:112
 msgid "Customer RMA, barcodes, staff digests, tracking email, and customer packing slip stay off until you enable them. Bulk print / pick list / CSV need the edit_shop_orders capability."
+msgstr ""
+
+#: includes/class-ob-rma.php:197
+msgid "Customer emails"
 msgstr ""
 
 #: templates/delivery-note.php:88 templates/invoice.php:139
@@ -239,7 +251,7 @@ msgstr ""
 msgid "Daily"
 msgstr ""
 
-#: includes/class-ob-plugin.php:118 includes/class-ob-plugin.php:119
+#: includes/class-ob-plugin.php:120 includes/class-ob-plugin.php:121
 msgid "Dashboard"
 msgstr ""
 
@@ -279,7 +291,7 @@ msgstr ""
 msgid "Document settings (invoice / packing slip)"
 msgstr ""
 
-#: includes/class-ob-plugin.php:126 includes/class-ob-plugin.php:127
+#: includes/class-ob-plugin.php:128 includes/class-ob-plugin.php:129
 msgid "Documents"
 msgstr ""
 
@@ -331,7 +343,7 @@ msgstr ""
 msgid "E-invoicing (UBL / Factur-X)"
 msgstr ""
 
-#: includes/class-ob-rma.php:136
+#: includes/class-ob-rma.php:201
 msgid "Eligible order statuses"
 msgstr ""
 
@@ -339,12 +351,16 @@ msgstr ""
 msgid "Email customer when tracking is first saved"
 msgstr ""
 
-#: includes/class-ob-plugin.php:166 includes/class-ob-plugin.php:167
+#: includes/class-ob-plugin.php:168 includes/class-ob-plugin.php:169
 msgid "Email rules"
 msgstr ""
 
 #: includes/class-ob-dashboard.php:121
 msgid "Email rules & low stock"
+msgstr ""
+
+#: includes/class-ob-rma.php:200
+msgid "Email the customer when the RMA status becomes Approved, Received or Closed (default off)"
 msgstr ""
 
 #: includes/class-ob-notifications.php:248
@@ -367,7 +383,7 @@ msgstr ""
 msgid "Estimated total"
 msgstr ""
 
-#: includes/class-ob-plugin.php:182 includes/class-ob-plugin.php:183
+#: includes/class-ob-plugin.php:184 includes/class-ob-plugin.php:185
 msgid "Export CSV"
 msgstr ""
 
@@ -414,8 +430,8 @@ msgstr ""
 #: includes/class-ob-notes.php:133 includes/class-ob-notes.php:82
 #: includes/class-ob-notifications.php:135
 #: includes/class-ob-notifications.php:166
-#: includes/class-ob-partial.php:176 includes/class-ob-rma.php:114
-#: includes/class-ob-rma.php:308 includes/class-ob-rma.php:324
+#: includes/class-ob-partial.php:176 includes/class-ob-rma.php:175
+#: includes/class-ob-rma.php:457 includes/class-ob-rma.php:473
 #: includes/class-ob-sla.php:184
 msgid "Forbidden"
 msgstr ""
@@ -442,8 +458,8 @@ msgstr ""
 msgid "Fulfilled"
 msgstr ""
 
-#: includes/class-ob-partial.php:70 includes/class-ob-plugin.php:134
-#: includes/class-ob-plugin.php:135
+#: includes/class-ob-partial.php:70 includes/class-ob-plugin.php:136
+#: includes/class-ob-plugin.php:137
 msgid "Fulfillment"
 msgstr ""
 
@@ -457,6 +473,10 @@ msgstr ""
 
 #: templates/packing-slip.php:151
 msgid "Gift message"
+msgstr ""
+
+#: includes/class-ob-rma.php:414
+msgid "Hello %s,"
 msgstr ""
 
 #: includes/class-ob-fulfillment.php:193
@@ -479,7 +499,7 @@ msgstr ""
 msgid "Immutable once assigned per order (_ob_proforma_number)."
 msgstr ""
 
-#: templates/rma-slip.php:85
+#: templates/rma-slip.php:92
 msgid "Include this slip with your return. Refunds are processed separately."
 msgstr ""
 
@@ -491,7 +511,7 @@ msgstr ""
 msgid "Inv"
 msgstr ""
 
-#: includes/class-ob-rma.php:424
+#: includes/class-ob-rma.php:573
 msgid "Invalid RMA request."
 msgstr ""
 
@@ -544,7 +564,7 @@ msgstr ""
 msgid "Invoice, proforma & credit note numbers"
 msgstr ""
 
-#: includes/class-ob-rma.php:214
+#: includes/class-ob-rma.php:298
 msgid "Issue RMA number"
 msgstr ""
 
@@ -552,6 +572,10 @@ msgstr ""
 #: templates/packing-slip.php:88 templates/proforma.php:88
 #: templates/rma-slip.php:62
 msgid "Item"
+msgstr ""
+
+#: includes/class-ob-rma.php:277
+msgid "Items to return"
 msgstr ""
 
 #: includes/class-ob-fulfillment.php:304
@@ -627,7 +651,7 @@ msgstr ""
 msgid "New orders (since %s): %d\n"
 msgstr ""
 
-#: includes/class-ob-rma.php:126
+#: includes/class-ob-rma.php:187
 msgid "Next RMA sequence"
 msgstr ""
 
@@ -671,7 +695,7 @@ msgstr ""
 msgid "No line items in selection."
 msgstr ""
 
-#: templates/rma-slip.php:69
+#: templates/rma-slip.php:70
 msgid "No line items on this order."
 msgstr ""
 
@@ -688,7 +712,7 @@ msgstr ""
 msgid "No refunds and no credit note number on this order."
 msgstr ""
 
-#: includes/class-ob-digest.php:254 includes/class-ob-rma.php:197
+#: includes/class-ob-digest.php:254 includes/class-ob-rma.php:262
 msgid "None"
 msgstr ""
 
@@ -700,12 +724,12 @@ msgstr ""
 msgid "Not flagged"
 msgstr ""
 
-#: includes/class-ob-rma.php:210
+#: includes/class-ob-rma.php:294
 msgid "Not issued"
 msgstr ""
 
-#: includes/class-ob-dashboard.php:120 includes/class-ob-plugin.php:158
-#: includes/class-ob-plugin.php:159
+#: includes/class-ob-dashboard.php:120 includes/class-ob-plugin.php:160
+#: includes/class-ob-plugin.php:161
 msgid "Note templates"
 msgstr ""
 
@@ -749,7 +773,7 @@ msgstr ""
 #: includes/class-ob-einvoice.php:154 includes/class-ob-einvoice.php:85
 #: includes/class-ob-invoicing.php:392 includes/class-ob-invoicing.php:408
 #: includes/class-ob-notes.php:139 includes/class-ob-partial.php:182
-#: includes/class-ob-rma.php:314 includes/class-ob-rma.php:330
+#: includes/class-ob-rma.php:463 includes/class-ob-rma.php:479
 msgid "Order not found"
 msgstr ""
 
@@ -759,15 +783,15 @@ msgstr ""
 
 #: includes/class-ob-dashboard.php:29 includes/class-ob-dashboard.php:30
 #: includes/class-ob-order-ops.php:57 includes/class-ob-order-ops.php:82
-#: includes/class-ob-plugin.php:108 includes/class-ob-plugin.php:109
+#: includes/class-ob-plugin.php:110 includes/class-ob-plugin.php:111
 msgid "Orderbay"
 msgstr ""
 
-#: includes/class-ob-rma.php:157 includes/class-ob-rma.php:178
+#: includes/class-ob-rma.php:222 includes/class-ob-rma.php:243
 msgid "Orderbay RMA"
 msgstr ""
 
-#: includes/class-ob-rma.php:301
+#: includes/class-ob-rma.php:450
 msgid "Orderbay RMA number issued: %s"
 msgstr ""
 
@@ -855,7 +879,7 @@ msgstr ""
 msgid "Orderbay requires WooCommerce to be active."
 msgstr ""
 
-#: includes/class-ob-rma.php:117
+#: includes/class-ob-rma.php:178
 msgid "Orderbay returns / RMA"
 msgstr ""
 
@@ -903,7 +927,7 @@ msgstr ""
 msgid "Orderbay: clear attention"
 msgstr ""
 
-#: includes/class-ob-rma.php:453
+#: includes/class-ob-rma.php:602
 msgid "Orderbay: customer submitted RMA request."
 msgstr ""
 
@@ -915,11 +939,11 @@ msgstr ""
 msgid "Orderbay: mark needs attention"
 msgstr ""
 
-#: includes/class-ob-rma.php:275
+#: includes/class-ob-rma.php:374
 msgid "Orderbay: needs attention (RMA requested)."
 msgstr ""
 
-#: includes/class-ob-rma.php:450
+#: includes/class-ob-rma.php:599
 msgid "Orderbay: needs attention (customer RMA request)."
 msgstr ""
 
@@ -1041,7 +1065,7 @@ msgstr ""
 msgid "Pick list"
 msgstr ""
 
-#: includes/class-ob-rma.php:442
+#: includes/class-ob-rma.php:591
 msgid "Please provide a reason."
 msgstr ""
 
@@ -1084,7 +1108,7 @@ msgstr ""
 msgid "Print Orderbay shipping labels"
 msgstr ""
 
-#: includes/class-ob-rma.php:215
+#: includes/class-ob-rma.php:299
 msgid "Print RMA slip"
 msgstr ""
 
@@ -1170,7 +1194,7 @@ msgstr ""
 msgid "Quick links"
 msgstr ""
 
-#: includes/class-ob-rma.php:209 includes/class-ob-rma.php:369
+#: includes/class-ob-rma.php:293 includes/class-ob-rma.php:518
 msgid "RMA #"
 msgstr ""
 
@@ -1178,7 +1202,7 @@ msgstr ""
 msgid "RMA %s"
 msgstr ""
 
-#: includes/class-ob-rma.php:124
+#: includes/class-ob-rma.php:185
 msgid "RMA prefix"
 msgstr ""
 
@@ -1186,20 +1210,20 @@ msgstr ""
 msgid "RMA slip"
 msgstr ""
 
-#: includes/class-ob-rma.php:194
+#: includes/class-ob-rma.php:259
 msgid "RMA status"
 msgstr ""
 
-#: includes/class-ob-rma.php:207 includes/class-ob-rma.php:372
+#: includes/class-ob-rma.php:291 includes/class-ob-rma.php:521
 #: templates/rma-slip.php:57
 msgid "Reason"
 msgstr ""
 
-#: includes/class-ob-rma.php:395
+#: includes/class-ob-rma.php:544
 msgid "Reason for return"
 msgstr ""
 
-#: includes/class-ob-rma.php:200
+#: includes/class-ob-rma.php:265
 msgid "Received"
 msgstr ""
 
@@ -1219,11 +1243,11 @@ msgstr ""
 msgid "Remove"
 msgstr ""
 
-#: includes/class-ob-rma.php:397
+#: includes/class-ob-rma.php:546
 msgid "Request return"
 msgstr ""
 
-#: includes/class-ob-rma.php:198
+#: includes/class-ob-rma.php:263
 msgid "Requested"
 msgstr ""
 
@@ -1231,20 +1255,24 @@ msgstr ""
 msgid "Requires the edit_shop_orders capability. Streams a CSV download of matching orders."
 msgstr ""
 
-#: includes/class-ob-rma.php:364
+#: includes/class-ob-rma.php:513
 msgid "Return / RMA"
 msgstr ""
 
-#: includes/class-ob-rma.php:122
+#: includes/class-ob-rma.php:183
 msgid "Return address"
 msgstr ""
 
-#: includes/class-ob-dashboard.php:118 includes/class-ob-plugin.php:142
-#: includes/class-ob-plugin.php:143
+#: templates/rma-slip.php:65
+msgid "Return qty"
+msgstr ""
+
+#: includes/class-ob-dashboard.php:118 includes/class-ob-plugin.php:144
+#: includes/class-ob-plugin.php:145
 msgid "Returns / RMA"
 msgstr ""
 
-#: includes/class-ob-rma.php:381 includes/class-ob-rma.php:438
+#: includes/class-ob-rma.php:530 includes/class-ob-rma.php:587
 msgid "Returns are not available for this order status."
 msgstr ""
 
@@ -1262,8 +1290,8 @@ msgstr ""
 msgid "SKU"
 msgstr ""
 
-#: includes/class-ob-dashboard.php:119 includes/class-ob-plugin.php:150
-#: includes/class-ob-plugin.php:151
+#: includes/class-ob-dashboard.php:119 includes/class-ob-plugin.php:152
+#: includes/class-ob-plugin.php:153
 msgid "SLA aging"
 msgstr ""
 
@@ -1271,7 +1299,7 @@ msgstr ""
 msgid "Safe defaults"
 msgstr ""
 
-#: includes/class-ob-rma.php:144
+#: includes/class-ob-rma.php:209
 msgid "Save RMA settings"
 msgstr ""
 
@@ -1303,7 +1331,7 @@ msgstr ""
 msgid "Select orders on the Orders list → bulk action “Orderbay: warehouse pick list”. Groups lines by SKU for the selection."
 msgstr ""
 
-#: includes/class-ob-rma.php:118
+#: includes/class-ob-rma.php:179
 msgid "Self-hosted RMA meta and print slips only — no payment or refund automation. Use credit notes for refunds. Independent of Twilio Order Communicator."
 msgstr ""
 
@@ -1351,7 +1379,7 @@ msgstr ""
 msgid "Set From name/address under Documents (used on invoices and packing slips)."
 msgstr ""
 
-#: includes/class-ob-rma.php:131
+#: includes/class-ob-rma.php:192
 msgid "Set needs-attention when RMA status becomes requested"
 msgstr ""
 
@@ -1402,12 +1430,12 @@ msgstr ""
 msgid "Shown on warehouse pick lists."
 msgstr ""
 
-#: includes/class-ob-dashboard.php:122 includes/class-ob-plugin.php:174
-#: includes/class-ob-plugin.php:175
+#: includes/class-ob-dashboard.php:122 includes/class-ob-plugin.php:176
+#: includes/class-ob-plugin.php:177
 msgid "Staff digest"
 msgstr ""
 
-#: includes/class-ob-export.php:85 includes/class-ob-rma.php:367
+#: includes/class-ob-export.php:85 includes/class-ob-rma.php:516
 msgid "Status"
 msgstr ""
 
@@ -1449,7 +1477,7 @@ msgstr ""
 msgid "Template not found"
 msgstr ""
 
-#: includes/class-ob-plugin.php:83
+#: includes/class-ob-plugin.php:85
 msgid "Thank you for your order."
 msgstr ""
 
@@ -1561,7 +1589,7 @@ msgstr ""
 msgid "Yes"
 msgstr ""
 
-#: includes/class-ob-rma.php:428
+#: includes/class-ob-rma.php:577
 msgid "You cannot request a return for this order."
 msgstr ""
 
@@ -1577,8 +1605,16 @@ msgstr ""
 msgid "Your order {order_number} has shipped"
 msgstr ""
 
-#: includes/class-ob-rma.php:374
+#: includes/class-ob-rma.php:418
+msgid "Your return %1$s is now %2$s."
+msgstr ""
+
+#: includes/class-ob-rma.php:523
 msgid "Your return request is being reviewed. You cannot change the status here."
+msgstr ""
+
+#: includes/class-ob-rma.php:421
+msgid "Your return request is now %s."
 msgstr ""
 
 #: includes/class-ob-notifications.php:391
@@ -1589,12 +1625,24 @@ msgstr ""
 msgid "[%1$s] Orderbay %2$s digest"
 msgstr ""
 
+#: includes/class-ob-rma.php:405
+msgid "approved"
+msgstr ""
+
+#: includes/class-ob-rma.php:407
+msgid "closed"
+msgstr ""
+
 #: includes/class-ob-digest.php:166
 msgid "day"
 msgstr ""
 
 #: includes/class-ob-partial.php:71
 msgid "open"
+msgstr ""
+
+#: includes/class-ob-rma.php:406
+msgid "received"
 msgstr ""
 
 #: includes/class-ob-digest.php:166

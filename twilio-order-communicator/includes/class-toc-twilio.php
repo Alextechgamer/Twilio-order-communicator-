@@ -521,8 +521,41 @@ class TOC_Twilio {
 		return $body . "\n\n" . $footer;
 	}
 
-	public function send_sms( $to, $body, $order_id = 0, $force = false ) {
-		$creds = $this->get_credentials();
+	/**
+	 * Format an E.164 number as a Twilio WhatsApp address (idempotent). Returns '' for a
+	 * non-E.164 input. Pure — unit-testable.
+	 *
+	 * @param string $number E.164 number, optionally already prefixed with "whatsapp:".
+	 * @return string "whatsapp:+…" or ''.
+	 */
+	public static function whatsapp_address( $number ) {
+		$number = trim( (string) $number );
+		if ( 0 === strpos( $number, 'whatsapp:' ) ) {
+			$number = substr( $number, 9 );
+		}
+		if ( ! self::is_e164( $number ) ) {
+			return '';
+		}
+		return 'whatsapp:' . $number;
+	}
+
+	/**
+	 * Send a WhatsApp message via the store's own Twilio WhatsApp sender. Thin wrapper over the
+	 * SMS send path (same opt-out / consent / merge-tag / logging behavior).
+	 *
+	 * @param string $to       Recipient (E.164).
+	 * @param string $body     Message body.
+	 * @param int    $order_id Order ID (0 for none).
+	 * @param bool   $force    Bypass consent/opt-out.
+	 * @return array
+	 */
+	public function send_whatsapp( $to, $body, $order_id = 0, $force = false ) {
+		return $this->send_sms( $to, $body, $order_id, $force, 'whatsapp' );
+	}
+
+	public function send_sms( $to, $body, $order_id = 0, $force = false, $channel = 'sms' ) {
+		$channel = ( 'whatsapp' === $channel ) ? 'whatsapp' : 'sms';
+		$creds   = $this->get_credentials();
 		if ( ! $this->is_configured() ) {
 			return array( 'success' => false, 'error' => __( 'Twilio credentials not configured.', 'twilio-order-communicator' ) );
 		}
@@ -551,12 +584,26 @@ class TOC_Twilio {
 
 		$status_cb = $this->webhook_url( 'toc_msg_status' );
 
+		// Channel addressing: WhatsApp uses the same Messages API with whatsapp:-prefixed
+		// addresses and a WhatsApp-enabled sender (toc_whatsapp_from, falling back to the SMS From).
+		if ( 'whatsapp' === $channel ) {
+			$wa_from = (string) get_option( 'toc_whatsapp_from', '' );
+			$from    = self::whatsapp_address( '' !== trim( $wa_from ) ? $wa_from : $creds['from'] );
+			$to_addr = self::whatsapp_address( $to );
+			if ( '' === $from || '' === $to_addr ) {
+				return array( 'success' => false, 'error' => __( 'WhatsApp sender or recipient is not a valid E.164 number.', 'twilio-order-communicator' ) );
+			}
+		} else {
+			$from    = $creds['from'];
+			$to_addr = $to;
+		}
+
 		$result = $this->request(
 			'POST',
 			'Messages.json',
 			array(
-				'To'                   => $to,
-				'From'                 => $creds['from'],
+				'To'                   => $to_addr,
+				'From'                 => $from,
 				'Body'                 => $body,
 				'StatusCallback'       => $status_cb,
 				'StatusCallbackMethod' => 'POST',
@@ -663,10 +710,31 @@ class TOC_Twilio {
 		if ( ! $order ) {
 			return false;
 		}
+		return $this->consent_for_order( $order );
+	}
+
+	/**
+	 * Consent check for an already-hydrated order. Avoids the redundant wc_get_order() of
+	 * customer_consented_sms() and, when given a precomputed opted-out last-10 set, skips the
+	 * per-row opt-out query (bulk-tab N+1 fix). Behavior is identical to the per-order path.
+	 *
+	 * @param WC_Order   $order            Hydrated order.
+	 * @param array|null $opted_out_last10 Precomputed opted-out last-10 set, or null to query.
+	 * @return bool
+	 */
+	public function consent_for_order( $order, $opted_out_last10 = null ) {
+		if ( ! $order instanceof WC_Order ) {
+			return false;
+		}
 
 		$phone = TOC_Logger::instance()->normalize_phone( $order->get_billing_phone() );
-		if ( $phone && $this->phone_is_opted_out( $phone ) ) {
-			return false;
+		if ( $phone ) {
+			$is_out = is_array( $opted_out_last10 )
+				? in_array( TOC_Logger::last10( $phone ), $opted_out_last10, true )
+				: $this->phone_is_opted_out( $phone );
+			if ( $is_out ) {
+				return false;
+			}
 		}
 
 		$meta_key = get_option( 'toc_sms_consent_meta', '_toc_sms_consent' );

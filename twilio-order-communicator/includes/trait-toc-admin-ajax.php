@@ -43,7 +43,7 @@ trait TOC_Admin_Ajax {
 
 		$message = sanitize_textarea_field( wp_unslash( $_POST['message'] ?? '' ) );
 		$mode    = sanitize_key( wp_unslash( $_POST['mode'] ?? 'call' ) );
-		if ( ! in_array( $mode, array( 'call', 'sms', 'both' ), true ) ) {
+		if ( ! in_array( $mode, array( 'call', 'sms', 'both', 'whatsapp' ), true ) ) {
 			$mode = 'call';
 		}
 
@@ -120,10 +120,26 @@ trait TOC_Admin_Ajax {
 			}
 		}
 
+		// WhatsApp — same consent gate as SMS; sends via the store's WhatsApp-enabled Twilio sender.
+		$wa_ok = null;
+		if ( 'whatsapp' === $mode ) {
+			if ( (int) get_option( 'toc_require_sms_consent', 1 ) === 1 && ! $consented ) {
+				$wa_ok    = false;
+				$detail[] = 'WhatsApp skipped (no consent)';
+			} else {
+				$r        = $twilio->send_whatsapp( $phone, $message, $order_id, false );
+				$wa_ok    = ! empty( $r['success'] );
+				$did_work = $did_work || $wa_ok;
+				$detail[] = $wa_ok ? 'WhatsApp queued' : ( 'WhatsApp failed: ' . ( $r['error'] ?? 'unknown' ) );
+			}
+		}
+
 		if ( $mode === 'call' ) {
 			$ok = ( true === $call_ok );
 		} elseif ( $mode === 'sms' ) {
 			$ok = ( true === $sms_ok );
+		} elseif ( $mode === 'whatsapp' ) {
+			$ok = ( true === $wa_ok );
 		} else {
 			// both: success if call went out even when SMS skipped for consent
 			$ok = ( true === $call_ok ) || ( true === $sms_ok );

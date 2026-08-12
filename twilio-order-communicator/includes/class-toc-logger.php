@@ -73,14 +73,39 @@ class TOC_Logger {
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			phone varchar(30) NOT NULL DEFAULT '',
 			phone_digits varchar(20) NOT NULL DEFAULT '',
+			phone_last10 varchar(10) NOT NULL DEFAULT '',
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			UNIQUE KEY phone_digits (phone_digits),
-			KEY phone (phone)
+			KEY phone (phone),
+			KEY phone_last10 (phone_last10)
 		) {$charset};";
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( $sql );
+	}
+
+	/**
+	 * Last 10 digits of a phone (or the whole digit string if shorter). Pure.
+	 * Backs the indexed phone_last10 column so opt-out lookups are sargable.
+	 *
+	 * @param string $phone Phone or digit string.
+	 * @return string
+	 */
+	public static function last10( $phone ) {
+		$digits = preg_replace( '/\D/', '', (string) $phone );
+		return strlen( $digits ) >= 10 ? substr( $digits, -10 ) : $digits;
+	}
+
+	/**
+	 * One-time backfill of phone_last10 for rows created before the indexed column existed.
+	 * RIGHT() here is a single maintenance pass (not a hot path) run on upgrade.
+	 */
+	public static function backfill_opt_out_last10() {
+		global $wpdb;
+		$table = $wpdb->prefix . 'toc_sms_opt_outs';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( "UPDATE {$table} SET phone_last10 = RIGHT(phone_digits, 10) WHERE phone_last10 = '' AND phone_digits <> ''" );
 	}
 
 	/**
@@ -340,14 +365,14 @@ class TOC_Logger {
 			return false;
 		}
 
-		$last10 = strlen( $digits ) >= 10 ? substr( $digits, -10 ) : $digits;
+		$last10 = self::last10( $digits );
 
 		$found = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT id FROM {$this->opt_outs_table}
 				 WHERE phone_digits = %s
 				    OR phone_digits = %s
-				    OR RIGHT(phone_digits, 10) = %s
+				    OR phone_last10 = %s
 				 LIMIT 1",
 				$digits,
 				$last10,
@@ -356,6 +381,34 @@ class TOC_Logger {
 		);
 
 		return ! empty( $found );
+	}
+
+	/**
+	 * Batch opt-out lookup: given many phones, return the set of opted-out last-10 values in ONE
+	 * query (avoids the per-row phone_is_opted_out N+1 on the bulk tab). Membership on last-10 is
+	 * equivalent to phone_is_opted_out because phone_last10 subsumes its other match conditions.
+	 *
+	 * @param array $phones Phone strings.
+	 * @return string[] Opted-out last-10 digit strings.
+	 */
+	public function opted_out_last10_set( $phones ) {
+		global $wpdb;
+		$keys = array();
+		foreach ( (array) $phones as $p ) {
+			$l = self::last10( $p );
+			if ( strlen( $l ) >= 7 ) {
+				$keys[ $l ] = true;
+			}
+		}
+		$keys = array_keys( $keys );
+		if ( ! $keys ) {
+			return array();
+		}
+		$placeholders = implode( ',', array_fill( 0, count( $keys ), '%s' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholders are %s only.
+		$sql  = "SELECT phone_last10 FROM {$this->opt_outs_table} WHERE phone_last10 IN ($placeholders)";
+		$rows = $wpdb->get_col( $wpdb->prepare( $sql, $keys ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		return is_array( $rows ) ? array_values( array_unique( $rows ) ) : array();
 	}
 
 	public function add_opt_out_phone( $phone ) {
@@ -373,9 +426,9 @@ class TOC_Logger {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- intentional upsert.
 		$existing = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT id FROM {$this->opt_outs_table} WHERE phone_digits = %s OR RIGHT(phone_digits, 10) = %s LIMIT 1",
+				"SELECT id FROM {$this->opt_outs_table} WHERE phone_digits = %s OR phone_last10 = %s LIMIT 1",
 				$digits,
-				strlen( $digits ) >= 10 ? substr( $digits, -10 ) : $digits
+				self::last10( $digits )
 			)
 		);
 
@@ -388,9 +441,10 @@ class TOC_Logger {
 			array(
 				'phone'        => $norm,
 				'phone_digits' => $digits,
+				'phone_last10' => self::last10( $digits ),
 				'created_at'   => current_time( 'mysql' ),
 			),
-			array( '%s', '%s', '%s' )
+			array( '%s', '%s', '%s', '%s' )
 		);
 	}
 
@@ -401,7 +455,7 @@ class TOC_Logger {
 			return;
 		}
 
-		$last10 = strlen( $digits ) >= 10 ? substr( $digits, -10 ) : $digits;
+		$last10 = self::last10( $digits );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->query(
@@ -409,7 +463,7 @@ class TOC_Logger {
 				"DELETE FROM {$this->opt_outs_table}
 				 WHERE phone_digits = %s
 				    OR phone_digits = %s
-				    OR RIGHT(phone_digits, 10) = %s",
+				    OR phone_last10 = %s",
 				$digits,
 				$last10,
 				$last10

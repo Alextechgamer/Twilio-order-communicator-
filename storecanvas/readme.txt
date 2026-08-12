@@ -3,18 +3,55 @@ Contributors: alextechgamer
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.6.0
+Stable tag: 1.6.1
 License: GPLv2 or later
 
 Self-hosted WooCommerce personalization: product options, live mockup, print-ready, library, guest save.
 
 == Description ==
 
-Product options parity with common add-ons plugins plus live mockup and print composites (PHP GD).
+StoreCanvas is a self-hosted product personalizer and options engine for WooCommerce — a live design canvas plus a deep options/pricing engine, with a one-time license, no per-order fees, and nothing that can be sunset from a server you don't control.
+
+* Live multi-view design canvas: text, image and clip-art layers with placement, scale and rotation
+* Deep product options: 15 field types, per-choice/lookup pricing, percent/qty/per-character pricing, multi-rule conditional logic (AND/OR + operators)
+* Print-ready output: true-DPI PNG (pHYs), per-composite SVG and a minimal single-image PDF at physical size with bleed guides
+* Production workflow: print queue, bulk ZIP download, proof-approval email, guest design save
+* One-click Fancy Product Designer importer (map an exported FPD product into a StoreCanvas config)
+* Prebuilt product templates (T-shirt, Mug, Sticker, Sign) to start from
+* Security-first: per-customer artwork authorization, private print files, upload/decompression guards, guest rate limits
+* HPOS (custom order tables) compatible
 
 Independent of Twilio Order Communicator and Orderbay.
 
+== Installation ==
+
+1. Upload the `storecanvas` folder to `/wp-content/plugins/`
+2. Activate through the Plugins menu (WooCommerce must be active; PHP GD is recommended for print composites)
+3. Edit a product → use the StoreCanvas boxes to enable the customizer (views + print areas) and add option fields, or click "Start from a template"
+4. Optionally paste a Fancy Product Designer export to import an existing product
+
+== Frequently Asked Questions ==
+
+= Do I need PHP GD? =
+GD is used to generate server-side print composites. Product options and the live mockup work without it; if GD is unavailable, composite generation is skipped with a notice.
+
+= Is there a per-order or per-seat fee? =
+No. StoreCanvas is self-hosted with no per-order fees and no cloud dependency — you own your artwork and pipeline.
+
+= Can I migrate from Fancy Product Designer? =
+Yes. Paste an exported FPD product JSON on the product screen and StoreCanvas maps its views, print zones and text fields into a config. Review the result and set the product view image before selling.
+
+= What print output does it produce? =
+True-to-size PNG with a DPI (pHYs) chunk, an SVG at physical millimetre size with bleed guides, and a minimal single-image PDF. The PDF is RGB/flattened (not CMYK/PDF-X); confirm color/DPI with your print provider.
+
+= Is it compatible with HPOS? =
+Yes, StoreCanvas declares and supports WooCommerce High-Performance Order Storage.
+
 == Changelog ==
+
+= 1.6.1 =
+* Docs: complete the readme (description, installation, FAQ, feature list)
+* Tests: pin the option field-row sanitizer with unit tests (no code change)
 
 = 1.6.0 =
 * New: prebuilt product templates (T-shirt, Mug, Sticker, Sign/Poster) — a "Start from a template" box on the product screen seeds a working print area + option fields with one click

@@ -4,7 +4,7 @@ Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
 WC requires at least: 7.0
-Stable tag: 1.16.0
+Stable tag: 1.18.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -85,6 +85,16 @@ No. The plugin includes its own tokenized TwiML endpoint.
 They text START or UNSTOP. Plain "YES" is intentionally not treated as re-subscribe.
 
 == Changelog ==
+
+= 1.18.0 =
+* New: WhatsApp channel via your own Twilio WhatsApp sender (BYO, zero markup) — reuses the SMS opt-out, consent, merge-tag and logging path
+* Settings: optional "WhatsApp Sender" E.164 field (falls back to the From Number); the bulk reminder tool gains a "WhatsApp only" mode
+* Requires WhatsApp enabled on your Twilio account (approved sender + message templates). WhatsApp sends are recorded as text messages in the log
+
+= 1.17.0 =
+* Performance: opt-out lookups are now sargable — an indexed phone_last10 column replaces the non-indexable RIGHT(phone_digits,10) match (added on upgrade with a one-time backfill)
+* Performance: the bulk reminder tab batch-loads opt-outs in a single query instead of one per row (fixes an N+1); consent for an already-hydrated order avoids a redundant order fetch
+* No behavior change to consent/opt-out results
 
 = 1.16.0 =
 * New: {tracking} and {tracking_url} merge tags for SMS, voice and email templates
