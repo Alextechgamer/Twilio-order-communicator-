@@ -32,11 +32,11 @@ Reproduce with `tools/dev/setup-wp.sh` (see the "Local development" section of t
 
 | # | Item | Verdict |
 |---|------|---------|
-| A1 | license-server /v1/health | — |
-| A2 | create-key + add-release CLIs | — |
-| A3 | activate → update-check → signed download | — |
-| A4 | H2 regression: update-check without site binding → 403 | — |
-| A5 | rate limit 429 + download_secret fails closed | — |
+| A1 | license-server /v1/health | **PASS** |
+| A2 | create-key + add-release CLIs | **PASS** |
+| A3 | activate → update-check → signed download | **PASS** |
+| A4 | H2 regression: update-check without site binding → 403 | **PASS** |
+| A5 | rate limit 429 + download_secret fails closed | **PASS** |
 | B1 | opt-out table upgrade: phone_last10 column, backfill, EXPLAIN uses index | — |
 | B2 | opt-out across formatting variants (STOP/START/YES) | — |
 | B3 | bulk tab: one batched opt-out query, not N | — |
@@ -64,7 +64,45 @@ Reproduce with `tools/dev/setup-wp.sh` (see the "Local development" section of t
 
 ### A. license-server
 
-_(pending)_
+Setup: `php8.3-sqlite3` installed (`pdo_sqlite` was missing from the VM); a git-ignored
+`license-server/config.php` with random `admin_token`/`download_secret` and
+`public_base_url=http://127.0.0.1:8081`; served with
+`cd license-server/public && php -S 127.0.0.1:8081`.
+
+**A1 — PASS.** `curl http://127.0.0.1:8081/v1/health` →
+`{"ok":true,"service":"toc-license-server"}` HTTP 200.
+
+**A2 — PASS.**
+`php bin/create-key.php --email=test@example.com --sites=1 --expires=lifetime` printed key
+`TOC-5A0D…009B`. Built `twilio-order-communicator-1.19.0.zip` per RELEASE.md (verified:
+single top-level folder, `grep -c license-server` = 0) and registered it with
+`php bin/add-release.php --version=1.19.0 --file=…` → row upserted, zip copied to
+`storage/releases/`.
+
+**A3 — PASS.**
+- `POST /v1/activate` (key + `site_url=http://localhost:8080` + `instance_id=inst-verify-001`) →
+  200 `{"success":true,"status":"active",…"activations":1}`.
+- `GET /v1/update-check?…&version=1.18.0&site_url=…&instance_id=inst-verify-001` with
+  `X-TOC-License` header → 200 `{"update":true,…"package_url":"http://127.0.0.1:8081/v1/download?slug=…&expires=…&sig=<hmac>"}`.
+- `curl` on that `package_url` → HTTP 200, `unzip -t` on the body: "No errors detected in
+  compressed data".
+
+**A4 (H2 regression) — PASS.**
+- Same valid key, **no** `site_url`/`instance_id` →
+  HTTP **403** `{"success":false,"status":"inactive","error":"Site not activated. Activate this site for the license before checking for updates."}` — no package URL minted.
+- Valid key with a never-activated `site_url=http://evil.example.com&instance_id=inst-neverseen`
+  → HTTP **403**, same body.
+- Bonus: `/v1/download` with a tampered `sig` → HTTP **403** "Invalid or expired download link."
+
+**A5 — PASS.**
+- Rate limit: with `rate_limit_max=5` (config edit, restored after), 8× `POST /v1/validate`
+  from one IP → requests 1–5 HTTP 200, requests 6–8 HTTP **429**
+  `{"success":false,"error":"Too many requests. Please try again later."}` (with `Retry-After`).
+- Fail closed: with `download_secret=''` and the placeholder `admin_token`
+  (`change-me-to-a-long-random-string`), the same fully-activated update-check returned
+  HTTP **500** `{"success":false,"error":"Server error"}` and the server log shows
+  `TOC License Server error: Download secret is not configured. Set download_secret (or a
+  non-default admin_token) in config.php.` — no URL was signed. Config restored afterwards.
 
 ### B. Twilio Order Communicator
 
