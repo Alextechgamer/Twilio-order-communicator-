@@ -271,6 +271,19 @@ check( 'fpd notes present', count( $mapped['notes'] ) >= 1, true );
 check( 'fpd bare list of views', count( SC_FPD_Import::map( array( array( 'title' => 'Only', 'elements' => array() ) ) )['customizer']['views'] ), 1 );
 check( 'fpd empty input', SC_FPD_Import::map( 'nope' )['customizer']['enabled'], 0 );
 
+/* ---- SC_FPD_Import::is_blocked_host (pins M7: SSRF host guard) ---- */
+check( 'ssrf blocks loopback', SC_FPD_Import::is_blocked_host( '127.0.0.1' ), true );
+check( 'ssrf blocks localhost', SC_FPD_Import::is_blocked_host( 'localhost' ), true );
+check( 'ssrf blocks sub localhost', SC_FPD_Import::is_blocked_host( 'db.localhost' ), true );
+check( 'ssrf blocks cloud metadata', SC_FPD_Import::is_blocked_host( '169.254.169.254' ), true );
+check( 'ssrf blocks rfc1918 10', SC_FPD_Import::is_blocked_host( '10.1.2.3' ), true );
+check( 'ssrf blocks rfc1918 192', SC_FPD_Import::is_blocked_host( '192.168.0.5' ), true );
+check( 'ssrf blocks ipv6 loopback', SC_FPD_Import::is_blocked_host( '::1' ), true );
+check( 'ssrf blocks ipv6 bracketed', SC_FPD_Import::is_blocked_host( '[::1]' ), true );
+check( 'ssrf blocks empty host', SC_FPD_Import::is_blocked_host( '' ), true );
+check( 'ssrf allows public ip', SC_FPD_Import::is_blocked_host( '8.8.8.8' ), false );
+check( 'ssrf allows public host', SC_FPD_Import::is_blocked_host( 'cdn.example.com' ), false );
+
 /* ---- StoreCanvas conditional logic (pure; AND/OR + operators) ---- */
 $opts = array( 'size' => 'L', 'color' => 'red', 'qty' => '5', 'name' => 'Bob', 'tags' => array( 'a', 'b' ) );
 check( 'rule is', SC_Product_Options::rule_matches( 'is', 'L', 'L' ), true );

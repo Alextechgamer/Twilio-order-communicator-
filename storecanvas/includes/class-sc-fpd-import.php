@@ -324,6 +324,57 @@ class SC_FPD_Import {
 	/**
 	 * @param string $post_type Current post type.
 	 */
+	/**
+	 * Whether a host is private/reserved/loopback and must not be fetched server-side.
+	 *
+	 * Pure (no DNS) so the rule is unit-testable: rejects `localhost`, any `*.localhost`,
+	 * and IP literals in private or reserved ranges (RFC1918, loopback, link-local incl.
+	 * the 169.254.169.254 cloud-metadata address, IPv6 ::1 / fc00::/7 / fe80::/10).
+	 * Hostnames that are not IP literals return false here and are resolved + range-checked
+	 * at runtime by wp_http_validate_url().
+	 *
+	 * @param string $host Host portion of a URL.
+	 * @return bool True when the host is blocked.
+	 */
+	public static function is_blocked_host( $host ) {
+		$host = strtolower( trim( (string) $host ) );
+		$host = trim( $host, '[]' ); // strip IPv6 literal brackets
+		if ( '' === $host ) {
+			return true;
+		}
+		if ( 'localhost' === $host || '.localhost' === substr( $host, -10 ) ) {
+			return true;
+		}
+		if ( filter_var( $host, FILTER_VALIDATE_IP ) ) {
+			// A private/reserved IP fails this filter → treat as blocked.
+			return ! filter_var( $host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE );
+		}
+		return false;
+	}
+
+	/**
+	 * Runtime SSRF gate for a URL about to be sideloaded. Combines WP core's
+	 * wp_http_validate_url() (scheme + DNS-resolved-IP range check) with the pure
+	 * is_blocked_host() literal check.
+	 *
+	 * @param string $url Candidate image URL.
+	 * @return bool
+	 */
+	public static function is_safe_sideload_url( $url ) {
+		$url = trim( (string) $url );
+		if ( '' === $url ) {
+			return false;
+		}
+		if ( function_exists( 'wp_http_validate_url' ) && ! wp_http_validate_url( $url ) ) {
+			return false;
+		}
+		$host = function_exists( 'wp_parse_url' ) ? wp_parse_url( $url, PHP_URL_HOST ) : parse_url( $url, PHP_URL_HOST ); // phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url
+		if ( empty( $host ) || self::is_blocked_host( $host ) ) {
+			return false;
+		}
+		return true;
+	}
+
 	public function add_meta_box( $post_type ) {
 		if ( 'product' !== $post_type || ! current_user_can( 'edit_products' ) ) {
 			return;
@@ -374,7 +425,10 @@ class SC_FPD_Import {
 		foreach ( $mapped['customizer']['views'] as &$view ) {
 			$url = $view['image_url'] ?? '';
 			unset( $view['image_url'] );
-			if ( $url && function_exists( 'media_sideload_image' ) ) {
+			// Sideloading fetches the URL server-side (download_url() does NOT block private
+			// hosts), so validate it first to prevent SSRF into the internal network / cloud
+			// metadata. Blocked URLs are skipped; the import continues without that image.
+			if ( $url && function_exists( 'media_sideload_image' ) && self::is_safe_sideload_url( $url ) ) {
 				$att = media_sideload_image( esc_url_raw( $url ), $product_id, null, 'id' );
 				if ( ! is_wp_error( $att ) ) {
 					$view['image_id'] = (int) $att;
