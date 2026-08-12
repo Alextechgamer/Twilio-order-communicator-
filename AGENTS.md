@@ -18,9 +18,15 @@ with WooCommerce active and the plugin under test activated.
 - PHPCS + WordPress Coding Standards + PHPCompatibility installed under `~/php-tools`.
 - WP admin login: user `admin` / password `admin`. Site URL: `http://localhost:8080`.
 
-### Starting services (not done by the update script)
+### Starting services
 
-Run these each session before browser/manual testing:
+When the saved Cloud Agent environment is active, its `start` command boots
+MariaDB and the PHP dev web server (`:8080`) automatically on every VM start, so
+the site is usually already up. The idempotent repository bootstrap lives in
+`.cursor/install.sh` and per-boot service startup in `.cursor/start.sh`.
+
+If you need to (re)start the services manually — e.g. a plain VM without the saved
+environment — run:
 
 - Start the database: `sudo service mariadb start`
 - Start the dev web server (use tmux so it persists): `php -S 0.0.0.0:8080 -t ~/wordpress`
