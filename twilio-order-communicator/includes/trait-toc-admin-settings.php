@@ -22,6 +22,7 @@ trait TOC_Admin_Settings {
 		$text_fields = array(
 			'toc_account_sid'               => 'sanitize_text_field',
 			'toc_from_number'               => array( $this, 'sanitize_from_number' ),
+			'toc_whatsapp_from'             => array( $this, 'sanitize_whatsapp_from' ),
 			'toc_voice'                     => array( $this, 'sanitize_voice' ),
 			'toc_sms_consent_meta'          => 'sanitize_key',
 			'toc_pickup_match'              => array( $this, 'sanitize_pickup_match' ),
@@ -188,6 +189,30 @@ trait TOC_Admin_Settings {
 		return (string) get_option( 'toc_from_number', '' );
 	}
 
+	/**
+	 * WhatsApp sender: optional E.164 number of a WhatsApp-enabled Twilio sender. Empty is allowed
+	 * (falls back to the SMS From at send time).
+	 *
+	 * @param mixed $value Raw value.
+	 * @return string
+	 */
+	public function sanitize_whatsapp_from( $value ) {
+		$value = is_string( $value ) ? trim( $value ) : '';
+		if ( '' === $value ) {
+			return '';
+		}
+		$compact = preg_replace( '/[\s().-]/', '', $value );
+		if ( TOC_Twilio::is_e164( $compact ) ) {
+			return $compact;
+		}
+		add_settings_error(
+			'toc_whatsapp_from',
+			'toc_whatsapp_from_invalid',
+			__( 'WhatsApp sender must be in E.164 format, e.g. +15055551234. Your previous value was kept.', 'twilio-order-communicator' )
+		);
+		return (string) get_option( 'toc_whatsapp_from', '' );
+	}
+
 	public function sanitize_voice( $value ) {
 		$value   = sanitize_text_field( $value );
 		$allowed = array( 'alice', 'man', 'woman', 'polly.joanna', 'polly.matthew', 'polly.amy' );
@@ -286,6 +311,13 @@ trait TOC_Admin_Settings {
 							<input type="text" name="toc_from_number" value="<?php echo esc_attr( get_option( 'toc_from_number' ) ); ?>" class="regular-text" placeholder="+1xxxxxxxxxx" />
 						<?php endif; ?>
 						<p class="description"><?php echo esc_html__( 'E.164 format required (e.g. +15055551234)', 'twilio-order-communicator' ); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th><?php echo esc_html__( 'WhatsApp Sender', 'twilio-order-communicator' ); ?></th>
+					<td>
+						<input type="text" name="toc_whatsapp_from" value="<?php echo esc_attr( get_option( 'toc_whatsapp_from' ) ); ?>" class="regular-text" placeholder="+1xxxxxxxxxx" />
+						<p class="description"><?php echo esc_html__( 'Optional. E.164 number of your WhatsApp-enabled Twilio sender. Leave blank to use the From Number. Requires WhatsApp enabled on your Twilio account (approved sender + templates).', 'twilio-order-communicator' ); ?></p>
 					</td>
 				</tr>
 			</table>

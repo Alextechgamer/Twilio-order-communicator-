@@ -69,6 +69,13 @@ check( 'falsy no', $twilio->is_falsy_consent( 'no' ), true );
 check( 'falsy yes', $twilio->is_falsy_consent( 'yes' ), false );
 check( 'falsy empty', $twilio->is_falsy_consent( '' ), false );
 
+/* ---- TOC_Twilio::whatsapp_address (pins WhatsApp channel addressing) ---- */
+check( 'wa address from e164', TOC_Twilio::whatsapp_address( '+15055551234' ), 'whatsapp:+15055551234' );
+check( 'wa address idempotent', TOC_Twilio::whatsapp_address( 'whatsapp:+447911123456' ), 'whatsapp:+447911123456' );
+check( 'wa address rejects non-e164', TOC_Twilio::whatsapp_address( '5055551234' ), '' );
+check( 'wa address rejects empty', TOC_Twilio::whatsapp_address( '' ), '' );
+check( 'wa address rejects letters', TOC_Twilio::whatsapp_address( '+1505abc1234' ), '' );
+
 /* ---- TOC_Logger::last10 (pins the sargable opt-out index derivation) ---- */
 check( 'last10 full', TOC_Logger::last10( '+1 (505) 555-1234' ), '5055551234' );
 check( 'last10 long intl', TOC_Logger::last10( '+447911123456' ), '7911123456' );

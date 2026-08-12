@@ -104,6 +104,9 @@ trait TOC_Admin_Bulk {
 						<label><input type="radio" name="mode" value="call" checked> <?php echo esc_html__( 'Voice call only', 'twilio-order-communicator' ); ?></label>
 						<label><input type="radio" name="mode" value="sms"> <?php echo esc_html__( 'SMS only', 'twilio-order-communicator' ); ?> <span class="description">(<?php echo esc_html__( 'consent required', 'twilio-order-communicator' ); ?>)</span></label>
 						<label><input type="radio" name="mode" value="both"> <?php echo esc_html__( 'Call + SMS when consented', 'twilio-order-communicator' ); ?></label>
+						<?php if ( get_option( 'toc_whatsapp_from', '' ) || get_option( 'toc_from_number', '' ) ) : ?>
+							<label><input type="radio" name="mode" value="whatsapp"> <?php echo esc_html__( 'WhatsApp only', 'twilio-order-communicator' ); ?> <span class="description">(<?php echo esc_html__( 'consent required; needs a WhatsApp sender', 'twilio-order-communicator' ); ?>)</span></label>
+						<?php endif; ?>
 					</p>
 					<p>
 						<label for="toc-bulk-delay"><strong><?php echo esc_html__( 'Delay between each order', 'twilio-order-communicator' ); ?></strong></label>
