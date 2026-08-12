@@ -441,6 +441,20 @@ if ( false !== $pp ) {
 check( 'phys decodes to 300 dpi', (int) round( $ppu * 0.0254 ), 300 );
 check( 'png_with_dpi rejects non-png', SC_Print_Ready::png_with_dpi( 'not a png', 300 ), '' );
 
+/* ---- SC_Print_Ready artwork download proxy (pins H1: signed token + marker classifier) ---- */
+$sc_secret = 'sc-unit-secret';
+$sc_future = time() + 3600;
+$sc_sig    = SC_Print_Ready::sign_token( $sc_secret, 123, $sc_future );
+check( 'sc token verify ok', SC_Print_Ready::verify_token( $sc_secret, 123, $sc_future, $sc_sig ), true );
+check( 'sc token wrong id', SC_Print_Ready::verify_token( $sc_secret, 124, $sc_future, $sc_sig ), false );
+check( 'sc token wrong secret', SC_Print_Ready::verify_token( 'other', 123, $sc_future, $sc_sig ), false );
+check( 'sc token expired', SC_Print_Ready::verify_token( $sc_secret, 123, time() - 5, $sc_sig ), false );
+check( 'sc marker uploaded (get_post_meta shape)', SC_Print_Ready::is_sc_artwork_meta( array( '_sc_uploaded' => array( '1' ) ) ), true );
+check( 'sc marker generated (flat)', SC_Print_Ready::is_sc_artwork_meta( array( '_sc_generated' => 1 ) ), true );
+check( 'sc marker plain attachment', SC_Print_Ready::is_sc_artwork_meta( array( '_wp_attached_file' => array( 'x.png' ) ) ), false );
+check( 'sc marker empty', SC_Print_Ready::is_sc_artwork_meta( array() ), false );
+check( 'sc marker non-array', SC_Print_Ready::is_sc_artwork_meta( 'nope' ), false );
+
 if ( extension_loaded( 'dom' ) ) {
 	$svg = SC_Export::svg_wrap( $png_1x1, 'image/png', 900, 600, 300, array( 'bleed_mm' => 3.0 ) );
 	check( 'svg well-formed', false !== @simplexml_load_string( $svg ), true );

@@ -44,6 +44,9 @@ Yes. Paste an exported FPD product JSON on the product screen and StoreCanvas ma
 = What print output does it produce? =
 True-to-size PNG with a DPI (pHYs) chunk, an SVG at physical millimetre size with bleed guides, and a minimal single-image PDF. The PDF is RGB/flattened (not CMYK/PDF-X); confirm color/DPI with your print provider.
 
+= Are customer artwork files private? =
+Uploaded artwork and generated print composites are marked and kept out of the public REST media listing, and StoreCanvas surfaces them through a signed, time-limited, capability-checked download proxy instead of a permanent public URL. To also block direct access to the underlying wp-content/uploads path (defense in depth), apply the Apache/nginx deny rules in docs/storecanvas-artwork-privacy.md.
+
 = Is it compatible with HPOS? =
 Yes, StoreCanvas declares and supports WooCommerce High-Performance Order Storage.
 

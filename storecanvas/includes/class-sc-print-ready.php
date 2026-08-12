@@ -10,6 +10,7 @@ class SC_Print_Ready {
 
 	const META_PRINT_FILES = 'sc_print_files'; // order item meta: [ view_id => attachment_id ]
 	const META_PREVIEW     = 'sc_preview_id'; // order item: small PNG preview attachment
+	const DL_ACTION        = 'sc_dl';          // admin-post action for the artwork download proxy
 
 	private static $instance = null;
 
@@ -25,6 +26,216 @@ class SC_Print_Ready {
 		add_action( 'woocommerce_after_order_itemmeta', array( $this, 'admin_download_links' ), 15, 3 );
 		add_action( 'wp_ajax_sc_generate_print_file', array( $this, 'ajax_generate' ) );
 		add_filter( 'rest_attachment_query', array( $this, 'filter_rest_media_query' ), 10, 2 );
+		// Capability/token-checked download proxy so customer artwork is not served from a
+		// guessable, permanent public uploads URL.
+		add_action( 'admin_post_' . self::DL_ACTION, array( $this, 'serve_download' ) );
+		add_action( 'admin_post_nopriv_' . self::DL_ACTION, array( $this, 'serve_download' ) );
+		// One-time backfill of the _sc_* markers on artwork created before they existed.
+		add_action( 'admin_init', array( $this, 'maybe_backfill_markers' ) );
+	}
+
+	/**
+	 * Whether an attachment's meta marks it as StoreCanvas customer artwork (uploaded or
+	 * generated). Accepts either a flat map or the array-of-values shape get_post_meta()
+	 * returns. Pure so it is unit-testable.
+	 *
+	 * @param array $meta Attachment meta.
+	 * @return bool
+	 */
+	public static function is_sc_artwork_meta( $meta ) {
+		if ( ! is_array( $meta ) ) {
+			return false;
+		}
+		foreach ( array( '_sc_uploaded', '_sc_generated' ) as $key ) {
+			$val = $meta[ $key ] ?? null;
+			if ( is_array( $val ) ) {
+				$val = reset( $val );
+			}
+			if ( ! empty( $val ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * HMAC token binding an attachment id to an expiry. Mirrors the license-server's
+	 * signed-download scheme. Pure + unit-testable.
+	 *
+	 * @param string $secret  Signing secret.
+	 * @param int    $att_id  Attachment id.
+	 * @param int    $expires Unix expiry.
+	 * @return string
+	 */
+	public static function sign_token( $secret, $att_id, $expires ) {
+		return hash_hmac( 'sha256', (int) $att_id . '|' . (int) $expires, (string) $secret );
+	}
+
+	/**
+	 * Verify a signed, unexpired download token (constant-time). Pure + unit-testable.
+	 *
+	 * @param string $secret  Signing secret.
+	 * @param int    $att_id  Attachment id.
+	 * @param int    $expires Unix expiry.
+	 * @param string $sig     Provided signature.
+	 * @return bool
+	 */
+	public static function verify_token( $secret, $att_id, $expires, $sig ) {
+		if ( (int) $expires < time() ) {
+			return false;
+		}
+		return hash_equals( self::sign_token( $secret, $att_id, $expires ), (string) $sig );
+	}
+
+	/**
+	 * Per-site signing secret for artwork download links.
+	 *
+	 * @return string
+	 */
+	private function download_secret() {
+		if ( function_exists( 'wp_salt' ) ) {
+			return wp_salt( 'auth' );
+		}
+		$secret = (string) get_option( 'sc_dl_secret', '' );
+		if ( '' === $secret ) {
+			$secret = wp_generate_password( 48, false, false );
+			update_option( 'sc_dl_secret', $secret, false );
+		}
+		return $secret;
+	}
+
+	/**
+	 * Signed, time-limited proxy URL for an artwork attachment. Use this instead of
+	 * wp_get_attachment_url() anywhere a customer-artwork/composite link is surfaced.
+	 *
+	 * @param int $att_id Attachment id.
+	 * @param int $ttl    Link lifetime in seconds.
+	 * @return string
+	 */
+	public function proxy_url( $att_id, $ttl = HOUR_IN_SECONDS ) {
+		$att_id  = (int) $att_id;
+		$expires = time() + max( 60, (int) $ttl );
+		$sig     = self::sign_token( $this->download_secret(), $att_id, $expires );
+		return add_query_arg(
+			array(
+				'action' => self::DL_ACTION,
+				'id'     => $att_id,
+				'exp'    => $expires,
+				'sig'    => rawurlencode( $sig ),
+			),
+			admin_url( 'admin-post.php' )
+		);
+	}
+
+	/**
+	 * Stream an SC artwork attachment to authorized requesters only: staff who manage
+	 * orders/media, or the bearer of a valid signed link. Everything else 403/404s, and
+	 * only attachments carrying the _sc_* markers are served here.
+	 */
+	public function serve_download() {
+		$att_id  = isset( $_GET['id'] ) ? absint( $_GET['id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$expires = isset( $_GET['exp'] ) ? (int) $_GET['exp'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$sig     = isset( $_GET['sig'] ) ? sanitize_text_field( wp_unslash( $_GET['sig'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+		if ( ! $att_id || 'attachment' !== get_post_type( $att_id ) ) {
+			status_header( 404 );
+			exit;
+		}
+		if ( ! self::is_sc_artwork_meta( get_post_meta( $att_id ) ) ) {
+			status_header( 404 );
+			exit;
+		}
+
+		$allowed = current_user_can( 'edit_shop_orders' )
+			|| current_user_can( 'upload_files' )
+			|| self::verify_token( $this->download_secret(), $att_id, $expires, $sig );
+		if ( ! $allowed ) {
+			status_header( 403 );
+			exit;
+		}
+
+		$path = get_attached_file( $att_id );
+		if ( ! $path || ! is_file( $path ) ) {
+			status_header( 404 );
+			exit;
+		}
+
+		$mime = get_post_mime_type( $att_id );
+		nocache_headers();
+		header( 'Content-Type: ' . ( $mime ? $mime : 'application/octet-stream' ) );
+		header( 'Content-Length: ' . filesize( $path ) );
+		header( 'Content-Disposition: inline; filename="' . basename( $path ) . '"' );
+		header( 'X-Content-Type-Options: nosniff' );
+		readfile( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile
+		exit;
+	}
+
+	/**
+	 * Run the marker backfill once, when an administrator loads wp-admin.
+	 */
+	public function maybe_backfill_markers() {
+		if ( get_option( 'sc_artwork_backfilled' ) ) {
+			return;
+		}
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+		self::backfill_artwork_markers();
+		update_option( 'sc_artwork_backfilled', 1, false );
+	}
+
+	/**
+	 * Mark attachments referenced by StoreCanvas order-item meta (print composites,
+	 * previews, uploaded artwork) with _sc_generated so the REST media filter and the
+	 * download proxy also cover files created before the markers existed (pre-1.5.x).
+	 *
+	 * @return int Number of attachments marked.
+	 */
+	public static function backfill_artwork_markers() {
+		global $wpdb;
+		if ( empty( $wpdb ) ) {
+			return 0;
+		}
+		$table = $wpdb->prefix . 'woocommerce_order_itemmeta';
+		$ids   = array();
+
+		// Single-value attachment ids (preview + uploaded artwork).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
+		$single = $wpdb->get_col( $wpdb->prepare( "SELECT meta_value FROM {$table} WHERE meta_key IN (%s,%s)", self::META_PREVIEW, '_sc_artwork_id' ) );
+		foreach ( (array) $single as $val ) {
+			$id = (int) $val;
+			if ( $id > 0 ) {
+				$ids[ $id ] = true;
+			}
+		}
+
+		// Serialized [ view_id => attachment_id ] composite maps.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
+		$maps = $wpdb->get_col( $wpdb->prepare( "SELECT meta_value FROM {$table} WHERE meta_key = %s", self::META_PRINT_FILES ) );
+		foreach ( (array) $maps as $blob ) {
+			$arr = maybe_unserialize( $blob );
+			if ( is_array( $arr ) ) {
+				foreach ( $arr as $fid ) {
+					$fid = (int) $fid;
+					if ( $fid > 0 ) {
+						$ids[ $fid ] = true;
+					}
+				}
+			}
+		}
+
+		$marked = 0;
+		foreach ( array_keys( $ids ) as $att_id ) {
+			if ( 'attachment' !== get_post_type( $att_id ) ) {
+				continue;
+			}
+			if ( get_post_meta( $att_id, '_sc_generated', true ) || get_post_meta( $att_id, '_sc_uploaded', true ) ) {
+				continue;
+			}
+			update_post_meta( $att_id, '_sc_generated', 1 );
+			$marked++;
+		}
+		return $marked;
 	}
 
 	/**
@@ -1089,7 +1300,7 @@ class SC_Print_Ready {
 		echo '<div class="sc-print-files" style="margin-top:8px;">';
 		echo '<strong>' . esc_html__( 'Print files', 'storecanvas' ) . '</strong><ul style="margin:4px 0 0 1em;">';
 		if ( $art_id ) {
-			$url = wp_get_attachment_url( $art_id );
+			$url = $this->proxy_url( $art_id );
 			if ( $url ) {
 				echo '<li><a href="' . esc_url( $url ) . '" target="_blank">' . esc_html__( 'Original artwork', 'storecanvas' ) . '</a></li>';
 			}
@@ -1097,7 +1308,7 @@ class SC_Print_Ready {
 		if ( is_array( $files ) ) {
 			foreach ( $files as $vid => $fid ) {
 				$fid = (int) $fid;
-				$url = wp_get_attachment_url( $fid );
+				$url = $this->proxy_url( $fid );
 				if ( $url ) {
 					echo '<li><a href="' . esc_url( $url ) . '" target="_blank">' . esc_html( sprintf( __( 'Print composite (%s)', 'storecanvas' ), $vid ) ) . '</a>';
 					if ( class_exists( 'SC_Export' ) ) {
@@ -1126,7 +1337,7 @@ class SC_Print_Ready {
 		if ( is_wp_error( $att ) ) {
 			wp_send_json_error( array( 'message' => $att->get_error_message() ) );
 		}
-		wp_send_json_success( array( 'attachment_id' => $att, 'url' => wp_get_attachment_url( $att ) ) );
+		wp_send_json_success( array( 'attachment_id' => $att, 'url' => $this->proxy_url( $att ) ) );
 	}
 
 	/**
