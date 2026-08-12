@@ -41,3 +41,21 @@ From `/workspace`: `~/php-tools/vendor/bin/phpcs --standard=phpcs.xml.dist -p` (
 ### Hello-world sanity check
 
 Create a WooCommerce order with a billing phone, move it to the **Ready for Pickup** status, and confirm the plugin writes auto-notify order notes and stamps `_toc_notified_ready_for_pickup_at`.
+
+## gstack
+
+[gstack](https://github.com/garrytan/gstack) skills are installed for Cursor in this environment under `~/.cursor/skills/gstack-*` (runtime root: `~/.cursor/skills/gstack`; source checkout: `~/gstack`). Use these skills for the matching workflows below — invoke them by their slash-command name.
+
+| Skill | Use it for |
+|-------|-----------|
+| `/office-hours` | Pressure-test a raw idea before building — forcing questions that expose real requirements and premises. |
+| `/autoplan` | Autonomous end-to-end planning: runs the CEO, design, engineering, and DX review passes over a plan. |
+| `/review` | Pre-landing PR review of the diff vs. the base branch (SQL safety, LLM trust, correctness). |
+| `/qa` | Systematically QA a web app in a real browser and fix the bugs it finds. |
+| `/cso` | Infrastructure-first security audit (secrets archaeology, exposure review). |
+| `/ship` | Ship workflow: sync base branch, run tests, review diff, bump `VERSION`, commit + PR. |
+| `/investigate` | Systematic root-cause debugging (investigate → hypothesize → fix → verify). |
+| `/document-release` | Post-ship documentation update, cross-referenced against the shipped changes. |
+| `/browse` | Fast headless browser for navigating, interacting with, and dogfooding sites. |
+
+**Prefer `/browse` for any web browsing, fetching, or site dogfooding.**
