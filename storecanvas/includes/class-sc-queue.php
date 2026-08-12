@@ -238,7 +238,9 @@ class SC_Queue {
 			echo '<td>' . esc_html( implode( '; ', $items ) ) . '</td>';
 			echo '<td>';
 			if ( $preview_id ) {
-				$url = wp_get_attachment_image_url( $preview_id, 'thumbnail' );
+				// Customer-artwork preview: always via the signed proxy, never the raw
+				// uploads URL (see docs/storecanvas-artwork-privacy.md).
+				$url = class_exists( 'SC_Print_Ready' ) ? SC_Print_Ready::instance()->proxy_url( $preview_id ) : '';
 				if ( $url ) {
 					echo '<img src="' . esc_url( $url ) . '" alt="" style="max-width:64px;height:auto;border:1px solid #ddd;" />';
 				} else {

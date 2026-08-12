@@ -629,7 +629,12 @@ class SC_Cart_Order {
 		echo '<div class="sc-order-item-meta" style="margin-top:8px;padding:8px;background:#f6f7f7;border:1px solid #c3c4c7;">';
 		echo '<strong>' . esc_html__( 'StoreCanvas', 'storecanvas' ) . '</strong>';
 		if ( $preview ) {
-			$url = wp_get_attachment_image_url( $preview, 'thumbnail' );
+			// Serve the preview through the signed download proxy — never the raw
+			// wp-content/uploads URL. The preview is a customer-artwork composite, and a
+			// direct URL both leaks the guessable path and breaks when the operator
+			// applies the recommended server-level deny rules (see
+			// docs/storecanvas-artwork-privacy.md).
+			$url = class_exists( 'SC_Print_Ready' ) ? SC_Print_Ready::instance()->proxy_url( $preview ) : '';
 			if ( $url ) {
 				echo '<p style="margin:6px 0 0;"><img src="' . esc_url( $url ) . '" alt="" style="max-width:120px;height:auto;border:1px solid #ddd;" /></p>';
 			}

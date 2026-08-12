@@ -44,11 +44,11 @@ Reproduce with `tools/dev/setup-wp.sh` (see the "Local development" section of t
 | B5 | auth token: shop_manager can't change; admin can; TOC_AUTH_TOKEN constant wins | **FAIL → fixed** (token was protected, but the settings error was never displayed) |
 | B6 | order screen SMS/call bound to billing phone; force bypasses consent not number | **PASS** |
 | B7 | WhatsApp: clean degradation without sender; whatsapp: prefixes in payload | **PASS** (live delivery **BLOCKED** — no real approved WhatsApp sender) |
-| C1 | customized order creates artwork attachments with _sc_* markers | — |
-| C2 | admin Print files links go through sc_dl proxy and download | — |
-| C3 | sc_dl signature matrix (no/valid/expired/tampered sig, non-SC id) | — |
-| C4 | anonymous REST media hides SC artwork; shop manager sees it | — |
-| C5 | backfill re-marks pre-marker artwork | — |
+| C1 | customized order creates artwork attachments with _sc_* markers | **PASS** |
+| C2 | admin Print files links go through sc_dl proxy and download | **FAIL → fixed** (preview `<img>` on the order screen and print queue leaked raw uploads URLs) |
+| C3 | sc_dl signature matrix (no/valid/expired/tampered sig, non-SC id) | **PASS** |
+| C4 | anonymous REST media hides SC artwork; shop manager sees it | **PASS** |
+| C5 | backfill re-marks pre-marker artwork | **PASS** |
 | C6 | webserver deny rules: direct uploads 403, proxy still serves | — |
 | C7 | proof email attaches files by path | — |
 | C8 | FPD import: public https OK; loopback/metadata/private/IPv6 URLs skipped | — |
@@ -196,7 +196,54 @@ Note: the provisioned site had `toc_require_sms_consent=0`; it was set to `1` fo
 
 ### C. StoreCanvas
 
-_(pending)_
+**C1 — PASS.** Full guest purchase, end to end over HTTP:
+- Created product #25 ("SC Custom Mug") with a real GD-generated 800×600 base view image
+  and a `_sc_customizer` config (view `front`, print area 25/25/50/50%); enabled COD.
+- Guest (fresh cookie jar) multipart POST to the product page:
+  `add-to-cart=25` + `sc_artwork=@…png` + `sc_placement` JSON + a text layer in
+  `sc_layers_json`. First attempt with a 400×300 PNG was **correctly refused by artwork
+  validation** ("minimum 500 px on the long edge", "~66.7 DPI, need at least 150"), which
+  is itself a live confirmation of `validate_source()`. Retried with a 2000×1500 PNG →
+  item added with `sc_attachments` populated.
+- Checkout completed as a guest via the Store API (`/wc/store/v1/checkout`, COD) →
+  order #29 `processing`.
+- Order item meta: `sc_print_files={"front":27}`, `_sc_artwork_id=26`, `sc_preview_id=28`.
+  Attachment 26 (uploaded artwork) carries `_sc_uploaded=1`; 27 (2560×1920 print
+  composite) and 28 (preview) carry `_sc_generated=1`; all three files exist on disk.
+
+**C2 — FAIL → fixed.**
+- The item-meta "Print files" links on the shop-manager order screen were already
+  `admin-post.php?action=sc_dl&id=…&exp=…&sig=…` and downloaded correctly
+  (HTTP 200, `Content-Type: image/png`, correct 2000×1500 file) — that part passed.
+- **Observed bug:** the StoreCanvas preview `<img>` on the same order screen — and the
+  StoreCanvas production-queue page — still rendered the customer preview via
+  `wp_get_attachment_image_url()`, i.e. a raw
+  `wp-content/uploads/2026/08/sc-preview-…png` URL, contradicting the H1 guarantee that
+  artwork links never expose the raw path (and it would break under the C6 deny rules).
+  **Fix:** both render sites now use `SC_Print_Ready::proxy_url()`
+  (`class-sc-cart-order.php::admin_order_preview`, `class-sc-queue.php` table). Re-ran:
+  0 raw `sc-*` uploads URLs on either page, 3 proxy links on the order screen, and the
+  proxied preview downloads as a shop manager (HTTP 200, PNG 600×450).
+
+**C3 — PASS** (all as a logged-out visitor):
+| Request | Result |
+|---|---|
+| `sc_dl&id=27` with **no** signature | **403** |
+| valid unexpired signature (minted via `proxy_url(27)`) | **200**, PNG 2560×1920 streamed |
+| **expired** signature (correctly signed, `exp` in the past) | **403** |
+| **tampered** signature | **403** |
+| valid signature for a **non-SC** attachment (id 24, merchant base image, no `_sc_*` markers) | **404** |
+
+**C4 — PASS.** Anonymous `GET /wp/v2/media?per_page=100` lists only ids `[24, 4]`
+(merchant/base imagery) — SC artwork 26/27/28 absent. The same request as the logged-in
+shop manager (cookie + `X-WP-Nonce`) lists `[28, 27, 26, 24, 4]`.
+
+**C5 — PASS.** Deleted `_sc_uploaded`/`_sc_generated` from 26/27/28 and the
+`sc_artwork_backfilled` option to simulate pre-marker artwork. Demonstrably exposed
+state: anonymous REST **listed all three** and the proxy 404'd even with a valid
+signature. One administrator wp-admin page load ran the `admin_init` backfill:
+all three re-marked `_sc_generated=1`, flag set, anonymous REST hides them again, and the
+signed proxy serves id 27 with HTTP 200.
 
 ### D. OrderBay
 
