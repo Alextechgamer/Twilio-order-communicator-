@@ -13,6 +13,7 @@ $root = dirname( __DIR__ );
 require $root . '/twilio-order-communicator/includes/class-toc-twilio.php';
 require $root . '/twilio-order-communicator/includes/class-toc-logger.php';
 require $root . '/license-server/src/Helpers.php';
+require $root . '/license-server/src/Api.php';
 require $root . '/orderbay/includes/class-ob-einvoice.php';
 require $root . '/orderbay/includes/class-ob-invoicing.php';
 require $root . '/orderbay/includes/class-ob-documents.php';
@@ -126,6 +127,13 @@ check( 'license verify ok', TOC_License_Helpers::verify_download( $secret, 'toc'
 check( 'license verify tampered version', TOC_License_Helpers::verify_download( $secret, 'toc', '1.2.4', $future, $sig ), false );
 check( 'license verify wrong secret', TOC_License_Helpers::verify_download( 'other', 'toc', '1.2.3', $future, $sig ), false );
 check( 'license verify expired', TOC_License_Helpers::verify_download( $secret, 'toc', '1.2.3', time() - 10, $sig ), false );
+
+/* ---- license update-check download gate (pins H2: activated-site binding) ---- */
+check( 'dl allowed when activated', TOC_License_API::download_allowed( 'shop.example', 'inst-1', true ), true );
+check( 'dl blocked without activation', TOC_License_API::download_allowed( 'shop.example', 'inst-1', false ), false );
+check( 'dl blocked missing site', TOC_License_API::download_allowed( '', 'inst-1', true ), false );
+check( 'dl blocked missing instance', TOC_License_API::download_allowed( 'shop.example', '', true ), false );
+check( 'dl blocked bare key', TOC_License_API::download_allowed( '', '', false ), false );
 
 /* ---- license-server rate limiter (in-memory SQLite; skipped if pdo_sqlite absent) ---- */
 if ( extension_loaded( 'pdo_sqlite' ) ) {
