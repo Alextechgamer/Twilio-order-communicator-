@@ -37,11 +37,11 @@ Reproduce with `tools/dev/setup-wp.sh` (see the "Local development" section of t
 | A3 | activate → update-check → signed download | **PASS** |
 | A4 | H2 regression: update-check without site binding → 403 | **PASS** |
 | A5 | rate limit 429 + download_secret fails closed | **PASS** |
-| B1 | opt-out table upgrade: phone_last10 column, backfill, EXPLAIN uses index | — |
-| B2 | opt-out across formatting variants (STOP/START/YES) | — |
-| B3 | bulk tab: one batched opt-out query, not N | — |
-| B4 | role matrix: admin saves; shop_manager refused; subscriber floor; admin never locked out | — |
-| B5 | auth token: shop_manager can't change; admin can; TOC_AUTH_TOKEN constant wins | — |
+| B1 | opt-out table upgrade: phone_last10 column, backfill, EXPLAIN uses index | **PASS** |
+| B2 | opt-out across formatting variants (STOP/START/YES) | **PASS** |
+| B3 | bulk tab: one batched opt-out query, not N | **PASS** |
+| B4 | role matrix: admin saves; shop_manager refused; subscriber floor; admin never locked out | **PASS** |
+| B5 | auth token: shop_manager can't change; admin can; TOC_AUTH_TOKEN constant wins | **FAIL → fixed** (token was protected, but the settings error was never displayed) |
 | B6 | order screen SMS/call bound to billing phone; force bypasses consent not number | — |
 | B7 | WhatsApp: clean degradation without sender; whatsapp: prefixes in payload | — |
 | C1 | customized order creates artwork attachments with _sc_* markers | — |
@@ -106,7 +106,60 @@ single top-level folder, `grep -c license-server` = 0) and registered it with
 
 ### B. Twilio Order Communicator
 
-_(pending)_
+**B1 — PASS.** Simulated a pre-1.17.0 install:
+`ALTER TABLE wp_toc_sms_opt_outs DROP KEY phone_last10, DROP COLUMN phone_last10`, inserted
+two legacy rows (`+1 (505) 555-1234` / digits `15055551234`, and UK-style `07911123456`),
+set `toc_db_version=1.16.0`. One ordinary front-page load (HTTP 200) ran the `init` upgrade:
+- `SHOW CREATE TABLE` again lists `phone_last10 varchar(10)` + `KEY phone_last10`.
+- Backfill populated both rows: `5055551234` and `7911123456` (correct last-10 truncation).
+- `EXPLAIN SELECT id FROM wp_toc_sms_opt_outs WHERE phone_last10 = '5055551234'` →
+  `type=ref, key=phone_last10, rows=1, Extra=Using where; Using index` — index used, no full scan.
+
+**B2 — PASS.** Drove the real inbound webhook (`/index.php?rest_route=/toc/v1/sms`) with a
+**valid computed `X-Twilio-Signature`** (HMAC-SHA1 over URL+sorted params with the stored
+token), one unique `MessageSid` per request:
+- `STOP` from `+1 (505) 555-1234` → 200 + TwiML "You have been unsubscribed…";
+  `phone_is_opted_out()` returns `true` for `5055551234`, `+15055551234`, **and**
+  `+1 (505) 555-1234`.
+- `YES` from the opted-out number → TwiML `<Response></Response>`, still opted out.
+  `YES` from a fresh number → not opted out (bare YES never toggles consent).
+- `START` from bare `5055551234` → "You have been re-subscribed…"; all formatting
+  variants now report opted-in; opt-out table row count back to 0.
+
+**B3 — PASS.** Created 10 Ready-for-Pickup orders with distinct billing phones; fetched
+`admin.php?page=toc-communicator&tab=bulk` as a logged-in administrator with a temporary
+`query`-filter logger capturing any SQL touching `toc_sms_opt_outs`. The page listed
+"11 order(s)" and issued **exactly one** opt-out query:
+`SELECT phone_last10 FROM wp_toc_sms_opt_outs WHERE phone_last10 IN ('5055551000',…,'5005550001')` —
+a single batched `IN` list, not one query per row.
+
+**B4 — PASS.**
+- Administrator: Settings shows the Role permissions form; POST to
+  `admin-post.php?action=toc_save_role_caps` (valid nonce) → 302 `…&toc_roles_saved=1`.
+- Baseline floor: the same admin POST asked for `subscriber[manage]=1`,
+  `subscriber[send]=1` and `editor[manage]=1` → after save `subscriber manage=0 send=0`,
+  `editor manage=0 send=0` (no WooCommerce baseline), while `shop_manager manage=1 send=1`.
+- Lockout: the POST deliberately omitted `administrator[manage]` → administrator still has
+  `toc_manage` (forced server-side).
+- shop_manager (real second user): the rendered Settings page contains **0** occurrences of
+  the role form; a direct POST to `admin-post.php?action=toc_save_role_caps` from that
+  session → HTTP **403**, role caps unchanged.
+
+**B5 — FAIL → fixed.**
+- The protection itself worked as designed on the live install: a shop_manager POST to
+  `options.php` (own valid nonce — shop managers may save the rest of Settings) with
+  `toc_auth_token=HACKED…` → 302, `toc_auth_token` unchanged.
+- **Observed bug:** the promised "previous value was kept" settings error never rendered.
+  The plugin page lives under the WooCommerce menu, so WordPress never loads
+  `options-head.php` and `add_settings_error()` notices were silently dropped.
+  **Fix:** `render_settings()` now calls `settings_errors()`
+  (`trait-toc-admin-settings.php`). Re-ran the same POST: the redirect target page now
+  shows "Only administrators can change the Twilio Auth Token. Your previous value was
+  kept." and the token is still unchanged.
+- Administrator with the same form → token actually changes (verified changed, then restored).
+- `TOC_AUTH_TOKEN` constant defined in wp-config: effective credentials report the constant
+  value, `credential_is_constant('token')` is true, and an admin save attempt neither
+  changes the option nor the effective token. Constant removed afterwards; option value wins again.
 
 ### C. StoreCanvas
 

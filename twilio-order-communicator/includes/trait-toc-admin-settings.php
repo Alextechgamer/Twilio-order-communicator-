@@ -272,6 +272,11 @@ trait TOC_Admin_Settings {
 
 	/* ---------- SETTINGS ---------- */
 	private function render_settings() {
+		// This page lives under the WooCommerce menu, not Settings, so WordPress does not
+		// print add_settings_error() notices automatically (options-head.php never loads).
+		// Without this call the sanitize-time warnings — e.g. "Only administrators can
+		// change the Twilio Auth Token" — were silently dropped after the redirect.
+		settings_errors();
 		?>
 		<form method="post" action="options.php">
 			<?php settings_fields( 'toc_settings' ); ?>
