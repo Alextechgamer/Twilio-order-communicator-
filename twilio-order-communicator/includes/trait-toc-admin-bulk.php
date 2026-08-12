@@ -127,9 +127,16 @@ trait TOC_Admin_Bulk {
 						</tr>
 					</thead>
 					<tbody>
-					<?php foreach ( $orders as $order ) :
+					<?php
+					// Batch-load opt-outs once for all rendered orders (avoids a per-row query).
+					$toc_bulk_phones = array();
+					foreach ( $orders as $order ) {
+						$toc_bulk_phones[] = $order->get_billing_phone();
+					}
+					$toc_bulk_opted = TOC_Logger::instance()->opted_out_last10_set( $toc_bulk_phones );
+					foreach ( $orders as $order ) :
 						$oid       = $order->get_id();
-						$consented = $twilio->customer_consented_sms( $oid );
+						$consented = $twilio->consent_for_order( $order, $toc_bulk_opted );
 						$last      = $order->get_meta( '_toc_last_reminder_at' );
 						$last_lbl  = '—';
 						if ( $last ) {

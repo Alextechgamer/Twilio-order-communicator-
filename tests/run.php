@@ -69,6 +69,13 @@ check( 'falsy no', $twilio->is_falsy_consent( 'no' ), true );
 check( 'falsy yes', $twilio->is_falsy_consent( 'yes' ), false );
 check( 'falsy empty', $twilio->is_falsy_consent( '' ), false );
 
+/* ---- TOC_Logger::last10 (pins the sargable opt-out index derivation) ---- */
+check( 'last10 full', TOC_Logger::last10( '+1 (505) 555-1234' ), '5055551234' );
+check( 'last10 long intl', TOC_Logger::last10( '+447911123456' ), '7911123456' );
+check( 'last10 short kept', TOC_Logger::last10( '5551234' ), '5551234' );
+check( 'last10 strips non-digits', TOC_Logger::last10( 'abc12-34' ), '1234' );
+check( 'last10 empty', TOC_Logger::last10( '' ), '' );
+
 /* ---- TOC_Twilio::tracking_from_meta (pins the {tracking} merge tag precedence) ---- */
 check( 'tracking OB wins', TOC_Twilio::tracking_from_meta( '1Z999', 'https://t/1Z999', array( array( 'tracking_number' => 'WC1' ) ) ), array( 'number' => '1Z999', 'url' => 'https://t/1Z999' ) );
 check( 'tracking WC fallback', TOC_Twilio::tracking_from_meta( '', '', array( array( 'tracking_number' => 'WC1', 'custom_tracking_link' => 'https://c/WC1' ) ) ), array( 'number' => 'WC1', 'url' => 'https://c/WC1' ) );
