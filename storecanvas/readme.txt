@@ -3,7 +3,7 @@ Contributors: alextechgamer
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.7.0
+Stable tag: 1.7.1
 License: GPLv2 or later
 
 Self-hosted WooCommerce personalization: product options, live mockup, print-ready, library, guest save.
@@ -51,6 +51,11 @@ Uploaded artwork and generated print composites are marked and kept out of the p
 Yes, StoreCanvas declares and supports WooCommerce High-Performance Order Storage.
 
 == Changelog ==
+
+= 1.7.1 =
+* Fix: the customer artwork preview on the admin order screen and the production queue now goes through the signed download proxy too, instead of emitting a raw wp-content/uploads URL (completes the 1.7.0 artwork-privacy work)
+* Fix: the production queue no longer triggers a "meta_query is not supported" notice on the classic (non-HPOS) order datastore; the meta filter is used only under HPOS
+* Fix: uninstall now also removes the sc_dl_secret and sc_artwork_backfilled options
 
 = 1.7.0 =
 * Security: customer artwork and print composites are served through a signed, capability-checked download proxy instead of a permanent public uploads URL; a one-time backfill marks pre-existing artwork so the REST media filter and proxy cover it too (see docs/storecanvas-artwork-privacy.md for the host-level deny step)

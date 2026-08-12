@@ -4,7 +4,7 @@ Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
 WC requires at least: 7.0
-Stable tag: 1.19.0
+Stable tag: 1.19.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -85,6 +85,10 @@ No. The plugin includes its own tokenized TwiML endpoint.
 They text START or UNSTOP. Plain "YES" is intentionally not treated as re-subscribe.
 
 == Changelog ==
+
+= 1.19.1 =
+* Fix: the Settings tab now renders its admin notices, so the "Only administrators can change the Twilio Auth Token" warning (and other save-time messages) are actually shown instead of being silently dropped
+* Fix: uninstall now also removes the toc_whatsapp_from option
 
 = 1.19.0 =
 * Security: the order screen's SMS/call now sends only to the order's own billing number — an operator-entered number must match it, so a send can no longer be directed at an arbitrary number under an order id
