@@ -242,7 +242,7 @@ class SC_Admin_Product {
 				</p>
 				<p class="form-field" style="padding-left:12px;max-height:180px;overflow:auto;">
 					<?php if ( empty( $clipart_all ) ) : ?>
-						<em><?php esc_html_e( 'No clip-art yet. Add items under WooCommerce → StoreCanvas library.', 'storecanvas' ); ?></em>
+						<em><?php esc_html_e( 'No clip-art yet. Add items under StoreCanvas → Library.', 'storecanvas' ); ?></em>
 					<?php else : ?>
 						<?php foreach ( $clipart_all as $ci ) : ?>
 							<label style="display:block;margin:2px 0;">
@@ -257,7 +257,7 @@ class SC_Admin_Product {
 			<div class="options_group sc-admin-section">
 				<h4 style="padding-left:12px;"><?php esc_html_e( 'Global option groups', 'storecanvas' ); ?></h4>
 				<p class="form-field" style="padding-left:12px;">
-					<span class="description"><?php esc_html_e( 'Select groups to use on this product (WooCommerce → Option groups). Empty = auto-match by group product/category assignment. Local fields with the same id override group fields.', 'storecanvas' ); ?></span>
+					<span class="description"><?php esc_html_e( 'Select groups to use on this product (StoreCanvas → Option groups). Empty = auto-match by group product/category assignment. Local fields with the same id override group fields.', 'storecanvas' ); ?></span>
 				</p>
 				<p class="form-field" style="padding-left:12px;max-height:160px;overflow:auto;">
 					<?php

@@ -76,8 +76,7 @@ class TOC_Admin {
 		$result = TOC_Caps::save_role_matrix( $clean );
 		$redirect = add_query_arg(
 			array(
-				'page'            => 'toc-communicator',
-				'tab'             => 'settings',
+				'page'            => 'toc-communicator-settings',
 				'toc_roles_saved' => is_wp_error( $result ) ? '0' : '1',
 			),
 			admin_url( 'admin.php' )
@@ -90,14 +89,83 @@ class TOC_Admin {
 	}
 
 	public function menu() {
-		add_submenu_page(
-			'woocommerce',
-			__( 'OrderRing', 'twilio-order-communicator' ),
-			__( 'OrderRing', 'twilio-order-communicator' ),
-			TOC_Caps::manage(),
+		$cap = TOC_Caps::manage();
+		add_menu_page(
+			TOC_BRAND_NAME,
+			TOC_BRAND_NAME,
+			$cap,
 			'toc-communicator',
-			array( $this, 'page' )
+			array( $this, 'page' ),
+			'dashicons-phone',
+			55
 		);
+		foreach ( $this->menu_pages() as $slug => $label ) {
+			add_submenu_page(
+				'toc-communicator',
+				$label,
+				$label,
+				$cap,
+				$slug,
+				array( $this, 'page' )
+			);
+		}
+	}
+
+	/**
+	 * Top-level submenu slugs → labels. First slug matches the parent.
+	 *
+	 * @return array<string,string>
+	 */
+	private function menu_pages() {
+		return array(
+			'toc-communicator'          => __( 'Dashboard', 'twilio-order-communicator' ),
+			'toc-communicator-bulk'     => __( 'Bulk Reminders', 'twilio-order-communicator' ),
+			'toc-communicator-settings' => __( 'Settings', 'twilio-order-communicator' ),
+			'toc-communicator-setup'    => __( 'Setup', 'twilio-order-communicator' ),
+			'toc-communicator-license'  => __( 'License', 'twilio-order-communicator' ),
+			'toc-communicator-tools'    => __( 'Tools & Docs', 'twilio-order-communicator' ),
+		);
+	}
+
+	/**
+	 * Map a page slug (or legacy ?tab=) to the internal tab key.
+	 *
+	 * @return string
+	 */
+	private function current_tab() {
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : 'toc-communicator'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$map  = array(
+			'toc-communicator'          => 'dashboard',
+			'toc-communicator-bulk'     => 'bulk',
+			'toc-communicator-settings' => 'settings',
+			'toc-communicator-setup'    => 'setup',
+			'toc-communicator-license'  => 'license',
+			'toc-communicator-tools'    => 'tools',
+		);
+		if ( isset( $_GET['tab'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$tab = sanitize_key( wp_unslash( $_GET['tab'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			if ( in_array( $tab, $map, true ) ) {
+				return $tab;
+			}
+		}
+		return isset( $map[ $page ] ) ? $map[ $page ] : 'dashboard';
+	}
+
+	/**
+	 * @param string $tab Internal tab key.
+	 * @return string
+	 */
+	public static function tab_url( $tab ) {
+		$slugs = array(
+			'dashboard' => 'toc-communicator',
+			'bulk'      => 'toc-communicator-bulk',
+			'settings'  => 'toc-communicator-settings',
+			'setup'     => 'toc-communicator-setup',
+			'license'   => 'toc-communicator-license',
+			'tools'     => 'toc-communicator-tools',
+		);
+		$slug = isset( $slugs[ $tab ] ) ? $slugs[ $tab ] : 'toc-communicator';
+		return admin_url( 'admin.php?page=' . $slug );
 	}
 
 	public function assets( $hook ) {
@@ -190,18 +258,18 @@ class TOC_Admin {
 			return;
 		}
 
-		$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'dashboard'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$tab = $this->current_tab();
 		?>
 		<div class="wrap toc-wrap">
 			<h1><?php echo esc_html( TOC_BRAND_NAME ); ?></h1>
 			<p class="description"><?php echo esc_html__( 'SMS and voice for WooCommerce (for Twilio). Bring your own Twilio account — you pay Twilio directly, zero markup.', 'twilio-order-communicator' ); ?></p>
 			<nav class="nav-tab-wrapper">
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator&tab=dashboard' ) ); ?>" class="nav-tab <?php echo $tab === 'dashboard' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__( 'Dashboard', 'twilio-order-communicator' ); ?></a>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator&tab=bulk' ) ); ?>" class="nav-tab <?php echo $tab === 'bulk' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__( 'Bulk Reminders', 'twilio-order-communicator' ); ?></a>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator&tab=settings' ) ); ?>" class="nav-tab <?php echo $tab === 'settings' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__( 'Settings', 'twilio-order-communicator' ); ?></a>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator&tab=setup' ) ); ?>" class="nav-tab <?php echo $tab === 'setup' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__( 'Setup', 'twilio-order-communicator' ); ?></a>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator&tab=license' ) ); ?>" class="nav-tab <?php echo $tab === 'license' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__( 'License', 'twilio-order-communicator' ); ?></a>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator&tab=tools' ) ); ?>" class="nav-tab <?php echo $tab === 'tools' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__( 'Tools & Docs', 'twilio-order-communicator' ); ?></a>
+				<a href="<?php echo esc_url( self::tab_url( 'dashboard' ) ); ?>" class="nav-tab <?php echo $tab === 'dashboard' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__( 'Dashboard', 'twilio-order-communicator' ); ?></a>
+				<a href="<?php echo esc_url( self::tab_url( 'bulk' ) ); ?>" class="nav-tab <?php echo $tab === 'bulk' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__( 'Bulk Reminders', 'twilio-order-communicator' ); ?></a>
+				<a href="<?php echo esc_url( self::tab_url( 'settings' ) ); ?>" class="nav-tab <?php echo $tab === 'settings' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__( 'Settings', 'twilio-order-communicator' ); ?></a>
+				<a href="<?php echo esc_url( self::tab_url( 'setup' ) ); ?>" class="nav-tab <?php echo $tab === 'setup' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__( 'Setup', 'twilio-order-communicator' ); ?></a>
+				<a href="<?php echo esc_url( self::tab_url( 'license' ) ); ?>" class="nav-tab <?php echo $tab === 'license' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__( 'License', 'twilio-order-communicator' ); ?></a>
+				<a href="<?php echo esc_url( self::tab_url( 'tools' ) ); ?>" class="nav-tab <?php echo $tab === 'tools' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__( 'Tools & Docs', 'twilio-order-communicator' ); ?></a>
 			</nav>
 			<div class="toc-content">
 				<?php

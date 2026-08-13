@@ -49,14 +49,13 @@ class TOC_Onboarding {
 		if ( ! current_user_can( TOC_Caps::manage() ) ) {
 			return;
 		}
-		if ( isset( $_GET['page'] ) && sanitize_key( wp_unslash( $_GET['page'] ) ) === 'toc-communicator' ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			if ( $tab === 'setup' ) {
-				return;
-			}
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$tab  = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( $page === 'toc-communicator-setup' || ( $page === 'toc-communicator' && $tab === 'setup' ) ) {
+			return;
 		}
 
-		$url      = admin_url( 'admin.php?page=toc-communicator&tab=setup' );
+		$url      = TOC_Admin::tab_url( 'setup' );
 		$dismiss  = wp_nonce_url( add_query_arg( 'toc_dismiss_setup', '1' ), 'toc_dismiss_setup' );
 		echo '<div class="notice notice-info"><p>';
 		echo wp_kses_post(
@@ -90,7 +89,7 @@ class TOC_Onboarding {
 		update_option( 'toc_onboarding_step', 6, false );
 		wp_send_json_success(
 			array(
-				'redirect' => admin_url( 'admin.php?page=toc-communicator&tab=dashboard' ),
+				'redirect' => TOC_Admin::tab_url( 'dashboard' ),
 			)
 		);
 	}
@@ -286,7 +285,7 @@ class TOC_Onboarding {
 				<p><?php echo esc_html__( 'Mark a test order as Ready for Pickup (or Shipped) to verify auto notify. Check order notes if SMS is skipped.', 'twilio-order-communicator' ); ?></p>
 				<p>
 					<button type="button" class="button button-primary button-hero" id="toc-wiz-finish"><?php echo esc_html__( 'Finish setup', 'twilio-order-communicator' ); ?></button>
-					<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator&tab=settings' ) ); ?>"><?php echo esc_html__( 'Open Settings', 'twilio-order-communicator' ); ?></a>
+					<a class="button" href="<?php echo esc_url( TOC_Admin::tab_url( 'settings' ) ); ?>"><?php echo esc_html__( 'Open Settings', 'twilio-order-communicator' ); ?></a>
 				</p>
 			</div>
 		</div>

@@ -41,3 +41,15 @@
 .sc-layer-row.active .sc-layer-select { box-shadow: 0 0 0 1px #2271b1; }
 .sc-library-thumbs .sc-lib-item:hover { border-color: #2271b1 !important; }
 .sc-text-editor label { display: inline-block; margin-right: 6px; }
+
+/* Top-level StoreCanvas overview */
+.sc-home{max-width:1100px}
+.sc-home-hero{margin:8px 0 20px}
+.sc-home-hero h1{margin:0 0 6px;font-size:23px;font-weight:600}
+.sc-home-hero p{margin:0;color:#646970;max-width:52em;font-size:14px}
+.sc-home-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.sc-home-card{display:flex;flex-direction:column;gap:6px;padding:18px 18px 16px;background:#fff;border:1px solid #dcdcde;border-radius:10px;text-decoration:none;color:#1d2327;box-shadow:0 1px 2px rgba(0,0,0,.04);transition:border-color .15s,box-shadow .15s,transform .15s}
+.sc-home-card:hover,.sc-home-card:focus{border-color:#2271b1;box-shadow:0 4px 14px rgba(34,113,177,.12);transform:translateY(-1px);color:#1d2327}
+.sc-home-card .dashicons{width:28px;height:28px;font-size:28px;color:#2271b1}
+.sc-home-card strong{font-size:15px}
+.sc-home-card span:last-child{color:#646970;font-size:13px;line-height:1.45}

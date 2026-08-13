@@ -30,6 +30,7 @@ class SC_Plugin {
 	const META_CLIPART     = '_sc_clipart_ids'; // product: array of clipart post IDs, empty = all
 	const META_OPTION_GROUPS = '_sc_option_group_ids'; // product: assigned global group IDs
 	const CPT_OPTION_GROUP = 'sc_option_group';
+	const MENU_SLUG        = 'storecanvas';
 
 	/** Cart/order item keys */
 	const CART_OPTIONS     = 'sc_options';
@@ -47,6 +48,7 @@ class SC_Plugin {
 	}
 
 	private function __construct() {
+		add_action( 'admin_menu', array( $this, 'register_menu' ), 9 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_front' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin' ) );
 	}
@@ -78,6 +80,84 @@ class SC_Plugin {
 		return array(
 			'fields' => array(),
 		);
+	}
+
+	public function register_menu() {
+		add_menu_page(
+			__( 'StoreCanvas', 'storecanvas' ),
+			__( 'StoreCanvas', 'storecanvas' ),
+			'edit_shop_orders',
+			self::MENU_SLUG,
+			array( $this, 'render_home' ),
+			'dashicons-art',
+			55
+		);
+		add_submenu_page(
+			self::MENU_SLUG,
+			__( 'Overview', 'storecanvas' ),
+			__( 'Overview', 'storecanvas' ),
+			'edit_shop_orders',
+			self::MENU_SLUG,
+			array( $this, 'render_home' )
+		);
+	}
+
+	public function render_home() {
+		if ( ! current_user_can( 'edit_shop_orders' ) ) {
+			wp_die( esc_html__( 'Forbidden', 'storecanvas' ) );
+		}
+		$links = array(
+			array(
+				'href'  => admin_url( 'admin.php?page=' . SC_Queue::PAGE_SLUG ),
+				'icon'  => 'dashicons-list-view',
+				'title' => __( 'Production queue', 'storecanvas' ),
+				'desc'  => __( 'Print, mark done, and download artwork ZIPs.', 'storecanvas' ),
+			),
+			array(
+				'href'  => admin_url( 'edit.php?post_type=' . self::CPT_OPTION_GROUP ),
+				'icon'  => 'dashicons-forms',
+				'title' => __( 'Option groups', 'storecanvas' ),
+				'desc'  => __( 'Reusable option fields assigned to products.', 'storecanvas' ),
+			),
+			array(
+				'href'  => admin_url( 'edit.php?post_type=' . SC_Designs::CPT ),
+				'icon'  => 'dashicons-portfolio',
+				'title' => __( 'Saved designs', 'storecanvas' ),
+				'desc'  => __( 'Customer-saved canvas designs.', 'storecanvas' ),
+			),
+			array(
+				'href'  => admin_url( 'edit.php?post_type=' . SC_Clipart::CPT ),
+				'icon'  => 'dashicons-images-alt2',
+				'title' => __( 'Library', 'storecanvas' ),
+				'desc'  => __( 'Clip-art available in the customizer.', 'storecanvas' ),
+			),
+			array(
+				'href'  => admin_url( 'admin.php?page=sc-journey' ),
+				'icon'  => 'dashicons-chart-area',
+				'title' => __( 'Journey', 'storecanvas' ),
+				'desc'  => __( 'Where customers drop off in the customizer.', 'storecanvas' ),
+			),
+			array(
+				'href'  => admin_url( 'admin.php?page=sc-proof-email' ),
+				'icon'  => 'dashicons-email-alt',
+				'title' => __( 'Proof email', 'storecanvas' ),
+				'desc'  => __( 'Optional proof of artwork after order.', 'storecanvas' ),
+			),
+		);
+		echo '<div class="wrap sc-home">';
+		echo '<div class="sc-home-hero">';
+		echo '<h1>' . esc_html__( 'StoreCanvas', 'storecanvas' ) . '</h1>';
+		echo '<p>' . esc_html__( 'Product designer, options, print files, and production — all in this menu. Product-level setup still lives on each product.', 'storecanvas' ) . '</p>';
+		echo '</div>';
+		echo '<div class="sc-home-grid">';
+		foreach ( $links as $item ) {
+			echo '<a class="sc-home-card" href="' . esc_url( $item['href'] ) . '">';
+			echo '<span class="dashicons ' . esc_attr( $item['icon'] ) . '"></span>';
+			echo '<strong>' . esc_html( $item['title'] ) . '</strong>';
+			echo '<span>' . esc_html( $item['desc'] ) . '</span>';
+			echo '</a>';
+		}
+		echo '</div></div>';
 	}
 
 	public function enqueue_front() {
@@ -200,14 +280,28 @@ class SC_Plugin {
 
 	public function enqueue_admin( $hook ) {
 		global $post;
-		if ( ! in_array( $hook, array( 'post.php', 'post-new.php' ), true ) ) {
+		$on_sc_menu = is_string( $hook ) && (
+			false !== strpos( $hook, 'storecanvas' )
+			|| false !== strpos( $hook, 'sc-production-queue' )
+			|| false !== strpos( $hook, 'sc-journey' )
+			|| false !== strpos( $hook, 'sc-proof-email' )
+			|| false !== strpos( $hook, 'sc_option_group' )
+			|| false !== strpos( $hook, 'sc_design' )
+			|| false !== strpos( $hook, 'sc_clipart' )
+		);
+		$on_product = in_array( $hook, array( 'post.php', 'post-new.php' ), true )
+			&& $post && 'product' === get_post_type( $post );
+
+		if ( ! $on_sc_menu && ! $on_product ) {
 			return;
 		}
-		if ( ! $post || 'product' !== get_post_type( $post ) ) {
+
+		wp_enqueue_style( 'sc-admin', SC_PLUGIN_URL . 'assets/admin.css', array(), SC_VERSION );
+
+		if ( ! $on_product ) {
 			return;
 		}
 		wp_enqueue_media();
-		wp_enqueue_style( 'sc-admin', SC_PLUGIN_URL . 'assets/admin.css', array(), SC_VERSION );
 		wp_enqueue_script( 'sc-admin', SC_PLUGIN_URL . 'assets/admin.js', array( 'jquery', 'jquery-ui-sortable' ), SC_VERSION, true );
 		wp_localize_script(
 			'sc-admin',

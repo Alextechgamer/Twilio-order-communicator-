@@ -206,7 +206,7 @@ trait TOC_Admin_Dashboard {
 			<input type="date" name="date_to" value="<?php echo esc_attr( $filters['date_to'] ); ?>" />
 			<input type="search" name="s" value="<?php echo esc_attr( $filters['search'] ); ?>" placeholder="<?php echo esc_attr__( 'Search…', 'twilio-order-communicator' ); ?>" />
 			<button class="button"><?php echo esc_html__( 'Filter', 'twilio-order-communicator' ); ?></button>
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=toc-communicator' ) ); ?>" class="button"><?php echo esc_html__( 'Reset', 'twilio-order-communicator' ); ?></a>
+			<a href="<?php echo esc_url( TOC_Admin::tab_url( 'dashboard' ) ); ?>" class="button"><?php echo esc_html__( 'Reset', 'twilio-order-communicator' ); ?></a>
 			<a href="<?php echo esc_url( $export_url ); ?>" class="button button-secondary"><?php echo esc_html__( 'Export CSV', 'twilio-order-communicator' ); ?></a>
 		</form>
 

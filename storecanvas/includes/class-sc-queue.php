@@ -30,9 +30,9 @@ class SC_Queue {
 
 	public function menu() {
 		add_submenu_page(
-			'woocommerce',
-			__( 'StoreCanvas Queue', 'storecanvas' ),
-			__( 'StoreCanvas Queue', 'storecanvas' ),
+			SC_Plugin::MENU_SLUG,
+			__( 'Production queue', 'storecanvas' ),
+			__( 'Production queue', 'storecanvas' ),
 			'edit_shop_orders',
 			self::PAGE_SLUG,
 			array( $this, 'render_page' )

@@ -134,8 +134,8 @@ class OB_Plugin {
 
 	public function register_menu() {
 		add_menu_page(
-			__( 'Orderbay', 'orderbay' ),
-			__( 'Orderbay', 'orderbay' ),
+			__( 'OrderBay', 'orderbay' ),
+			__( 'OrderBay', 'orderbay' ),
 			'edit_shop_orders',
 			'orderbay',
 			array( 'OB_Dashboard', 'render_page_static' ),

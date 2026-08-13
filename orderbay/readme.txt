@@ -1,9 +1,9 @@
-=== Orderbay ===
+=== OrderBay ===
 Contributors: alextechgamer
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.8.3
+Stable tag: 1.9.0
 License: GPLv2 or later
 
 Self-hosted WooCommerce ops toolkit: documents, fulfillment, RMA, digests, search.
@@ -29,7 +29,7 @@ Independent of OrderRing and StoreCanvas.
 
 1. Upload the `orderbay` folder to `/wp-content/plugins/`
 2. Activate through the Plugins menu (WooCommerce must be active)
-3. Open WooCommerce → Orderbay (and the Documents settings) to set your invoice prefix/format, seller details and options
+3. Open **OrderBay → Documents** to set your invoice prefix/format, seller details and options
 4. Print documents from the order screen; assign tracking and manage returns from the order panels
 
 == Frequently Asked Questions ==
@@ -50,6 +50,10 @@ Yes — copy any template from the plugin's `templates/` folder into `wp-content
 Yes, Orderbay declares and supports WooCommerce High-Performance Order Storage.
 
 == Changelog ==
+
+= 1.9.0 =
+* Admin: OrderBay lives only in its own top-level menu (removed the extra WooCommerce submenu)
+* Dashboard: new ops console — hero, colored stat cards, setup prompt, and grouped tiles instead of a plain link list
 
 = 1.8.3 =
 * Fix: the dashboard "Today" count and the staff digest now use the store timezone for "start of day" instead of UTC midnight, so daily numbers no longer shift across the date boundary for non-UTC stores.

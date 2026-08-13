@@ -1,8 +1,223 @@
-/* Orderbay admin */
-.ob-dashboard .ob-card:hover {
-	border-color: #2271b1;
-	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+/* OrderBay admin */
+
+.ob-dash {
+	max-width: 1120px;
 }
+
+.ob-dash-hero {
+	display: flex;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 20px;
+	flex-wrap: wrap;
+	margin: 8px 0 22px;
+	padding: 22px 24px;
+	background: linear-gradient(135deg, #0f2744 0%, #1a4a73 58%, #2271b1 100%);
+	border-radius: 12px;
+	color: #fff;
+}
+
+.ob-dash-kicker {
+	margin: 0 0 4px;
+	font-size: 11px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	opacity: 0.75;
+	font-weight: 600;
+}
+
+.ob-dash-hero h1 {
+	margin: 0 0 6px;
+	color: #fff;
+	font-size: 26px;
+	font-weight: 650;
+	letter-spacing: -0.02em;
+}
+
+.ob-dash-lead {
+	margin: 0;
+	max-width: 40em;
+	color: rgba(255, 255, 255, 0.82);
+	font-size: 14px;
+	line-height: 1.5;
+}
+
+.ob-dash-hero-actions {
+	display: flex;
+	gap: 8px;
+}
+
+.ob-dash-hero-actions .button-primary {
+	background: #fff;
+	border-color: #fff;
+	color: #0f2744;
+}
+
+.ob-dash-hero-actions .button-primary:hover {
+	background: #f0f6fc;
+	border-color: #f0f6fc;
+	color: #0f2744;
+}
+
+.ob-dash-hero-actions .button:not(.button-primary) {
+	background: transparent;
+	border-color: rgba(255, 255, 255, 0.45);
+	color: #fff;
+}
+
+.ob-dash-hero-actions .button:not(.button-primary):hover {
+	background: rgba(255, 255, 255, 0.1);
+	border-color: #fff;
+	color: #fff;
+}
+
+.ob-dash-stats {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: 12px;
+	margin: 0 0 20px;
+}
+
+.ob-stat {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding: 16px 18px 14px;
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 10px;
+	text-decoration: none;
+	color: #1d2327;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+	border-left: 4px solid #2271b1;
+	transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+}
+
+.ob-stat:hover,
+.ob-stat:focus {
+	transform: translateY(-1px);
+	box-shadow: 0 6px 16px rgba(15, 39, 68, 0.1);
+	color: #1d2327;
+}
+
+.ob-stat--queue { border-left-color: #dba617; }
+.ob-stat--alert { border-left-color: #d63638; background: #fcf0f1; }
+.ob-stat--ok { border-left-color: #00a32a; }
+.ob-stat--art { border-left-color: #7c3aed; }
+
+.ob-stat-value {
+	font-size: 32px;
+	font-weight: 650;
+	line-height: 1.1;
+	letter-spacing: -0.03em;
+}
+
+.ob-stat--alert .ob-stat-value { color: #d63638; }
+
+.ob-stat-title {
+	margin-top: 6px;
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.ob-stat-hint {
+	font-size: 12px;
+	color: #646970;
+}
+
+.ob-dash-setup {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	padding: 14px 16px;
+	margin: 0 0 22px;
+	background: #fff8e5;
+	border: 1px solid #f0c33c;
+	border-radius: 10px;
+}
+
+.ob-dash-setup-icon {
+	width: 28px;
+	height: 28px;
+	font-size: 28px;
+	color: #996800;
+}
+
+.ob-dash-setup strong { display: block; margin-bottom: 2px; }
+.ob-dash-setup p { margin: 0; color: #50575e; }
+.ob-dash-setup .button { margin-left: auto; flex-shrink: 0; }
+
+.ob-dash-sections {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+	gap: 18px;
+}
+
+.ob-dash-section h2 {
+	margin: 0 0 10px;
+	font-size: 13px;
+	font-weight: 650;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: #646970;
+}
+
+.ob-dash-tiles {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.ob-dash-tile {
+	display: grid;
+	grid-template-columns: 28px 1fr;
+	grid-template-rows: auto auto;
+	column-gap: 10px;
+	padding: 12px 14px;
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 10px;
+	text-decoration: none;
+	color: #1d2327;
+	transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.ob-dash-tile:hover,
+.ob-dash-tile:focus {
+	border-color: #2271b1;
+	box-shadow: 0 4px 12px rgba(34, 113, 177, 0.1);
+	color: #1d2327;
+}
+
+.ob-dash-tile .dashicons {
+	grid-row: 1 / span 2;
+	align-self: center;
+	width: 22px;
+	height: 22px;
+	font-size: 22px;
+	color: #2271b1;
+}
+
+.ob-dash-tile strong { font-size: 14px; }
+.ob-dash-tile span:last-child {
+	grid-column: 2;
+	color: #646970;
+	font-size: 12px;
+	line-height: 1.4;
+}
+
+.ob-dash-foot {
+	margin: 22px 0 0;
+	color: #646970;
+	font-size: 12px;
+	max-width: 62em;
+}
+
+@media (max-width: 782px) {
+	.ob-dash-setup { flex-wrap: wrap; }
+	.ob-dash-setup .button { margin-left: 0; }
+}
+
 .ob-order-side {
 	border-top: 1px solid #eee;
 	margin-top: 8px;

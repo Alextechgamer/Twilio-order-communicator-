@@ -550,7 +550,7 @@ class TOC_License {
 			return;
 		}
 
-		$url = admin_url( 'admin.php?page=toc-communicator&tab=license' );
+		$url = TOC_Admin::tab_url( 'license' );
 		echo '<div class="notice notice-warning is-dismissible"><p>';
 		echo esc_html(
 			sprintf(

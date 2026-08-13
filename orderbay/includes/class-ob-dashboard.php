@@ -18,20 +18,7 @@ class OB_Dashboard {
 	}
 
 	private function __construct() {
-		// Menu registered by OB_Plugin.
-		// Also under WooCommerce for discoverability.
-		add_action( 'admin_menu', array( $this, 'wc_submenu' ), 60 );
-	}
-
-	public function wc_submenu() {
-		add_submenu_page(
-			'woocommerce',
-			__( 'Orderbay', 'orderbay' ),
-			__( 'Orderbay', 'orderbay' ),
-			'edit_shop_orders',
-			'orderbay-wc',
-			array( __CLASS__, 'render_page_static' )
-		);
+		// Menu registered by OB_Plugin (top-level OrderBay section).
 	}
 
 	public static function render_page_static() {
@@ -80,53 +67,92 @@ class OB_Dashboard {
 			}
 		}
 
-		echo '<div class="wrap ob-dashboard">';
-		echo '<h1>' . esc_html__( 'Orderbay dashboard', 'orderbay' ) . '</h1>';
-		echo '<p class="description">' . esc_html__( 'Self-hosted ops overview. Documents, order flags, email rules, and catalog tools live under Orderbay.', 'orderbay' ) . '</p>';
-
-		echo '<div class="ob-cards" style="display:flex;flex-wrap:wrap;gap:16px;margin:16px 0;">';
-		$this->card( __( 'Orders today', 'orderbay' ), (string) $today_count, $orders_url );
-		$this->card( __( 'Processing / on-hold', 'orderbay' ), (string) $processing, add_query_arg( 'status', 'processing', $orders_url ) );
-		$this->card( __( 'Needs attention', 'orderbay' ), (string) $attention, add_query_arg( 'ob_attention', '1', $orders_url ) );
-		if ( null !== $sc_count ) {
-			$this->card( __( 'Custom art (StoreCanvas)', 'orderbay' ), (string) $sc_count, $orders_url );
-		}
-		echo '</div>';
-
 		$docs = OB_Plugin::get_doc_settings();
 		$from_missing = empty( trim( (string) ( $docs['from_lines'] ?? '' ) ) );
 		$logo_missing = empty( $docs['logo_url'] );
+
+		$groups = array(
+			array(
+				'title' => __( 'Documents', 'orderbay' ),
+				'items' => array(
+					array( 'orderbay-documents', 'dashicons-media-document', __( 'Invoice & packing', 'orderbay' ), __( 'Logo, From address, numbering, paper.', 'orderbay' ) ),
+					array( 'orderbay-export', 'dashicons-download', __( 'Export CSV', 'orderbay' ), __( 'Download orders for accounting.', 'orderbay' ) ),
+				),
+			),
+			array(
+				'title' => __( 'Fulfillment', 'orderbay' ),
+				'items' => array(
+					array( 'orderbay-fulfillment', 'dashicons-car', __( 'Tracking & pick list', 'orderbay' ), __( 'Carriers, auto-attention, bin locations.', 'orderbay' ) ),
+					array( 'orderbay-rma', 'dashicons-image-rotate', __( 'Returns / RMA', 'orderbay' ), __( 'Line-level returns and customer emails.', 'orderbay' ) ),
+					array( 'orderbay-sla', 'dashicons-clock', __( 'SLA aging', 'orderbay' ), __( 'Flag orders that sit too long.', 'orderbay' ) ),
+				),
+			),
+			array(
+				'title' => __( 'Team', 'orderbay' ),
+				'items' => array(
+					array( 'orderbay-notes', 'dashicons-edit', __( 'Note templates', 'orderbay' ), __( 'Reusable staff notes on orders.', 'orderbay' ) ),
+					array( 'orderbay-notifications', 'dashicons-email', __( 'Email rules', 'orderbay' ), __( 'Status emails and low-stock alerts.', 'orderbay' ) ),
+					array( 'orderbay-digest', 'dashicons-groups', __( 'Staff digest', 'orderbay' ), __( 'Daily attention summary for the team.', 'orderbay' ) ),
+				),
+			),
+		);
+
+		echo '<div class="wrap ob-dash">';
+		echo '<div class="ob-dash-hero">';
+		echo '<div>';
+		echo '<p class="ob-dash-kicker">' . esc_html__( 'Operations', 'orderbay' ) . '</p>';
+		echo '<h1>' . esc_html__( 'OrderBay', 'orderbay' ) . '</h1>';
+		echo '<p class="ob-dash-lead">' . esc_html__( 'Documents, fulfillment, returns, and SLA — self-hosted, no per-order fee. SMS and voice live in OrderRing.', 'orderbay' ) . '</p>';
+		echo '</div>';
+		echo '<div class="ob-dash-hero-actions">';
+		echo '<a class="button button-primary" href="' . esc_url( $orders_url ) . '">' . esc_html__( 'Open orders', 'orderbay' ) . '</a>';
+		echo '<a class="button" href="' . esc_url( admin_url( 'edit.php?post_type=product' ) ) . '">' . esc_html__( 'Products', 'orderbay' ) . '</a>';
+		echo '</div></div>';
+
+		echo '<div class="ob-dash-stats">';
+		$this->stat_card( __( 'Orders today', 'orderbay' ), (string) $today_count, $orders_url, 'today', __( 'Created since midnight UTC', 'orderbay' ) );
+		$this->stat_card( __( 'Processing', 'orderbay' ), (string) $processing, add_query_arg( 'status', 'wc-processing', $orders_url ), 'queue', __( 'Processing and on-hold', 'orderbay' ) );
+		$this->stat_card( __( 'Needs attention', 'orderbay' ), (string) $attention, add_query_arg( 'ob_attention', '1', $orders_url ), $attention > 0 ? 'alert' : 'ok', __( 'Flagged by staff or rules', 'orderbay' ) );
+		if ( null !== $sc_count ) {
+			$this->stat_card( __( 'Custom art', 'orderbay' ), (string) $sc_count, $orders_url, 'art', __( 'StoreCanvas orders', 'orderbay' ) );
+		}
+		echo '</div>';
+
 		if ( $logo_missing || $from_missing ) {
-			echo '<div class="notice notice-info inline" style="margin:12px 0;"><p><strong>' . esc_html__( 'Getting started — documents', 'orderbay' ) . '</strong> — ';
+			echo '<div class="ob-dash-setup">';
+			echo '<div class="ob-dash-setup-icon dashicons dashicons-admin-appearance"></div>';
+			echo '<div>';
+			echo '<strong>' . esc_html__( 'Finish document branding', 'orderbay' ) . '</strong>';
+			echo '<p>';
 			if ( $logo_missing && $from_missing ) {
-				echo esc_html__( 'Add a logo URL and From name/address under Documents so invoices look complete.', 'orderbay' );
+				echo esc_html__( 'Add a logo and From name/address so invoices look complete.', 'orderbay' );
 			} elseif ( $logo_missing ) {
-				echo esc_html__( 'Optional: add a logo URL under Documents for branded invoices.', 'orderbay' );
+				echo esc_html__( 'Optional: add a logo URL for branded invoices.', 'orderbay' );
 			} else {
-				echo esc_html__( 'Set From name/address under Documents (used on invoices and packing slips).', 'orderbay' );
+				echo esc_html__( 'Set From name/address used on invoices and packing slips.', 'orderbay' );
 			}
-			echo ' <a href="' . esc_url( admin_url( 'admin.php?page=orderbay-documents' ) ) . '">' . esc_html__( 'Open Documents', 'orderbay' ) . '</a>';
 			echo '</p></div>';
+			echo '<a class="button button-primary" href="' . esc_url( admin_url( 'admin.php?page=orderbay-documents' ) ) . '">' . esc_html__( 'Documents', 'orderbay' ) . '</a>';
+			echo '</div>';
 		}
 
-		echo '<div class="notice notice-info inline" style="margin:12px 0;"><p><strong>' . esc_html__( 'Safe defaults', 'orderbay' ) . '</strong> — ';
-		echo esc_html__( 'Customer RMA, barcodes, staff digests, tracking email, and customer packing slip stay off until you enable them. Bulk print / pick list / CSV need the edit_shop_orders capability.', 'orderbay' );
-		echo '</p></div>';
+		echo '<div class="ob-dash-sections">';
+		foreach ( $groups as $group ) {
+			echo '<section class="ob-dash-section">';
+			echo '<h2>' . esc_html( $group['title'] ) . '</h2>';
+			echo '<div class="ob-dash-tiles">';
+			foreach ( $group['items'] as $item ) {
+				echo '<a class="ob-dash-tile" href="' . esc_url( admin_url( 'admin.php?page=' . $item[0] ) ) . '">';
+				echo '<span class="dashicons ' . esc_attr( $item[1] ) . '"></span>';
+				echo '<strong>' . esc_html( $item[2] ) . '</strong>';
+				echo '<span>' . esc_html( $item[3] ) . '</span>';
+				echo '</a>';
+			}
+			echo '</div></section>';
+		}
+		echo '</div>';
 
-		echo '<h2>' . esc_html__( 'Quick links', 'orderbay' ) . '</h2><ul>';
-		echo '<li><a href="' . esc_url( admin_url( 'admin.php?page=orderbay-documents' ) ) . '">' . esc_html__( 'Document settings (invoice / packing slip)', 'orderbay' ) . '</a></li>';
-		echo '<li><a href="' . esc_url( admin_url( 'admin.php?page=orderbay-fulfillment' ) ) . '">' . esc_html__( 'Fulfillment (tracking / auto-attention / pick list)', 'orderbay' ) . '</a></li>';
-		echo '<li><a href="' . esc_url( admin_url( 'admin.php?page=orderbay-rma' ) ) . '">' . esc_html__( 'Returns / RMA', 'orderbay' ) . '</a></li>';
-		echo '<li><a href="' . esc_url( admin_url( 'admin.php?page=orderbay-sla' ) ) . '">' . esc_html__( 'SLA aging', 'orderbay' ) . '</a></li>';
-		echo '<li><a href="' . esc_url( admin_url( 'admin.php?page=orderbay-notes' ) ) . '">' . esc_html__( 'Note templates', 'orderbay' ) . '</a></li>';
-		echo '<li><a href="' . esc_url( admin_url( 'admin.php?page=orderbay-notifications' ) ) . '">' . esc_html__( 'Email rules & low stock', 'orderbay' ) . '</a></li>';
-		echo '<li><a href="' . esc_url( admin_url( 'admin.php?page=orderbay-digest' ) ) . '">' . esc_html__( 'Staff digest', 'orderbay' ) . '</a></li>';
-		echo '<li><a href="' . esc_url( admin_url( 'admin.php?page=orderbay-export' ) ) . '">' . esc_html__( 'Export orders CSV', 'orderbay' ) . '</a></li>';
-		echo '<li><a href="' . esc_url( $orders_url ) . '">' . esc_html__( 'Orders list', 'orderbay' ) . '</a></li>';
-		echo '<li><a href="' . esc_url( admin_url( 'edit.php?post_type=product' ) ) . '">' . esc_html__( 'Products (bulk price/stock/duplicate)', 'orderbay' ) . '</a></li>';
-		echo '</ul>';
-
-		echo '<p class="description">' . esc_html__( 'Orderbay does not send SMS or voice — that is OrderRing. StoreCanvas art count appears only when StoreCanvas is active.', 'orderbay' ) . '</p>';
+		echo '<p class="ob-dash-foot">' . esc_html__( 'Safe defaults: customer RMA, barcodes, staff digests, tracking email, and customer packing slips stay off until you enable them.', 'orderbay' ) . '</p>';
 		echo '</div>';
 	}
 
@@ -159,12 +185,15 @@ class OB_Dashboard {
 	/**
 	 * @param string $title Title.
 	 * @param string $value Value.
-	 * @param string $url URL.
+	 * @param string $url   URL.
+	 * @param string $tone  today|queue|alert|ok|art
+	 * @param string $hint  Small caption.
 	 */
-	private function card( $title, $value, $url ) {
-		echo '<a class="ob-card" href="' . esc_url( $url ) . '" style="display:block;min-width:160px;padding:16px 20px;background:#fff;border:1px solid #c3c4c7;border-radius:4px;text-decoration:none;color:inherit;">';
-		echo '<div style="font-size:28px;font-weight:600;line-height:1.2;">' . esc_html( $value ) . '</div>';
-		echo '<div style="color:#50575e;margin-top:4px;">' . esc_html( $title ) . '</div>';
+	private function stat_card( $title, $value, $url, $tone, $hint ) {
+		echo '<a class="ob-stat ob-stat--' . esc_attr( $tone ) . '" href="' . esc_url( $url ) . '">';
+		echo '<span class="ob-stat-value">' . esc_html( $value ) . '</span>';
+		echo '<span class="ob-stat-title">' . esc_html( $title ) . '</span>';
+		echo '<span class="ob-stat-hint">' . esc_html( $hint ) . '</span>';
 		echo '</a>';
 	}
 }

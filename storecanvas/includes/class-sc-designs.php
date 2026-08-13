@@ -47,7 +47,7 @@ class SC_Designs {
 				),
 				'public'              => false,
 				'show_ui'             => true,
-				'show_in_menu'        => 'woocommerce',
+				'show_in_menu'        => SC_Plugin::MENU_SLUG,
 				'capability_type'     => 'post',
 				'map_meta_cap'        => true,
 				'supports'            => array( 'title', 'author' ),
