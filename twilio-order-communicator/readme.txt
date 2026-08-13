@@ -4,7 +4,7 @@ Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
 WC requires at least: 7.0
-Stable tag: 1.20.0
+Stable tag: 1.20.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -94,12 +94,15 @@ They text START or UNSTOP. Plain "YES" is intentionally not treated as re-subscr
 
 == Changelog ==
 
+= 1.20.1 =
+* Fix: uninstall now removes the `toc_manage` / `toc_send` capabilities from every role that holds them — previously they were left behind in `wp_user_roles` after the plugin's data was deleted.
+* i18n: wrapped the last hardcoded English strings — the Voice Settings / SMS Consent / Advanced settings headings, labels and descriptions, and the bulk-tab JavaScript confirm/alert messages (send confirmation, consent-skip warnings, mode labels) now use the plugin text domain. Translation template regenerated.
+
 = 1.20.0 =
 * Brand: product name is OrderRing (SMS and voice for WooCommerce, for Twilio). Folder and text domain unchanged so existing installs keep working
 * Compliance: US A2P 10DLC guidance on Settings and Tools & Docs; “you pay Twilio directly, zero markup” on the admin header
 * Compliance: required Twilio trademark attribution (Twilio and all related logos are trademarks of Twilio Inc. or its affiliates)
 * License: default item slug is `orderring` (override with TOC_LICENSE_ITEM_SLUG)
-
 = 1.19.1 =
 * Fix: the Settings tab now renders its admin notices, so the "Only administrators can change the Twilio Auth Token" warning (and other save-time messages) are actually shown instead of being silently dropped
 * Fix: uninstall now also removes the toc_whatsapp_from option

@@ -28,6 +28,15 @@ foreach ( $toc_hooks as $toc_hook ) {
 	}
 }
 
+// Remove the plugin's capabilities from every role that holds them
+// (seeded on admin + shop_manager, but the role matrix can grant others).
+if ( function_exists( 'wp_roles' ) ) {
+	foreach ( wp_roles()->role_objects as $toc_role ) {
+		$toc_role->remove_cap( 'toc_manage' );
+		$toc_role->remove_cap( 'toc_send' );
+	}
+}
+
 $tables = array(
 	$wpdb->prefix . 'toc_communications',
 	$wpdb->prefix . 'toc_sms_opt_outs',

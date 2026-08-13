@@ -6,7 +6,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-12 19:49+0000\n"
+"POT-Creation-Date: 2026-08-13 07:14+0000\n"
 "X-Domain: twilio-order-communicator\n"
 
 #: includes/trait-toc-admin-bulk.php:53
@@ -85,12 +85,12 @@ msgstr ""
 msgid "Account SID / Auth Token / From Number"
 msgstr ""
 
-#: includes/class-toc-admin.php:149
+#: includes/class-toc-admin.php:157
 #: includes/trait-toc-admin-license.php:111
 msgid "Activate"
 msgstr ""
 
-#: includes/class-toc-admin.php:145
+#: includes/class-toc-admin.php:153
 msgid "Activating…"
 msgstr ""
 
@@ -108,6 +108,10 @@ msgstr ""
 
 #: includes/trait-toc-admin-tools.php:35
 msgid "Admins can still preview TwiML while logged in:"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:672
+msgid "Advanced"
 msgstr ""
 
 #: includes/trait-toc-admin-settings.php:664
@@ -270,7 +274,7 @@ msgstr ""
 msgid "Bulk Pickup Reminders"
 msgstr ""
 
-#: includes/class-toc-admin.php:192
+#: includes/class-toc-admin.php:200
 msgid "Bulk Reminders"
 msgstr ""
 
@@ -310,7 +314,7 @@ msgstr ""
 msgid "Checkbox label"
 msgstr ""
 
-#: includes/class-toc-admin.php:147
+#: includes/class-toc-admin.php:155
 msgid "Checking…"
 msgstr ""
 
@@ -350,6 +354,7 @@ msgstr ""
 msgid "Consent"
 msgstr ""
 
+#: includes/trait-toc-admin-settings.php:580
 #: includes/trait-toc-admin-tools.php:99
 msgid "Consent meta key"
 msgstr ""
@@ -436,7 +441,7 @@ msgstr ""
 msgid "Customer:"
 msgstr ""
 
-#: includes/class-toc-admin.php:191
+#: includes/class-toc-admin.php:199
 msgid "Dashboard"
 msgstr ""
 
@@ -444,12 +449,12 @@ msgstr ""
 msgid "Date"
 msgstr ""
 
-#: includes/class-toc-admin.php:150
+#: includes/class-toc-admin.php:158
 #: includes/trait-toc-admin-license.php:113
 msgid "Deactivate"
 msgstr ""
 
-#: includes/class-toc-admin.php:146
+#: includes/class-toc-admin.php:154
 msgid "Deactivating…"
 msgstr ""
 
@@ -760,7 +765,7 @@ msgstr ""
 msgid "Legacy alias (still supported):"
 msgstr ""
 
-#: includes/class-toc-admin.php:195 includes/trait-toc-admin-license.php:16
+#: includes/class-toc-admin.php:203 includes/trait-toc-admin-license.php:16
 msgid "License"
 msgstr ""
 
@@ -800,7 +805,7 @@ msgstr ""
 msgid "License server URL is not configured."
 msgstr ""
 
-#: includes/class-toc-admin.php:174
+#: includes/class-toc-admin.php:182
 msgid "License server URL saved."
 msgstr ""
 
@@ -808,7 +813,7 @@ msgstr ""
 msgid "Licensed site:"
 msgstr ""
 
-#: includes/class-toc-admin.php:155
+#: includes/class-toc-admin.php:163
 #: includes/trait-toc-admin-license.php:100
 msgid "Lifetime / none set"
 msgstr ""
@@ -828,6 +833,10 @@ msgstr ""
 
 #: includes/trait-toc-admin-settings.php:727
 msgid "Manage plugin"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:576
+msgid "Manual Send SMS warns and can force-send. Automatic and bulk SMS respect this setting. STOP keywords always block further SMS."
 msgstr ""
 
 #: includes/class-toc-admin.php:132
@@ -939,6 +948,10 @@ msgstr ""
 msgid "Non-US routes have their own sender-ID / DLT / CASL rules; follow Twilio’s docs for your destination country."
 msgstr ""
 
+#: includes/class-toc-admin.php:150
+msgid "None of the selected orders have SMS consent. SMS will be skipped for all."
+msgstr ""
+
 #: includes/class-toc-order-meta.php:261
 msgid "OK"
 msgstr ""
@@ -953,6 +966,10 @@ msgstr ""
 
 #: includes/trait-toc-admin-settings.php:424
 msgid "Only auto-notify Ready for Pickup if shipping method looks like Local Pickup"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:575
+msgid "Only send SMS when the customer has opted in"
 msgstr ""
 
 #: includes/class-toc-onboarding.php:289
@@ -985,6 +1002,10 @@ msgstr ""
 
 #: includes/trait-toc-admin-settings.php:338
 msgid "Optional. E.164 number of your WhatsApp-enabled Twilio sender. Leave blank to use the From Number. Requires WhatsApp enabled on your Twilio account (approved sender + templates)."
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:678
+msgid "Optional. Set if Twilio signature checks fail behind Cloudflare/proxy (must match the public HTTPS URL Twilio calls). Leave blank to use the WordPress home URL."
 msgstr ""
 
 #: includes/trait-toc-admin-tools.php:78
@@ -1073,7 +1094,7 @@ msgstr ""
 msgid "Per-status enable, voice, and SMS controls."
 msgstr ""
 
-#: includes/class-toc-admin.php:164 includes/class-toc-admin.php:54
+#: includes/class-toc-admin.php:172 includes/class-toc-admin.php:54
 #: includes/class-toc-license.php:466 includes/class-toc-license.php:483
 #: includes/class-toc-license.php:493 includes/class-toc-onboarding.php:101
 #: includes/class-toc-onboarding.php:78
@@ -1156,7 +1177,7 @@ msgstr ""
 msgid "Quiet hours"
 msgstr ""
 
-#: includes/class-toc-admin.php:151
+#: includes/class-toc-admin.php:159
 #: includes/trait-toc-admin-license.php:112
 msgid "Re-check"
 msgstr ""
@@ -1231,6 +1252,10 @@ msgstr ""
 msgid "Require consent before automatic/bulk SMS"
 msgstr ""
 
+#: includes/trait-toc-admin-settings.php:572
+msgid "Require consent for SMS"
+msgstr ""
+
 #: includes/trait-toc-admin-dashboard.php:209
 msgid "Reset"
 msgstr ""
@@ -1276,6 +1301,14 @@ msgstr ""
 msgid "SMS %1$s (SID: %2$s)%3$s"
 msgstr ""
 
+#: includes/class-toc-admin.php:146
+msgid "SMS (consent required)"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:548
+msgid "SMS Consent"
+msgstr ""
+
 #: includes/trait-toc-admin-settings.php:634
 msgid "SMS Footer"
 msgstr ""
@@ -1284,7 +1317,7 @@ msgstr ""
 msgid "SMS STOP / opted out"
 msgstr ""
 
-#: includes/class-toc-admin.php:189
+#: includes/class-toc-admin.php:197
 msgid "SMS and voice for WooCommerce (for Twilio). Bring your own Twilio account — you pay Twilio directly, zero markup."
 msgstr ""
 
@@ -1354,7 +1387,7 @@ msgstr ""
 msgid "Save role permissions"
 msgstr ""
 
-#: includes/class-toc-admin.php:152 includes/trait-toc-admin-license.php:74
+#: includes/class-toc-admin.php:160 includes/trait-toc-admin-license.php:74
 msgid "Save server URL"
 msgstr ""
 
@@ -1362,7 +1395,7 @@ msgstr ""
 msgid "Saved key: %s — leave blank to keep it, or paste a new key to replace."
 msgstr ""
 
-#: includes/class-toc-admin.php:148
+#: includes/class-toc-admin.php:156
 msgid "Saving…"
 msgstr ""
 
@@ -1442,6 +1475,10 @@ msgstr ""
 msgid "Send to Selected"
 msgstr ""
 
+#: includes/class-toc-admin.php:149
+msgid "Send {mode} to {count} order(s)?\n\nDelay: {delay}s between each (~{est} min total)."
+msgstr ""
+
 #: includes/class-toc-admin.php:136
 msgid "Sending…"
 msgstr ""
@@ -1454,7 +1491,7 @@ msgstr ""
 msgid "Sent with the WooCommerce email template when available. Quiet hours do not apply."
 msgstr ""
 
-#: includes/class-toc-admin.php:167
+#: includes/class-toc-admin.php:175
 msgid "Server URL is locked by TOC_LICENSE_SERVER_URL."
 msgstr ""
 
@@ -1466,7 +1503,7 @@ msgstr ""
 msgid "Setting"
 msgstr ""
 
-#: includes/class-toc-admin.php:193
+#: includes/class-toc-admin.php:201
 msgid "Settings"
 msgstr ""
 
@@ -1474,7 +1511,7 @@ msgstr ""
 msgid "Settings Reference"
 msgstr ""
 
-#: includes/class-toc-admin.php:194
+#: includes/class-toc-admin.php:202
 msgid "Setup"
 msgstr ""
 
@@ -1598,7 +1635,7 @@ msgstr ""
 msgid "This phone has opted out (STOP). Send SMS anyway?"
 msgstr ""
 
-#: includes/class-toc-admin.php:196
+#: includes/class-toc-admin.php:204
 msgid "Tools & Docs"
 msgstr ""
 
@@ -1626,7 +1663,7 @@ msgstr ""
 msgid "Twilio OK, but TwiML endpoint unreachable: %s"
 msgstr ""
 
-#: includes/class-toc-admin.php:216 includes/trait-toc-admin-tools.php:69
+#: includes/class-toc-admin.php:224 includes/trait-toc-admin-tools.php:69
 msgid "Twilio and all related logos are trademarks of Twilio Inc. or its affiliates. OrderRing is not affiliated with, endorsed, or sponsored by Twilio Inc."
 msgstr ""
 
@@ -1715,7 +1752,12 @@ msgstr ""
 
 #: includes/trait-toc-admin-dashboard.php:193
 #: includes/trait-toc-admin-dashboard.php:261
+#: includes/trait-toc-admin-settings.php:346
 msgid "Voice"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:343
+msgid "Voice Settings"
 msgstr ""
 
 #: includes/class-toc-onboarding.php:256
@@ -1761,6 +1803,10 @@ msgstr ""
 #: includes/class-toc-onboarding.php:216
 #: includes/trait-toc-admin-tools.php:44
 msgid "Webhook"
+msgstr ""
+
+#: includes/trait-toc-admin-settings.php:675
+msgid "Webhook base URL"
 msgstr ""
 
 #: includes/trait-toc-admin-settings.php:335
@@ -1835,6 +1881,10 @@ msgstr ""
 msgid "[%1$s] SMS %2$s — order #%3$s"
 msgstr ""
 
+#: includes/class-toc-admin.php:147
+msgid "call + SMS (SMS only with consent)"
+msgstr ""
+
 #: includes/trait-toc-admin-bulk.php:105
 msgid "consent required"
 msgstr ""
@@ -1855,11 +1905,11 @@ msgstr ""
 msgid "order(s) listed"
 msgstr ""
 
-#: includes/class-toc-admin.php:153 includes/trait-toc-admin-license.php:37
+#: includes/class-toc-admin.php:161 includes/trait-toc-admin-license.php:37
 msgid "premium updates enabled"
 msgstr ""
 
-#: includes/class-toc-admin.php:154 includes/trait-toc-admin-license.php:39
+#: includes/class-toc-admin.php:162 includes/trait-toc-admin-license.php:39
 msgid "premium updates paused"
 msgstr ""
 
@@ -1885,6 +1935,14 @@ msgstr ""
 
 #: includes/class-toc-onboarding.php:273
 msgid "until"
+msgstr ""
+
+#: includes/class-toc-admin.php:145
+msgid "voice call"
+msgstr ""
+
+#: includes/class-toc-admin.php:152
+msgid "{skipped} of {total} selected order(s) have no SMS consent and will be skipped. Continue?"
 msgstr ""
 
 #: includes/class-toc-onboarding.php:186

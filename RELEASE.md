@@ -38,7 +38,7 @@ unzip -l orderring-${VERSION}.zip | grep -c license-server   # must be 0
 
 WordPress requires exactly one top-level directory (`twilio-order-communicator/`) inside the archive.
 
-**Version markers must agree before building** — `twilio-order-communicator.php` header `Version:`, the `TOC_VERSION` constant, and `readme.txt` `Stable tag:`. Same for StoreCanvas (`storecanvas.php` / `SC_VERSION`) and OrderBay (`orderbay.php` / `OB_VERSION`).
+**Version markers must agree before building** — there are **five** per plugin: the plugin header `Version:`, the version constant (`TOC_VERSION` / `SC_VERSION` / `OB_VERSION`), `readme.txt` `Stable tag:`, the top `readme.txt` changelog entry, and the plugin's row in the root `README.md` version table. Verify with `php tools/release/check-versions.php` (also a CI hard gate), or bump all five at once with `php tools/release/bump-version.php <plugin> <version>`.
 
 ---
 
@@ -130,11 +130,13 @@ The customer still needs their **own Twilio** Account SID, Auth Token, and From 
 ## 5. Shipping an update later
 
 ```bash
-# 1. Bump version in twilio-order-communicator.php (header + TOC_VERSION) and readme.txt Stable tag
-# 2. Add a changelog entry in readme.txt
+# 1. Bump all five version markers in one command (header, version constant,
+#    Stable tag, changelog stub, root README row):
+php tools/release/bump-version.php toc 1.21.0
+# 2. Replace the TODO changelog stub in readme.txt with real notes
 # 3. Rebuild the zip (section 1) with the new version in the filename
 # 4. Register it:
-php bin/add-release.php --slug=orderring --version=1.20.0 --file=/path/to/orderring-1.20.0.zip --changelog="..."
+php bin/add-release.php --slug=orderring --version=1.21.0 --file=/path/to/orderring-1.21.0.zip --changelog="..."
 ```
 
 Licensed sites pick it up on their next update check. The plugin caches the result for 6 hours, so allow for that delay (or have the customer visit **Dashboard → Updates** and click **Check again**).
@@ -145,7 +147,7 @@ Download URLs handed to sites are HMAC-signed and expire after `download_ttl` (d
 
 ## Release checklist
 
-- [ ] Version matches in plugin header, `TOC_VERSION`, and `readme.txt` stable tag
+- [ ] `php tools/release/check-versions.php` passes (all five markers agree)
 - [ ] Changelog entry added to `readme.txt`
 - [ ] Zip built and verified: one top-level folder, no `license-server`, no `.git`
 - [ ] Release registered with `bin/add-release.php`

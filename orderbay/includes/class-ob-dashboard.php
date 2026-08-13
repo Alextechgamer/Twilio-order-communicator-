@@ -43,7 +43,8 @@ class OB_Dashboard {
 			wp_die( esc_html__( 'Forbidden', 'orderbay' ) );
 		}
 
-		$today_start = gmdate( 'Y-m-d 00:00:00' );
+		// Store-local midnight (as an unambiguous epoch), not UTC midnight.
+		$today_start = OB_Plugin::day_start_ts( time(), wp_timezone_string() );
 		$today_count = $this->count_orders(
 			array(
 				'date_created' => '>=' . $today_start,

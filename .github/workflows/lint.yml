@@ -10,12 +10,14 @@ permissions:
 
 jobs:
   # Hard gate: every PHP file must parse. Fast, no dependencies.
+  # 7.4 is in the matrix because every plugin header declares `Requires PHP: 7.4`
+  # — without it an 8.x-only construct would ship undetected to 7.4 sites.
   php-syntax:
     name: PHP syntax (php -l)
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php: [ '8.1', '8.3' ]
+        php: [ '7.4', '8.1', '8.3' ]
     steps:
       - uses: actions/checkout@v4
       - name: Setup PHP ${{ matrix.php }}
@@ -30,6 +32,8 @@ jobs:
             | xargs -0 -n1 -P4 php -l
       - name: Unit tests (no dependencies)
         run: php tests/run.php
+      - name: Version consistency (5 markers per plugin)
+        run: php tools/release/check-versions.php
 
   # Advisory: WordPress Coding Standards + PHPCompatibility. Not a hard gate yet
   # (see tasks.md G8) — the report is printed for humans but never fails the build,

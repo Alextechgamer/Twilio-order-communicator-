@@ -132,9 +132,10 @@ class OB_Digest {
 		set_transient( 'ob_digest_sending', 1, 10 * MINUTE_IN_SECONDS );
 
 		$is_week = ( 'weekly' === ( $s['frequency'] ?? 'daily' ) );
-		$since   = $is_week ? gmdate( 'Y-m-d 00:00:00', time() - 7 * DAY_IN_SECONDS ) : gmdate( 'Y-m-d 00:00:00' );
+		// Store-local midnight (as an unambiguous epoch), not UTC midnight.
+		$since_ts = OB_Plugin::day_start_ts( time(), wp_timezone_string(), $is_week ? 7 : 0 );
 
-		$new_orders = $this->count_orders( array( 'date_created' => '>=' . $since ) );
+		$new_orders = $this->count_orders( array( 'date_created' => '>=' . $since_ts ) );
 		$processing = $this->count_orders( array( 'status' => array( 'processing', 'on-hold' ) ) );
 		$attention  = $this->count_orders(
 			array(
@@ -146,20 +147,13 @@ class OB_Digest {
 		$low_stock_hits = 0;
 		$low_cfg        = class_exists( 'OB_Notifications' ) ? OB_Notifications::get_low_stock() : array( 'threshold' => 5 );
 		$threshold      = (int) ( $low_cfg['threshold'] ?? 5 );
-		if ( function_exists( 'wc_get_products' ) ) {
-			$ids = wc_get_products(
-				array(
-					'limit'  => 100,
-					'status' => 'publish',
-					'return' => 'ids',
-				)
-			);
-			foreach ( (array) $ids as $pid ) {
-				$p = wc_get_product( $pid );
-				if ( $p && $p->managing_stock() && null !== $p->get_stock_quantity() && (int) $p->get_stock_quantity() <= $threshold ) {
+		if ( function_exists( 'wc_get_products' ) && class_exists( 'OB_Notifications' ) ) {
+			OB_Notifications::for_each_low_stock(
+				$threshold,
+				function ( $p ) use ( &$low_stock_hits ) {
 					$low_stock_hits++;
 				}
-			}
+			);
 		}
 
 		$store = wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
@@ -171,7 +165,7 @@ class OB_Digest {
 			$period
 		);
 		$body  = sprintf( __( "Orderbay staff digest (%s)\n", 'orderbay' ), $period );
-		$body .= sprintf( __( "New orders (since %s): %d\n", 'orderbay' ), $since, $new_orders );
+		$body .= sprintf( __( "New orders (since %s): %d\n", 'orderbay' ), wp_date( 'Y-m-d H:i', $since_ts ), $new_orders );
 		$body .= sprintf( __( "Processing / on-hold: %d\n", 'orderbay' ), $processing );
 		$body .= sprintf( __( "Needs attention: %d\n", 'orderbay' ), $attention );
 		$body .= sprintf( __( "Low-stock products (≤%d): %d\n", 'orderbay' ), $threshold, $low_stock_hits );

@@ -353,22 +353,51 @@ class OB_Notifications {
 			return;
 		}
 		$threshold = (int) $cfg['threshold'];
-		$ids       = wc_get_products(
-			array(
-				'limit'  => 150,
-				'status' => 'publish',
-				'return' => 'ids',
-			)
-		);
-		foreach ( $ids as $id ) {
-			$p = wc_get_product( $id );
-			if ( ! $p || ! $p->managing_stock() ) {
-				continue;
-			}
-			if ( $p->get_stock_quantity() !== null && (int) $p->get_stock_quantity() <= $threshold ) {
+		self::for_each_low_stock(
+			$threshold,
+			function ( $p ) use ( $cfg ) {
 				$this->maybe_notify_stock( $p, $cfg );
 			}
-		}
+		);
+	}
+
+	/**
+	 * Invoke a callback for every published, stock-managed product at or below
+	 * a threshold, paginating through the whole catalog (the previous single
+	 * bounded query silently ignored products beyond the first 100–150).
+	 *
+	 * @param int      $threshold Low-stock threshold (inclusive).
+	 * @param callable $callback  Receives each low-stock WC_Product.
+	 */
+	public static function for_each_low_stock( $threshold, $callback ) {
+		$threshold = (int) $threshold;
+		$page      = 1;
+		/**
+		 * Safety valve on catalog sweep size (pages of 100 products).
+		 *
+		 * @param int $max_pages Maximum pages scanned per run (default 200 = 20,000 products).
+		 */
+		$max_pages = max( 1, (int) apply_filters( 'ob_low_stock_scan_max_pages', 200 ) );
+		do {
+			$ids = wc_get_products(
+				array(
+					'limit'  => 100,
+					'page'   => $page,
+					'status' => 'publish',
+					'return' => 'ids',
+				)
+			);
+			foreach ( (array) $ids as $id ) {
+				$p = wc_get_product( $id );
+				if ( ! $p || ! $p->managing_stock() ) {
+					continue;
+				}
+				if ( $p->get_stock_quantity() !== null && (int) $p->get_stock_quantity() <= $threshold ) {
+					call_user_func( $callback, $p );
+				}
+			}
+			$page++;
+		} while ( count( (array) $ids ) === 100 && $page <= $max_pages );
 	}
 
 	/**
