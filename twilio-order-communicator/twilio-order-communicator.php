@@ -85,6 +85,7 @@ final class Twilio_Order_Communicator {
 		TOC_Logger::migrate_opt_outs_from_option();
 		TOC_Logger::backfill_opt_out_last10();
 		$this->seed_defaults();
+		$this->import_lite_settings();
 		$this->migrate_from_legacy();
 		TOC_Caps::maybe_seed();
 		update_option( 'toc_db_version', TOC_VERSION );
@@ -147,8 +148,30 @@ final class Twilio_Order_Communicator {
 	}
 
 	/**
-	 * One-time migration from 1.5.x Local Pickup / Completed options.
+	 * One-time copy of OrderRing Lite credentials/templates if Pro has none yet.
 	 */
+	public function import_lite_settings() {
+		$map = array(
+			'orl_account_sid'              => 'toc_account_sid',
+			'orl_auth_token'               => 'toc_auth_token',
+			'orl_from_number'              => 'toc_from_number',
+			'orl_webhook_base_url'         => 'toc_webhook_base_url',
+			'orl_status_ready_for_pickup'  => 'toc_status_ready_for_pickup',
+			'orl_message_ready_for_pickup' => 'toc_message_ready_for_pickup',
+			'orl_checkout_consent_label'   => 'toc_checkout_consent_label',
+			'orl_stop_reply'               => 'toc_stop_reply',
+			'orl_start_reply'              => 'toc_start_reply',
+			'orl_help_reply'               => 'toc_help_reply',
+		);
+		foreach ( $map as $from => $to ) {
+			$have = get_option( $to, '' );
+			$src  = get_option( $from, '' );
+			if ( ( $have === '' || $have === false ) && $src !== '' && $src !== false ) {
+				update_option( $to, $src );
+			}
+		}
+	}
+
 	public function migrate_from_legacy() {
 		// Copy message templates from legacy keys when new keys were just seeded empty / default.
 		$msg_map = array(
@@ -194,6 +217,10 @@ final class Twilio_Order_Communicator {
 	public function init() {
 		load_plugin_textdomain( 'twilio-order-communicator', false, dirname( TOC_PLUGIN_BASENAME ) . '/languages' );
 
+		if ( defined( 'ORL_VERSION' ) ) {
+			add_action( 'admin_notices', array( $this, 'lite_active_notice' ) );
+		}
+
 		if ( ! class_exists( 'WooCommerce' ) ) {
 			add_action( 'admin_notices', array( $this, 'woocommerce_missing_notice' ) );
 			return;
@@ -205,6 +232,7 @@ final class Twilio_Order_Communicator {
 			TOC_Logger::migrate_opt_outs_from_option();
 			TOC_Logger::backfill_opt_out_last10();
 			$this->seed_defaults();
+			$this->import_lite_settings();
 			$this->migrate_from_legacy();
 			TOC_Caps::maybe_seed();
 			update_option( 'toc_db_version', TOC_VERSION );
@@ -225,6 +253,15 @@ final class Twilio_Order_Communicator {
 		TOC_Reminders::instance();
 		TOC_Checkout::instance();
 		TOC_Onboarding::instance();
+	}
+
+	public function lite_active_notice() {
+		if ( ! current_user_can( 'activate_plugins' ) ) {
+			return;
+		}
+		echo '<div class="notice notice-warning"><p>';
+		echo esc_html__( 'OrderRing Lite is still active. Deactivate Lite so Ready-for-pickup SMS is handled only by OrderRing.', 'twilio-order-communicator' );
+		echo '</p></div>';
 	}
 
 	public function woocommerce_missing_notice() {

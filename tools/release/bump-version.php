@@ -44,6 +44,12 @@ $plugins = array(
 		'constant'     => 'OB_VERSION',
 		'readme_label' => 'Orderbay',
 	),
+	'lite' => array(
+		'dir'          => 'orderring-lite',
+		'main'         => 'orderring-lite/orderring-lite.php',
+		'constant'     => 'ORL_VERSION',
+		'readme_label' => 'OrderRing Lite',
+	),
 );
 
 $key     = isset( $argv[1] ) ? strtolower( trim( $argv[1] ) ) : '';
