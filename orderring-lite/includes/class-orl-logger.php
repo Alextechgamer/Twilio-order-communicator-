@@ -92,9 +92,13 @@ class ORL_Logger {
 
 	public static function backfill_opt_out_last10() {
 		global $wpdb;
-		$table = esc_sql( $wpdb->prefix . 'orl_sms_opt_outs' );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
-		$wpdb->query( "UPDATE {$table} SET phone_last10 = RIGHT(phone_digits, 10) WHERE phone_last10 = '' AND phone_digits <> ''" );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE %i SET phone_last10 = RIGHT(phone_digits, 10) WHERE phone_last10 = '' AND phone_digits <> ''",
+				$wpdb->prefix . 'orl_sms_opt_outs'
+			)
+		);
 	}
 
 	public static function migrate_opt_outs_from_option() {
@@ -167,11 +171,12 @@ class ORL_Logger {
 			return 0;
 		}
 
-		$table = esc_sql( $this->table );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$table = $this->table;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$order_id = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT order_id FROM {$table} WHERE twilio_sid = %s LIMIT 1",
+				'SELECT order_id FROM %i WHERE twilio_sid = %s LIMIT 1',
+				$table,
 				$sid
 			)
 		);
@@ -187,12 +192,13 @@ class ORL_Logger {
 		}
 
 		$last10 = self::last10( $digits );
-		$table  = esc_sql( $this->opt_outs_table );
+		$table  = $this->opt_outs_table;
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$found = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT id FROM {$table} WHERE phone_digits = %s OR phone_digits = %s OR phone_last10 = %s LIMIT 1",
+				'SELECT id FROM %i WHERE phone_digits = %s OR phone_digits = %s OR phone_last10 = %s LIMIT 1',
+				$table,
 				$digits,
 				$last10,
 				$last10
@@ -214,11 +220,12 @@ class ORL_Logger {
 			return false;
 		}
 
-		$table = esc_sql( $this->opt_outs_table );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$table = $this->opt_outs_table;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$existing = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT id FROM {$table} WHERE phone_digits = %s OR phone_last10 = %s LIMIT 1",
+				'SELECT id FROM %i WHERE phone_digits = %s OR phone_last10 = %s LIMIT 1',
+				$table,
 				$digits,
 				self::last10( $digits )
 			)
@@ -249,12 +256,13 @@ class ORL_Logger {
 		}
 
 		$last10 = self::last10( $digits );
-		$table  = esc_sql( $this->opt_outs_table );
+		$table  = $this->opt_outs_table;
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->query(
 			$wpdb->prepare(
-				"DELETE FROM {$table} WHERE phone_digits = %s OR phone_digits = %s OR phone_last10 = %s",
+				'DELETE FROM %i WHERE phone_digits = %s OR phone_digits = %s OR phone_last10 = %s',
+				$table,
 				$digits,
 				$last10,
 				$last10
@@ -314,12 +322,13 @@ class ORL_Logger {
 
 		$like  = $this->phone_like_needle( $tail );
 		$limit = $this->inbound_phone_lookup_limit();
-		$table = esc_sql( $this->table );
+		$table = $this->table;
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT order_id, phone FROM {$table} WHERE order_id > 0 AND phone LIKE %s ORDER BY created_at DESC LIMIT %d",
+				'SELECT order_id, phone FROM %i WHERE order_id > 0 AND phone LIKE %s ORDER BY created_at DESC LIMIT %d',
+				$table,
 				$like,
 				$limit
 			)
@@ -354,20 +363,22 @@ class ORL_Logger {
 		}
 
 		if ( $hpos ) {
-			$addresses = esc_sql( $wpdb->prefix . 'wc_order_addresses' );
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+			$addresses = $wpdb->prefix . 'wc_order_addresses';
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 			$ids = $wpdb->get_col(
 				$wpdb->prepare(
-					"SELECT order_id FROM {$addresses} WHERE address_type = 'billing' AND phone LIKE %s ORDER BY order_id DESC LIMIT %d",
+					"SELECT order_id FROM %i WHERE address_type = 'billing' AND phone LIKE %s ORDER BY order_id DESC LIMIT %d",
+					$addresses,
 					$like,
 					$limit
 				)
 			);
 		} else {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 			$ids = $wpdb->get_col(
 				$wpdb->prepare(
-					"SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_billing_phone' AND meta_value LIKE %s ORDER BY post_id DESC LIMIT %d",
+					"SELECT post_id FROM %i WHERE meta_key = '_billing_phone' AND meta_value LIKE %s ORDER BY post_id DESC LIMIT %d",
+					$wpdb->postmeta,
 					$like,
 					$limit
 				)
