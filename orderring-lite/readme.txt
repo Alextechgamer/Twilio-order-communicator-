@@ -1,10 +1,10 @@
 === OrderRing Lite ===
 Contributors: alextechgamer
 Tags: woocommerce, sms, twilio, pickup, notifications
-Requires at least: 6.0
+Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 WC requires at least: 7.0
@@ -56,6 +56,10 @@ Yes. Define `ORL_ACCOUNT_SID`, `ORL_AUTH_TOKEN`, and/or `ORL_FROM_NUMBER`.
 == Changelog ==
 
 
+
+= 1.0.2 =
+* Use $wpdb->prepare() %i for table names (Plugin Check InterpolatedNotPrepared)
+* Requires WordPress 6.2+ (%i identifiers)
 = 1.0.1 =
 * Plugin Check: translators comment, TwiML escaping, drop unused logger queries
 * readme: Tested up to 7.0
