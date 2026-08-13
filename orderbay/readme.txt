@@ -3,7 +3,7 @@ Contributors: alextechgamer
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.8.2
+Stable tag: 1.8.3
 License: GPLv2 or later
 
 Self-hosted WooCommerce ops toolkit: documents, fulfillment, RMA, digests, search.
@@ -51,10 +51,15 @@ Yes, Orderbay declares and supports WooCommerce High-Performance Order Storage.
 
 == Changelog ==
 
+= 1.8.3 =
+* Fix: the dashboard "Today" count and the staff digest now use the store timezone for "start of day" instead of UTC midnight, so daily numbers no longer shift across the date boundary for non-UTC stores.
+* Fix: low-stock alerts and the digest low-stock count now paginate through the whole catalog — previously products beyond the first 100–150 were silently skipped. New `ob_low_stock_scan_max_pages` filter bounds the sweep (default 200 pages of 100).
+* Fix: the PDF download endpoint (Dompdf) now respects the configured A4/Letter paper size; it was hardcoded to Letter on that path.
+* Fix: uninstall now removes the numbering format/reset options (`ob_*_format`, `ob_*_reset`) and sweeps the period-scoped counter rows (`ob_invoice_next_2026` etc.) created when a yearly/monthly reset is configured.
+
 = 1.8.2 =
 * Docs: “not tax advice / consult your accountant” on the Documents settings screen
 * Docs: e-invoice copy states export-only (no Peppol network / PDP delivery)
-
 = 1.8.1 =
 * Fix: saving the RMA panel no longer re-enters its own save handler (the woocommerce_update_order hook re-fired $order->save() recursively); a single admin save now applies the RMA meta exactly once instead of thousands of nested saves
 

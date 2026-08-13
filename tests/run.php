@@ -15,6 +15,7 @@ require $root . '/twilio-order-communicator/includes/class-toc-logger.php';
 require $root . '/twilio-order-communicator/includes/class-toc-caps.php';
 require $root . '/license-server/src/Helpers.php';
 require $root . '/license-server/src/Api.php';
+require $root . '/orderbay/includes/class-ob-plugin.php';
 require $root . '/orderbay/includes/class-ob-einvoice.php';
 require $root . '/orderbay/includes/class-ob-invoicing.php';
 require $root . '/orderbay/includes/class-ob-documents.php';
@@ -425,6 +426,19 @@ check( 'fmt day token', OB_Invoicing::format_number( '{DD}', 1, $fts, '' ), '11'
 check( 'fmt pad never truncates', OB_Invoicing::format_number( '{SEQ:3}', 1234, $fts, '' ), '1234' );
 check( 'fmt unknown token kept', OB_Invoicing::format_number( 'X{FOO}{SEQ}', 3, $fts, '' ), 'X{FOO}3' );
 check( 'fmt all tokens', OB_Invoicing::format_number( '{PREFIX}{YYYY}{MM}{DD}-{SEQ:4}', 9, $fts, 'AC/' ), 'AC/20260811-0009' );
+
+/* ---- OB_Plugin::day_start_ts (pure; pins the store-timezone "today" fix) ----
+ * Fixed epochs: 1786503600 = 2026-08-12 03:00 UTC; 1786566600 = 2026-08-12 20:30 UTC;
+ * 1786536000 = 2026-08-12 12:00 UTC. Expected values are independently computed
+ * local midnights, hardcoded so the test cannot mirror the implementation. */
+check( 'day start UTC', OB_Plugin::day_start_ts( 1786503600, 'UTC' ), 1786492800 ); // 2026-08-12 00:00 UTC
+check( 'day start NY (local date behind UTC)', OB_Plugin::day_start_ts( 1786503600, 'America/New_York' ), 1786420800 ); // 2026-08-11 00:00 EDT
+check( 'day start Kolkata (local date ahead of UTC)', OB_Plugin::day_start_ts( 1786566600, 'Asia/Kolkata' ), 1786559400 ); // 2026-08-13 00:00 IST
+check( 'day start Berlin', OB_Plugin::day_start_ts( 1786536000, 'Europe/Berlin' ), 1786485600 ); // 2026-08-12 00:00 CEST
+check( 'day start Berlin minus 7 days', OB_Plugin::day_start_ts( 1786536000, 'Europe/Berlin', 7 ), 1785880800 ); // 2026-08-05 00:00 CEST
+check( 'day start offset tz string', OB_Plugin::day_start_ts( 1786536000, '+02:00' ), 1786485600 ); // wp_timezone_string() can return raw offsets
+check( 'day start empty tz falls back to UTC', OB_Plugin::day_start_ts( 1786503600, '' ), 1786492800 );
+check( 'day start invalid tz falls back to UTC', OB_Plugin::day_start_ts( 1786503600, 'Not/AZone' ), 1786492800 );
 
 /* ---- StoreCanvas print output: pHYs DPI + SVG + minimal PDF (pure) ---- */
 $png_1x1 = base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M8AAAMBAQDJ/pLvAAAAAElFTkSuQmCC' );

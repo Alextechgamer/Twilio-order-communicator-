@@ -671,7 +671,7 @@ class OB_Documents {
 		if ( 'dompdf' === $engine && class_exists( '\\Dompdf\\Dompdf' ) ) {
 			$dompdf = new \Dompdf\Dompdf();
 			$dompdf->loadHtml( $html );
-			$dompdf->setPaper( 'letter' );
+			$dompdf->setPaper( ( 'a4' === ( $s['paper'] ?? 'letter' ) ) ? 'a4' : 'letter' );
 			$dompdf->render();
 			$dompdf->stream( 'orderbay-' . $type . '-' . $order_id . '.pdf', array( 'Attachment' => true ) );
 			exit;

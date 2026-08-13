@@ -19,10 +19,16 @@ $options = array(
 	'ob_documents_settings',
 	'ob_invoice_prefix',
 	'ob_invoice_next',
+	'ob_invoice_format',
+	'ob_invoice_reset',
 	'ob_credit_prefix',
 	'ob_credit_next',
+	'ob_credit_format',
+	'ob_credit_reset',
 	'ob_proforma_next',
 	'ob_proforma_prefix',
+	'ob_proforma_format',
+	'ob_proforma_reset',
 	// Notifications.
 	'ob_email_rules',
 	'ob_low_stock_settings',
@@ -65,4 +71,16 @@ $wpdb->query(
 	"DELETE FROM {$wpdb->options}
 	WHERE option_name LIKE '_transient_ob_lowstock_%'
 	   OR option_name LIKE '_transient_timeout_ob_lowstock_%'"
+);
+
+// Period-scoped numbering counters written by OB_Invoicing::allocate_number()
+// when a yearly/monthly reset is configured (e.g. ob_invoice_next_2026,
+// ob_invoice_next_202608) — dynamic names, so a LIKE sweep is required.
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+$wpdb->query(
+	"DELETE FROM {$wpdb->options}
+	WHERE option_name LIKE 'ob\\_invoice\\_next\\_%'
+	   OR option_name LIKE 'ob\\_credit\\_next\\_%'
+	   OR option_name LIKE 'ob\\_proforma\\_next\\_%'
+	   OR option_name LIKE 'ob\\_rma\\_next\\_%'"
 );

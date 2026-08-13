@@ -74,6 +74,33 @@ class OB_Plugin {
 	}
 
 	/**
+	 * Start of the store-local day as a unix timestamp.
+	 *
+	 * "Today" on the dashboard and in digests must follow the store timezone,
+	 * not UTC midnight — for a UTC-7 store at 5 pm local, UTC midnight already
+	 * lies in "tomorrow" and undercounts the day. Pure (no WordPress calls) so
+	 * it is unit-testable; callers pass wp_timezone_string().
+	 *
+	 * @param int    $now       Current unix timestamp.
+	 * @param string $tz_string Timezone string (e.g. 'Europe/Berlin', 'UTC',
+	 *                          or a wp_timezone_string() offset like '+02:00').
+	 * @param int    $days_back Whole days to step back from that midnight.
+	 * @return int Unix timestamp of local midnight.
+	 */
+	public static function day_start_ts( $now, $tz_string, $days_back = 0 ) {
+		try {
+			$tz = new DateTimeZone( (string) $tz_string !== '' ? (string) $tz_string : 'UTC' );
+		} catch ( Exception $e ) {
+			$tz = new DateTimeZone( 'UTC' );
+		}
+		$day = ( new DateTimeImmutable( '@' . (int) $now ) )->setTimezone( $tz )->setTime( 0, 0, 0 );
+		if ( (int) $days_back > 0 ) {
+			$day = $day->modify( '-' . (int) $days_back . ' day' );
+		}
+		return $day->getTimestamp();
+	}
+
+	/**
 	 * Default document settings.
 	 *
 	 * @return array

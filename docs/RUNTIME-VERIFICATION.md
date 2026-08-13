@@ -355,6 +355,13 @@ then the plugin was re-activated.
 - OrderBay: `uninstall.php` removed all real `ob_*` options and left no `ob_*` cron. (Clean;
   the one leftover seen during testing, `ob_fulfillment_customer_packing`, was a typo option
   I had set by hand — not written by the plugin, confirmed by grep.)
+  **Addendum (2026-08-12, OB 1.8.3):** a later code audit showed this "clean" verdict held
+  only because the test never configured a numbering format/reset — with those configured,
+  the six `ob_*_format`/`ob_*_reset` options and the period-scoped counter rows
+  (`ob_invoice_next_2026`, `ob_invoice_next_202608`, …) written by
+  `OB_Invoicing::allocate_number()` were left behind. Fixed in 1.8.3: the options were added
+  to the uninstall list and a `LIKE 'ob\_*\_next\_%'` sweep removes the period counters.
+  This fix is code-reviewed + `php -l`/unit-tested, not yet re-verified on a live install.
 - Re-activating all three: front page + wp-admin both HTTP 200, TOC tables recreated, and the
   only debug-log line was WordPress core's `_load_textdomain_just_in_time` nag for the
   **woocommerce** domain during WP-CLI activation (not emitted on web requests and not from
