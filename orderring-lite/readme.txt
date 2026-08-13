@@ -2,9 +2,9 @@
 Contributors: alextechgamer
 Tags: woocommerce, sms, twilio, pickup, notifications
 Requires at least: 6.0
-Tested up to: 6.8
+Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 WC requires at least: 7.0
@@ -54,6 +54,12 @@ Lite steps aside so you do not send duplicate SMS. You can deactivate Lite.
 Yes. Define `ORL_ACCOUNT_SID`, `ORL_AUTH_TOKEN`, and/or `ORL_FROM_NUMBER`.
 
 == Changelog ==
+
+
+= 1.0.1 =
+* Plugin Check: translators comment, TwiML escaping, drop unused logger queries
+* readme: Tested up to 7.0
+* Restore failed-SMS order notes; stop calling a missing Shipped helper
 
 = 1.0.0 =
 * First public release: Ready-for-pickup SMS, checkout consent, STOP/HELP/START

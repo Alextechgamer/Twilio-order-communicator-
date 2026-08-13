@@ -47,6 +47,7 @@ class ORL_Statuses {
 				'exclude_from_search'       => false,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
+				/* translators: %s: number of orders */
 				'label_count'               => _n_noop(
 					'Ready for Pickup <span class="count">(%s)</span>',
 					'Ready for Pickup <span class="count">(%s)</span>',

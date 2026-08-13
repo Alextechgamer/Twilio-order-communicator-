@@ -310,7 +310,7 @@ class ORL_Twilio {
 	}
 
 	private function candidate_signature_urls() {
-		$uri  = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '/';
+		$uri  = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '/';
 		$urls = array();
 
 		$override = trim( (string) get_option( 'orl_webhook_base_url', '' ) );
@@ -347,7 +347,7 @@ class ORL_Twilio {
 	}
 
 	private function current_request_url() {
-		$uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '/';
+		$uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '/';
 
 		$forwarded = isset( $_SERVER['HTTP_X_FORWARDED_PROTO'] )
 			? strtolower( sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_FORWARDED_PROTO'] ) ) )

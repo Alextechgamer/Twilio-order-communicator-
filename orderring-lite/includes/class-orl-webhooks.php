@@ -165,8 +165,9 @@ class ORL_Webhooks {
 			return;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Twilio signed webhook, not a WP form.
 		$sid    = isset( $_POST['MessageSid'] ) ? sanitize_text_field( wp_unslash( $_POST['MessageSid'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Twilio signed webhook, not a WP form.
 		$status = isset( $_POST['MessageStatus'] ) ? sanitize_text_field( wp_unslash( $_POST['MessageStatus'] ) ) : '';
 
 		if ( $sid && $status ) {
@@ -194,6 +195,23 @@ class ORL_Webhooks {
 
 		status_header( 200 );
 		echo 'OK';
+	}
+
+	/**
+	 * Attach a delivery note to the order that sent this Twilio SID.
+	 *
+	 * @param string $sid  Twilio SID.
+	 * @param string $note Note text.
+	 */
+	private function note_order_for_sid( $sid, $note ) {
+		$order_id = ORL_Logger::instance()->get_order_id_by_sid( $sid );
+		if ( ! $order_id ) {
+			return;
+		}
+		$order = wc_get_order( $order_id );
+		if ( $order ) {
+			$order->add_order_note( $note );
+		}
 	}
 
 	private function incoming_sms() {
@@ -325,7 +343,7 @@ class ORL_Webhooks {
 		echo '<?xml version="1.0" encoding="UTF-8"?>';
 		echo '<Response>';
 		if ( $reply !== '' ) {
-			echo '<Message>' . htmlspecialchars( $reply, ENT_XML1 | ENT_QUOTES, 'UTF-8' ) . '</Message>';
+			echo '<Message>' . esc_xml( $reply ) . '</Message>';
 		}
 		echo '</Response>';
 	}

@@ -3,7 +3,7 @@
  * Plugin Name:       OrderRing Lite
  * Plugin URI:        https://github.com/Alextechgamer/Twilio-order-communicator-
  * Description:       Ready-for-pickup SMS for WooCommerce via your own Twilio account. Checkout consent and STOP/HELP/START included. Bring your own Twilio account — you pay Twilio directly, zero markup.
- * Version:           1.0.0
+ * Version:           1.0.1
  * Author:            Alextechgamer
  * Author URI:        https://github.com/Alextechgamer
  * Requires at least: 6.0
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'ORL_VERSION', '1.0.0' );
+define( 'ORL_VERSION', '1.0.1' );
 define( 'ORL_BRAND_NAME', 'OrderRing Lite' );
 define( 'ORL_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'ORL_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -100,8 +100,6 @@ final class OrderRing_Lite {
 	}
 
 	public function init() {
-		load_plugin_textdomain( 'orderring-lite', false, dirname( ORL_PLUGIN_BASENAME ) . '/languages' );
-
 		if ( $this->pro_is_active() ) {
 			add_action( 'admin_notices', array( $this, 'pro_active_notice' ) );
 			return;

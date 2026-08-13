@@ -36,7 +36,7 @@ class ORL_Order_Meta {
 
 	private function order_from_screen() {
 		if ( isset( $_GET['id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$order = wc_get_order( absint( wp_unslash( $_GET['id'] ) ) );
+			$order = wc_get_order( absint( wp_unslash( $_GET['id'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			if ( $order ) {
 				return $order;
 			}
