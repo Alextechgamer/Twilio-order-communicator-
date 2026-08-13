@@ -93,9 +93,8 @@ class ORL_Checkout {
 	 * @param array    $data  Posted checkout data.
 	 */
 	public function save_classic_to_order( $order, $data ) {
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		// Classic checkbox: key present with value = yes; missing key = explicit no (user left unchecked).
-		$consented = ! empty( $_POST['orl_sms_consent'] );
+		$consented = ! empty( $_POST['orl_sms_consent'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- WC checkout nonce already verified.
 		$this->apply_consent_to_order( $order, $consented, 'classic', true );
 	}
 
