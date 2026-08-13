@@ -3,7 +3,7 @@ Contributors: alextechgamer
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.7.2
+Stable tag: 1.8.0
 License: GPLv2 or later
 
 Self-hosted WooCommerce personalization: product options, live mockup, print-ready, library, guest save.
@@ -51,6 +51,12 @@ Uploaded artwork and generated print composites are marked and kept out of the p
 Yes, StoreCanvas declares and supports WooCommerce High-Performance Order Storage.
 
 == Changelog ==
+
+= 1.8.0 =
+* Admin: StoreCanvas is now its own top-level menu (Overview, Production queue, Option groups, Saved designs, Library, Journey, Proof email, License)
+* Admin: modern Overview dashboard with stats
+* License: activate a key for premium StoreCanvas updates (same server as OrderRing)
+* Removed the extra WooCommerce submenu items that were cluttering the WooCommerce menu
 
 = 1.7.2 =
 * Docs: color/DPI fidelity disclaimer on the product Print validation box and the production queue (RGB / flattened, not CMYK/PDF-X; confirm with your print provider)

@@ -8,9 +8,9 @@ WordPress / WooCommerce plugins. **OrderRing** is SMS, voice, and WhatsApp via *
 
 | Plugin | Path | Current |
 |--------|------|---------|
-| OrderRing | `twilio-order-communicator/` | 1.20.1 |
-| StoreCanvas | `storecanvas/` | 1.7.2 |
-| Orderbay | `orderbay/` | 1.8.3 |
+| OrderRing | `twilio-order-communicator/` | 1.21.0 |
+| StoreCanvas | `storecanvas/` | 1.8.0 |
+| Orderbay | `orderbay/` | 1.9.0 |
 
 Launch (naming, license-server production, pricing, legal): [`docs/launch/`](./docs/launch/).
 
@@ -40,7 +40,7 @@ What has actually been exercised against a live install is recorded in
 
 ## Install
 
-Upload `twilio-order-communicator/` to `/wp-content/plugins/`, activate, then open **WooCommerce → OrderRing → Setup**.
+Upload `twilio-order-communicator/` to `/wp-content/plugins/`, activate, then open **OrderRing → Setup**.
 
 Enter your Twilio Account SID, Auth Token, and From Number (or define `TOC_ACCOUNT_SID` / `TOC_AUTH_TOKEN` / `TOC_FROM_NUMBER` in `wp-config.php`). This plugin does not provide messaging services — Twilio bills you directly.
 

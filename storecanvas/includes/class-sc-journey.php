@@ -109,9 +109,9 @@ class SC_Journey {
 
 	public function admin_menu() {
 		add_submenu_page(
-			'woocommerce',
-			__( 'StoreCanvas Journey', 'storecanvas' ),
-			__( 'SC Journey', 'storecanvas' ),
+			SC_Plugin::MENU_SLUG,
+			__( 'Journey', 'storecanvas' ),
+			__( 'Journey', 'storecanvas' ),
 			'manage_woocommerce',
 			'sc-journey',
 			array( $this, 'render_admin' )

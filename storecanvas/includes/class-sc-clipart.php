@@ -34,14 +34,14 @@ class SC_Clipart {
 			self::CPT,
 			array(
 				'labels'              => array(
-					'name'          => __( 'StoreCanvas library', 'storecanvas' ),
+					'name'          => __( 'Library', 'storecanvas' ),
 					'singular_name' => __( 'Clip-art', 'storecanvas' ),
 					'add_new_item'  => __( 'Add clip-art', 'storecanvas' ),
 					'edit_item'     => __( 'Edit clip-art', 'storecanvas' ),
 				),
 				'public'              => false,
 				'show_ui'             => true,
-				'show_in_menu'        => 'woocommerce',
+				'show_in_menu'        => SC_Plugin::MENU_SLUG,
 				'capability_type'     => 'post',
 				'map_meta_cap'        => true,
 				'supports'            => array( 'title', 'thumbnail' ),

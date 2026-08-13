@@ -47,6 +47,11 @@ $options = array(
 	// SLA / notes.
 	'ob_sla_settings',
 	'ob_note_templates',
+	'ob_license_key',
+	'ob_license_status',
+	'ob_license_data',
+	'ob_license_last_check',
+	'ob_license_server_url',
 );
 
 foreach ( $options as $opt ) {

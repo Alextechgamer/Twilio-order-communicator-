@@ -49,9 +49,9 @@ class SC_Proof_Email {
 
 	public function settings_page() {
 		add_submenu_page(
-			'woocommerce',
-			__( 'StoreCanvas Proof Email', 'storecanvas' ),
-			__( 'SC Proof Email', 'storecanvas' ),
+			SC_Plugin::MENU_SLUG,
+			__( 'Proof email', 'storecanvas' ),
+			__( 'Proof email', 'storecanvas' ),
 			'manage_woocommerce',
 			'sc-proof-email',
 			array( $this, 'render_settings' )

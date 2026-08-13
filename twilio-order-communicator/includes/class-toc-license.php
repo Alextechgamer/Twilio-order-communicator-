@@ -47,7 +47,10 @@ class TOC_License {
 			return untrailingslashit( (string) TOC_LICENSE_SERVER_URL );
 		}
 		$url = (string) get_option( 'toc_license_server_url', '' );
-		return $url !== '' ? untrailingslashit( $url ) : '';
+		if ( $url !== '' ) {
+			return untrailingslashit( $url );
+		}
+		return 'https://licenses.alextechgamer.com';
 	}
 
 	/**
@@ -68,9 +71,17 @@ class TOC_License {
 	 * @return string
 	 */
 	public function instance_id() {
-		$id = (string) get_option( 'toc_license_instance_id', '' );
+		$id = (string) get_option( 'atg_site_instance_id', '' );
+		if ( $id === '' ) {
+			$id = (string) get_option( 'toc_license_instance_id', '' );
+		}
 		if ( $id === '' ) {
 			$id = wp_generate_password( 32, false, false );
+		}
+		if ( (string) get_option( 'atg_site_instance_id', '' ) !== $id ) {
+			update_option( 'atg_site_instance_id', $id, false );
+		}
+		if ( (string) get_option( 'toc_license_instance_id', '' ) === '' ) {
 			update_option( 'toc_license_instance_id', $id, false );
 		}
 		return $id;
@@ -550,7 +561,7 @@ class TOC_License {
 			return;
 		}
 
-		$url = admin_url( 'admin.php?page=toc-communicator&tab=license' );
+		$url = TOC_Admin::tab_url( 'license' );
 		echo '<div class="notice notice-warning is-dismissible"><p>';
 		echo esc_html(
 			sprintf(

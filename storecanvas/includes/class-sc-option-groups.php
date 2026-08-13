@@ -43,7 +43,7 @@ class SC_Option_Groups {
 				),
 				'public'              => false,
 				'show_ui'             => true,
-				'show_in_menu'        => 'woocommerce',
+				'show_in_menu'        => SC_Plugin::MENU_SLUG,
 				'menu_position'       => 57,
 				'capability_type'     => 'product',
 				'map_meta_cap'        => true,
@@ -55,7 +55,7 @@ class SC_Option_Groups {
 	}
 
 	/**
-	 * Ensure visible under WooCommerce → Option groups label.
+	 * CPT lives under the StoreCanvas top-level menu.
 	 */
 	public function menu_alias() {
 		// CPT already under woocommerce; optional submenu rename not required.

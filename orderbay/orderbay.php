@@ -1,9 +1,9 @@
 <?php
 /**
- * Plugin Name:       Orderbay
+ * Plugin Name:       OrderBay
  * Plugin URI:        https://github.com/Alextechgamer/Twilio-order-communicator-
  * Description:       Self-hosted WooCommerce ops toolkit — invoices/packing slips, fulfillment, order ops, email rules, catalog helpers, and dashboard. Independent of OrderRing and StoreCanvas.
- * Version:           1.8.3
+ * Version:           1.9.0
  * Author:            Alextechgamer
  * Author URI:        https://github.com/Alextechgamer
  * Requires at least: 6.0
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'OB_VERSION', '1.8.3' );
+define( 'OB_VERSION', '1.9.0' );
 define( 'OB_PLUGIN_FILE', __FILE__ );
 define( 'OB_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'OB_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -43,6 +43,7 @@ require_once OB_PLUGIN_DIR . 'includes/class-ob-partial.php';
 require_once OB_PLUGIN_DIR . 'includes/class-ob-barcode.php';
 require_once OB_PLUGIN_DIR . 'includes/class-ob-qr.php';
 require_once OB_PLUGIN_DIR . 'includes/class-ob-search.php';
+require_once OB_PLUGIN_DIR . 'includes/class-ob-license.php';
 
 /**
  * Bootstrap when WooCommerce is active.
@@ -82,6 +83,7 @@ function ob_init() {
 	OB_Notes::instance();
 	OB_Partial::instance();
 	OB_Search::instance();
+	OB_License::instance();
 }
 
 register_deactivation_hook( __FILE__, 'ob_deactivate' );
@@ -95,6 +97,9 @@ function ob_deactivate() {
 	$ts = wp_next_scheduled( 'ob_daily_stock_scan' );
 	if ( $ts ) {
 		wp_unschedule_event( $ts, 'ob_daily_stock_scan' );
+	}
+	if ( class_exists( 'OB_License' ) ) {
+		OB_License::unschedule_cron();
 	}
 }
 add_action( 'plugins_loaded', 'ob_init' );

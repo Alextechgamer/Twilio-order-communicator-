@@ -3,7 +3,7 @@
  * Plugin Name:       OrderRing
  * Plugin URI:        https://github.com/Alextechgamer/Twilio-order-communicator-
  * Description:       SMS, voice, and WhatsApp for WooCommerce via your own Twilio account. Ready for Pickup and Shipped notifications, two-way chat, and consent-aware messaging. Bring your own Twilio account — you pay Twilio directly, zero markup.
- * Version:           1.20.1
+ * Version:           1.21.0
  * Author:            Alextechgamer
  * Author URI:        https://github.com/Alextechgamer
  * Requires at least: 6.0
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'TOC_VERSION', '1.20.1' );
+define( 'TOC_VERSION', '1.21.0' );
 define( 'TOC_BRAND_NAME', 'OrderRing' );
 define( 'TOC_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TOC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );

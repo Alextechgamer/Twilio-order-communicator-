@@ -134,8 +134,8 @@ class OB_Plugin {
 
 	public function register_menu() {
 		add_menu_page(
-			__( 'Orderbay', 'orderbay' ),
-			__( 'Orderbay', 'orderbay' ),
+			__( 'OrderBay', 'orderbay' ),
+			__( 'OrderBay', 'orderbay' ),
 			'edit_shop_orders',
 			'orderbay',
 			array( 'OB_Dashboard', 'render_page_static' ),
@@ -214,6 +214,14 @@ class OB_Plugin {
 			'orderbay-export',
 			array( 'OB_Export', 'render_tools_static' )
 		);
+		add_submenu_page(
+			'orderbay',
+			__( 'License', 'orderbay' ),
+			__( 'License', 'orderbay' ),
+			'manage_woocommerce',
+			'ob-license',
+			array( OB_License::instance(), 'render_page' )
+		);
 	}
 
 	public function enqueue_admin( $hook ) {
@@ -223,6 +231,32 @@ class OB_Plugin {
 			}
 		}
 		wp_enqueue_style( 'ob-admin', OB_PLUGIN_URL . 'assets/admin.css', array(), OB_VERSION );
+		if ( is_string( $hook ) && false !== strpos( $hook, 'ob-license' ) ) {
+			wp_enqueue_script( 'ob-license', OB_PLUGIN_URL . 'assets/license.js', array( 'jquery' ), OB_VERSION, true );
+			wp_localize_script(
+				'ob-license',
+				'obLicense',
+				array(
+					'ajax'   => admin_url( 'admin-ajax.php' ),
+					'nonce'  => wp_create_nonce( 'ob_license' ),
+					'prefix' => 'ob',
+					'i18n'   => array(
+						'activate'      => __( 'Activate', 'orderbay' ),
+						'activating'    => __( 'Activating…', 'orderbay' ),
+						'deactivate'    => __( 'Deactivate', 'orderbay' ),
+						'deactivating'  => __( 'Deactivating…', 'orderbay' ),
+						'recheck'       => __( 'Re-check', 'orderbay' ),
+						'checking'      => __( 'Checking…', 'orderbay' ),
+						'saveServer'    => __( 'Save server URL', 'orderbay' ),
+						'saving'        => __( 'Saving…', 'orderbay' ),
+						'requestFailed' => __( 'Request failed', 'orderbay' ),
+						'updatesOn'     => __( 'premium updates enabled', 'orderbay' ),
+						'updatesOff'    => __( 'premium updates paused', 'orderbay' ),
+						'lifetime'      => __( 'Lifetime / none set', 'orderbay' ),
+					),
+				)
+			);
+		}
 		wp_enqueue_script( 'ob-admin', OB_PLUGIN_URL . 'assets/admin.js', array( 'jquery' ), OB_VERSION, true );
 		wp_localize_script(
 			'ob-admin',
