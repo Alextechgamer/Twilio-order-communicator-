@@ -110,6 +110,7 @@ $options = array(
 	'toc_license_last_check',
 	'toc_license_instance_id',
 	'toc_license_server_url',
+	'toc_trial_started_at',
 );
 
 // Cached update answers are keyed by license key + plugin version. TOC_VERSION is not

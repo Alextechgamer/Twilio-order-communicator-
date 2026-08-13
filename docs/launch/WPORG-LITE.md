@@ -2,6 +2,8 @@
 
 Not built in this pass. Spec so a later packaging PR stays small.
 
+The **sold** plugins (30-day trial + license/updater) must not be submitted to WordPress.org — see [WORDPRESS-ORG.md](./WORDPRESS-ORG.md).
+
 **Ship as a separate plugin folder** (new slug, e.g. `orderring-lite/`) — do not strip the Pro tree in place.
 
 | In Lite | Out of Lite (Pro) |

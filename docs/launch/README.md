@@ -8,6 +8,7 @@ Commercial launch work for the WooCommerce plugin line. Plugin features are done
 | [LICENSE-SERVER-DEPLOY.md](./LICENSE-SERVER-DEPLOY.md) | Production HTTPS (nginx/Apache), secrets, smoke + H2 |
 | [PRICING.md](./PRICING.md) | Lite / Pro / Agency bands |
 | [WPORG-LITE.md](./WPORG-LITE.md) | Optional wordpress.org Lite spec (not built) |
+| [WORDPRESS-ORG.md](./WORDPRESS-ORG.md) | Why the commercial zips cannot be submitted to .org; 30-day trial model |
 | [legal/TERMS.md](./legal/TERMS.md) | Terms of use |
 | [legal/PRIVACY.md](./legal/PRIVACY.md) | Seller privacy policy |
 | [legal/REFUND.md](./legal/REFUND.md) | 30-day money-back |

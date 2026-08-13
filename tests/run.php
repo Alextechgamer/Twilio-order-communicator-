@@ -15,6 +15,7 @@ require $root . '/twilio-order-communicator/includes/class-toc-logger.php';
 require $root . '/twilio-order-communicator/includes/class-toc-caps.php';
 require $root . '/license-server/src/Helpers.php';
 require $root . '/license-server/src/Api.php';
+require $root . '/twilio-order-communicator/includes/class-toc-license.php';
 require $root . '/orderbay/includes/class-ob-plugin.php';
 require $root . '/orderbay/includes/class-ob-einvoice.php';
 require $root . '/orderbay/includes/class-ob-invoicing.php';
@@ -144,6 +145,15 @@ check( 'dl blocked without activation', TOC_License_API::download_allowed( 'shop
 check( 'dl blocked missing site', TOC_License_API::download_allowed( '', 'inst-1', true ), false );
 check( 'dl blocked missing instance', TOC_License_API::download_allowed( 'shop.example', '', true ), false );
 check( 'dl blocked bare key', TOC_License_API::download_allowed( '', '', false ), false );
+
+/* ---- 30-day trial math (features stay unlocked; trial only tracks licensed-updates window) ---- */
+$now = 1_700_000_000;
+check( 'trial not started', TOC_License::trial_days_remaining( 0, $now, 30 ), 0 );
+check( 'trial day 1', TOC_License::trial_days_remaining( $now, $now, 30 ), 30 );
+check( 'trial day 15', TOC_License::trial_days_remaining( $now, $now + ( 15 * 86400 ), 30 ), 15 );
+check( 'trial last day', TOC_License::trial_days_remaining( $now, $now + ( 29 * 86400 ) + 1, 30 ), 1 );
+check( 'trial expired', TOC_License::trial_days_remaining( $now, $now + ( 30 * 86400 ), 30 ), 0 );
+check( 'trial disabled length', TOC_License::trial_days_remaining( $now, $now, 0 ), 0 );
 
 /* ---- TOC_Caps::role_meets_baseline (pins H4: cap-grant floor) ---- */
 check( 'baseline admin always', TOC_Caps::role_meets_baseline( 'administrator', false, false ), true );

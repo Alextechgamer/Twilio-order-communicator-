@@ -15,7 +15,7 @@ trait TOC_Admin_License {
 		?>
 		<h2><?php echo esc_html__( 'License', 'twilio-order-communicator' ); ?></h2>
 		<p class="description">
-			<?php echo esc_html__( 'A license unlocks premium plugin updates from your update server. SMS, voice, chat, and auto-notify always use your own Twilio account and keep working without an active license.', 'twilio-order-communicator' ); ?>
+			<?php echo esc_html__( 'New installs include a 30-day trial. After that, a license key unlocks premium plugin updates. SMS, voice, chat, and auto-notify always use your own Twilio account and keep working without a key.', 'twilio-order-communicator' ); ?>
 		</p>
 
 		<?php if ( ! $state['server_configured'] ) : ?>
@@ -101,6 +101,9 @@ trait TOC_Admin_License {
 						</li>
 						<li><?php echo esc_html__( 'Customer:', 'twilio-order-communicator' ); ?> <strong id="toc-lic-email"><?php echo esc_html( $state['customer_email'] !== '' ? $state['customer_email'] : '—' ); ?></strong></li>
 						<li><?php echo esc_html__( 'Last check:', 'twilio-order-communicator' ); ?> <strong id="toc-lic-check"><?php echo esc_html( $state['last_check'] !== '' ? $state['last_check'] : '—' ); ?></strong></li>
+						<?php if ( ! empty( $state['on_trial'] ) || ( ! empty( $state['trial_ends_at'] ) && empty( $state['has_key'] ) ) ) : ?>
+						<li><?php echo esc_html__( 'Trial ends:', 'twilio-order-communicator' ); ?> <strong><?php echo esc_html( $state['trial_ends_at'] !== '' ? $state['trial_ends_at'] : '—' ); ?></strong></li>
+						<?php endif; ?>
 						<li><?php echo esc_html__( 'Instance ID:', 'twilio-order-communicator' ); ?> <code id="toc-lic-instance"><?php echo esc_html( $state['instance_id'] ); ?></code></li>
 					</ul>
 				</td>

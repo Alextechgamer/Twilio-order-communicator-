@@ -4,7 +4,7 @@ Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
 WC requires at least: 7.0
-Stable tag: 1.21.0
+Stable tag: 1.22.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -66,7 +66,7 @@ If you text US mobile numbers, carriers require A2P 10DLC brand and campaign reg
 No. Twilio and all related logos are trademarks of Twilio Inc. or its affiliates. OrderRing is not affiliated with, endorsed, or sponsored by Twilio Inc.
 
 = Do I need a license key to send SMS? =
-No. A license only unlocks premium plugin updates from the seller’s update server. Core SMS, voice, chat, and auto-notify keep working without a license.
+No. New installs include a 30-day trial of premium updates. After the trial, a key is required only for those updates. Core SMS, voice, chat, and auto-notify keep working without a license — we do not disable built-in features.
 
 = Can I set credentials in wp-config.php? =
 Yes. Define `TOC_ACCOUNT_SID`, `TOC_AUTH_TOKEN`, and/or `TOC_FROM_NUMBER`. Constants override Settings fields. For licensing, define `TOC_LICENSE_SERVER_URL`.
@@ -94,6 +94,11 @@ They text START or UNSTOP. Plain "YES" is intentionally not treated as re-subscr
 
 == Changelog ==
 
+
+= 1.22.0 =
+* New: 30-day trial of premium updates starts on first admin visit (override with TOC_TRIAL_DAYS)
+* License screen shows days remaining / trial end date; a nag appears in the last week and after expiry
+* Built-in SMS, voice, chat, and auto-notify stay available after the trial — only premium updates pause without a key
 = 1.21.0 =
 * Admin: OrderRing is now its own top-level menu (Dashboard, Bulk Reminders, Settings, Setup, License, Tools & Docs) instead of a WooCommerce submenu
 * Admin: modern dashboard header and stat cards

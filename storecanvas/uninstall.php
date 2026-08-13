@@ -35,6 +35,7 @@ $options = array(
 	'sc_license_data',
 	'sc_license_last_check',
 	'sc_license_server_url',
+	'sc_trial_started_at',
 );
 foreach ( $options as $opt ) {
 	delete_option( $opt );
