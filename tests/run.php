@@ -16,6 +16,8 @@ require $root . '/twilio-order-communicator/includes/class-toc-caps.php';
 require $root . '/license-server/src/Helpers.php';
 require $root . '/license-server/src/Api.php';
 require $root . '/twilio-order-communicator/includes/class-toc-license.php';
+require $root . '/orderring-lite/includes/class-orl-twilio.php';
+require $root . '/orderring-lite/includes/class-orl-caps.php';
 require $root . '/orderbay/includes/class-ob-plugin.php';
 require $root . '/orderbay/includes/class-ob-einvoice.php';
 require $root . '/orderbay/includes/class-ob-invoicing.php';
@@ -154,6 +156,11 @@ check( 'trial day 15', TOC_License::trial_days_remaining( $now, $now + ( 15 * 86
 check( 'trial last day', TOC_License::trial_days_remaining( $now, $now + ( 29 * 86400 ) + 1, 30 ), 1 );
 check( 'trial expired', TOC_License::trial_days_remaining( $now, $now + ( 30 * 86400 ), 30 ), 0 );
 check( 'trial disabled length', TOC_License::trial_days_remaining( $now, $now, 0 ), 0 );
+
+check( 'lite e164 ok', ORL_Twilio::is_e164( '+15055551234' ), true );
+check( 'lite e164 reject', ORL_Twilio::is_e164( '5551234' ), false );
+check( 'lite cap baseline admin', ORL_Caps::role_meets_baseline( 'administrator', false, false ), true );
+check( 'lite cap baseline subscriber', ORL_Caps::role_meets_baseline( 'subscriber', false, false ), false );
 
 /* ---- TOC_Caps::role_meets_baseline (pins H4: cap-grant floor) ---- */
 check( 'baseline admin always', TOC_Caps::role_meets_baseline( 'administrator', false, false ), true );
