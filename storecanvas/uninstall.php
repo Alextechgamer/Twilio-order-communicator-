@@ -30,6 +30,11 @@ $options = array(
 	// Artwork-privacy proxy (H1): per-site signing secret fallback + one-time backfill flag.
 	'sc_dl_secret',
 	'sc_artwork_backfilled',
+	'sc_license_key',
+	'sc_license_status',
+	'sc_license_data',
+	'sc_license_last_check',
+	'sc_license_server_url',
 );
 foreach ( $options as $opt ) {
 	delete_option( $opt );

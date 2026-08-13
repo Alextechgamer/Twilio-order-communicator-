@@ -93,6 +93,7 @@ class OB_Dashboard {
 					array( 'orderbay-notes', 'dashicons-edit', __( 'Note templates', 'orderbay' ), __( 'Reusable staff notes on orders.', 'orderbay' ) ),
 					array( 'orderbay-notifications', 'dashicons-email', __( 'Email rules', 'orderbay' ), __( 'Status emails and low-stock alerts.', 'orderbay' ) ),
 					array( 'orderbay-digest', 'dashicons-groups', __( 'Staff digest', 'orderbay' ), __( 'Daily attention summary for the team.', 'orderbay' ) ),
+					array( 'ob-license', 'dashicons-unlock', __( 'License', 'orderbay' ), __( 'Activate premium updates for this site.', 'orderbay' ) ),
 				),
 			),
 		);

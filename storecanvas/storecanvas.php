@@ -44,6 +44,7 @@ require_once SC_PLUGIN_DIR . 'includes/class-sc-clipart.php';
 require_once SC_PLUGIN_DIR . 'includes/class-sc-orders-list.php';
 require_once SC_PLUGIN_DIR . 'includes/class-sc-blocks.php';
 require_once SC_PLUGIN_DIR . 'includes/class-sc-queue.php';
+require_once SC_PLUGIN_DIR . 'includes/class-sc-license.php';
 
 /**
  * Bootstrap when WooCommerce is available.
@@ -67,6 +68,7 @@ function sc_init() {
 	SC_Proof_Email::instance();
 	SC_Clipart::instance();
 	SC_Blocks::instance();
+	SC_License::instance();
 	if ( is_admin() ) {
 		SC_Admin_Product::instance();
 		SC_FPD_Import::instance();
@@ -78,6 +80,12 @@ function sc_init() {
 	}
 }
 add_action( 'plugins_loaded', 'sc_init' );
+
+register_deactivation_hook( SC_PLUGIN_FILE, static function () {
+	if ( class_exists( 'SC_License' ) ) {
+		SC_License::unschedule_cron();
+	}
+} );
 
 // Load translations so bundled /languages/*.mo files are used. On init per WP 6.7+.
 add_action(

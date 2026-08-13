@@ -96,6 +96,8 @@ They text START or UNSTOP. Plain "YES" is intentionally not treated as re-subscr
 
 = 1.21.0 =
 * Admin: OrderRing is now its own top-level menu (Dashboard, Bulk Reminders, Settings, Setup, License, Tools & Docs) instead of a WooCommerce submenu
+* Admin: modern dashboard header and stat cards
+* License: default update server is https://licenses.alextechgamer.com (still overridable)
 * Old `admin.php?page=toc-communicator&tab=` links still open the matching screen
 
 = 1.20.1 =

@@ -43,6 +43,7 @@ require_once OB_PLUGIN_DIR . 'includes/class-ob-partial.php';
 require_once OB_PLUGIN_DIR . 'includes/class-ob-barcode.php';
 require_once OB_PLUGIN_DIR . 'includes/class-ob-qr.php';
 require_once OB_PLUGIN_DIR . 'includes/class-ob-search.php';
+require_once OB_PLUGIN_DIR . 'includes/class-ob-license.php';
 
 /**
  * Bootstrap when WooCommerce is active.
@@ -82,6 +83,7 @@ function ob_init() {
 	OB_Notes::instance();
 	OB_Partial::instance();
 	OB_Search::instance();
+	OB_License::instance();
 }
 
 register_deactivation_hook( __FILE__, 'ob_deactivate' );
@@ -95,6 +97,9 @@ function ob_deactivate() {
 	$ts = wp_next_scheduled( 'ob_daily_stock_scan' );
 	if ( $ts ) {
 		wp_unschedule_event( $ts, 'ob_daily_stock_scan' );
+	}
+	if ( class_exists( 'OB_License' ) ) {
+		OB_License::unschedule_cron();
 	}
 }
 add_action( 'plugins_loaded', 'ob_init' );

@@ -261,9 +261,14 @@ class TOC_Admin {
 		$tab = $this->current_tab();
 		?>
 		<div class="wrap toc-wrap">
-			<h1><?php echo esc_html( TOC_BRAND_NAME ); ?></h1>
-			<p class="description"><?php echo esc_html__( 'SMS and voice for WooCommerce (for Twilio). Bring your own Twilio account — you pay Twilio directly, zero markup.', 'twilio-order-communicator' ); ?></p>
-			<nav class="nav-tab-wrapper">
+			<div class="toc-hero">
+				<div>
+					<p class="toc-hero-kicker"><?php echo esc_html__( 'Messaging', 'twilio-order-communicator' ); ?></p>
+					<h1><?php echo esc_html( TOC_BRAND_NAME ); ?></h1>
+					<p class="toc-hero-lead"><?php echo esc_html__( 'SMS, voice, and WhatsApp for WooCommerce via your own Twilio account. You pay Twilio directly — zero markup.', 'twilio-order-communicator' ); ?></p>
+				</div>
+			</div>
+			<nav class="nav-tab-wrapper toc-tabs">
 				<a href="<?php echo esc_url( self::tab_url( 'dashboard' ) ); ?>" class="nav-tab <?php echo $tab === 'dashboard' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__( 'Dashboard', 'twilio-order-communicator' ); ?></a>
 				<a href="<?php echo esc_url( self::tab_url( 'bulk' ) ); ?>" class="nav-tab <?php echo $tab === 'bulk' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__( 'Bulk Reminders', 'twilio-order-communicator' ); ?></a>
 				<a href="<?php echo esc_url( self::tab_url( 'settings' ) ); ?>" class="nav-tab <?php echo $tab === 'settings' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__( 'Settings', 'twilio-order-communicator' ); ?></a>

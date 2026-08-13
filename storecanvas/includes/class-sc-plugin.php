@@ -100,12 +100,28 @@ class SC_Plugin {
 			self::MENU_SLUG,
 			array( $this, 'render_home' )
 		);
+		add_submenu_page(
+			self::MENU_SLUG,
+			__( 'License', 'storecanvas' ),
+			__( 'License', 'storecanvas' ),
+			'manage_woocommerce',
+			'sc-license',
+			array( SC_License::instance(), 'render_page' )
+		);
 	}
 
 	public function render_home() {
 		if ( ! current_user_can( 'edit_shop_orders' ) ) {
 			wp_die( esc_html__( 'Forbidden', 'storecanvas' ) );
 		}
+		$groups   = wp_count_posts( self::CPT_OPTION_GROUP );
+		$designs  = wp_count_posts( SC_Designs::CPT );
+		$library  = wp_count_posts( SC_Clipart::CPT );
+		$n_groups = $groups && isset( $groups->publish ) ? (int) $groups->publish : 0;
+		$n_des    = $designs && isset( $designs->publish ) ? (int) $designs->publish : 0;
+		$n_lib    = $library && isset( $library->publish ) ? (int) $library->publish : 0;
+		$lic      = class_exists( 'SC_License' ) ? SC_License::instance() : null;
+
 		$links = array(
 			array(
 				'href'  => admin_url( 'admin.php?page=' . SC_Queue::PAGE_SLUG ),
@@ -146,8 +162,23 @@ class SC_Plugin {
 		);
 		echo '<div class="wrap sc-home">';
 		echo '<div class="sc-home-hero">';
+		echo '<div>';
+		echo '<p class="sc-home-kicker">' . esc_html__( 'Designer', 'storecanvas' ) . '</p>';
 		echo '<h1>' . esc_html__( 'StoreCanvas', 'storecanvas' ) . '</h1>';
-		echo '<p>' . esc_html__( 'Product designer, options, print files, and production — all in this menu. Product-level setup still lives on each product.', 'storecanvas' ) . '</p>';
+		echo '<p class="sc-home-lead">' . esc_html__( 'Live canvas, options, print files, and production. Product-level setup still lives on each product.', 'storecanvas' ) . '</p>';
+		echo '</div>';
+		echo '<div class="sc-home-hero-actions">';
+		echo '<a class="button button-primary" href="' . esc_url( admin_url( 'edit.php?post_type=product' ) ) . '">' . esc_html__( 'Products', 'storecanvas' ) . '</a>';
+		echo '<a class="button" href="' . esc_url( admin_url( 'admin.php?page=sc-license' ) ) . '">' . esc_html__( 'License', 'storecanvas' ) . '</a>';
+		echo '</div></div>';
+		echo '<div class="sc-home-stats">';
+		echo '<a class="sc-stat" href="' . esc_url( admin_url( 'edit.php?post_type=' . SC_Designs::CPT ) ) . '"><span class="sc-stat-value">' . esc_html( (string) $n_des ) . '</span><span class="sc-stat-title">' . esc_html__( 'Saved designs', 'storecanvas' ) . '</span></a>';
+		echo '<a class="sc-stat sc-stat--groups" href="' . esc_url( admin_url( 'edit.php?post_type=' . self::CPT_OPTION_GROUP ) ) . '"><span class="sc-stat-value">' . esc_html( (string) $n_groups ) . '</span><span class="sc-stat-title">' . esc_html__( 'Option groups', 'storecanvas' ) . '</span></a>';
+		echo '<a class="sc-stat sc-stat--lib" href="' . esc_url( admin_url( 'edit.php?post_type=' . SC_Clipart::CPT ) ) . '"><span class="sc-stat-value">' . esc_html( (string) $n_lib ) . '</span><span class="sc-stat-title">' . esc_html__( 'Library items', 'storecanvas' ) . '</span></a>';
+		if ( $lic ) {
+			$ok = $lic->allows_updates();
+			echo '<a class="sc-stat ' . ( $ok ? 'sc-stat--ok' : 'sc-stat--muted' ) . '" href="' . esc_url( admin_url( 'admin.php?page=sc-license' ) ) . '"><span class="sc-stat-value">' . esc_html( $ok ? __( 'On', 'storecanvas' ) : __( 'Off', 'storecanvas' ) ) . '</span><span class="sc-stat-title">' . esc_html__( 'Premium updates', 'storecanvas' ) . '</span></a>';
+		}
 		echo '</div>';
 		echo '<div class="sc-home-grid">';
 		foreach ( $links as $item ) {
@@ -285,6 +316,7 @@ class SC_Plugin {
 			|| false !== strpos( $hook, 'sc-production-queue' )
 			|| false !== strpos( $hook, 'sc-journey' )
 			|| false !== strpos( $hook, 'sc-proof-email' )
+			|| false !== strpos( $hook, 'sc-license' )
 			|| false !== strpos( $hook, 'sc_option_group' )
 			|| false !== strpos( $hook, 'sc_design' )
 			|| false !== strpos( $hook, 'sc_clipart' )
@@ -297,6 +329,33 @@ class SC_Plugin {
 		}
 
 		wp_enqueue_style( 'sc-admin', SC_PLUGIN_URL . 'assets/admin.css', array(), SC_VERSION );
+
+		if ( is_string( $hook ) && false !== strpos( $hook, 'sc-license' ) ) {
+			wp_enqueue_script( 'sc-license', SC_PLUGIN_URL . 'assets/license.js', array( 'jquery' ), SC_VERSION, true );
+			wp_localize_script(
+				'sc-license',
+				'scLicense',
+				array(
+					'ajax'   => admin_url( 'admin-ajax.php' ),
+					'nonce'  => wp_create_nonce( 'sc_license' ),
+					'prefix' => 'sc',
+					'i18n'   => array(
+						'activate'      => __( 'Activate', 'storecanvas' ),
+						'activating'    => __( 'Activating…', 'storecanvas' ),
+						'deactivate'    => __( 'Deactivate', 'storecanvas' ),
+						'deactivating'  => __( 'Deactivating…', 'storecanvas' ),
+						'recheck'       => __( 'Re-check', 'storecanvas' ),
+						'checking'      => __( 'Checking…', 'storecanvas' ),
+						'saveServer'    => __( 'Save server URL', 'storecanvas' ),
+						'saving'        => __( 'Saving…', 'storecanvas' ),
+						'requestFailed' => __( 'Request failed', 'storecanvas' ),
+						'updatesOn'     => __( 'premium updates enabled', 'storecanvas' ),
+						'updatesOff'    => __( 'premium updates paused', 'storecanvas' ),
+						'lifetime'      => __( 'Lifetime / none set', 'storecanvas' ),
+					),
+				)
+			);
+		}
 
 		if ( ! $on_product ) {
 			return;

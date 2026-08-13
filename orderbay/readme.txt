@@ -53,7 +53,8 @@ Yes, Orderbay declares and supports WooCommerce High-Performance Order Storage.
 
 = 1.9.0 =
 * Admin: OrderBay lives only in its own top-level menu (removed the extra WooCommerce submenu)
-* Dashboard: new ops console — hero, colored stat cards, setup prompt, and grouped tiles instead of a plain link list
+* Dashboard: new ops console — hero, colored stat cards, setup prompt, and grouped tiles
+* License: activate a key for premium OrderBay updates (same server as OrderRing)
 
 = 1.8.3 =
 * Fix: the dashboard "Today" count and the staff digest now use the store timezone for "start of day" instead of UTC midnight, so daily numbers no longer shift across the date boundary for non-UTC stores.

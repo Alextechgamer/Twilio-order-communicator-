@@ -53,7 +53,9 @@ Yes, StoreCanvas declares and supports WooCommerce High-Performance Order Storag
 == Changelog ==
 
 = 1.8.0 =
-* Admin: StoreCanvas is now its own top-level menu (Overview, Production queue, Option groups, Saved designs, Library, Journey, Proof email)
+* Admin: StoreCanvas is now its own top-level menu (Overview, Production queue, Option groups, Saved designs, Library, Journey, Proof email, License)
+* Admin: modern Overview dashboard with stats
+* License: activate a key for premium StoreCanvas updates (same server as OrderRing)
 * Removed the extra WooCommerce submenu items that were cluttering the WooCommerce menu
 
 = 1.7.2 =
