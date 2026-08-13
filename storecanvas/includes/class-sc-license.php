@@ -20,6 +20,8 @@ class SC_License {
 	const STATUS_EXPIRED  = 'expired';
 	const STATUS_INVALID  = 'invalid';
 	const STATUS_ERROR    = 'error';
+	const STATUS_TRIAL    = 'trial';
+	const TRIAL_DAYS      = 30;
 
 	private static $instance = null;
 
@@ -33,6 +35,7 @@ class SC_License {
 	private function __construct() {
 		add_action( self::CRON_HOOK, array( $this, 'cron_validate' ) );
 		add_action( 'admin_init', array( $this, 'maybe_schedule_cron' ) );
+		add_action( 'admin_init', array( $this, 'maybe_start_trial' ) );
 		add_action( 'admin_notices', array( $this, 'admin_notice' ) );
 		add_action( 'wp_ajax_sc_license_activate', array( $this, 'ajax_activate' ) );
 		add_action( 'wp_ajax_sc_license_deactivate', array( $this, 'ajax_deactivate' ) );
@@ -102,9 +105,57 @@ class SC_License {
 		return (int) get_option( 'sc_license_last_check', 0 );
 	}
 
+	public static function trial_length_days() {
+		if ( defined( 'SC_TRIAL_DAYS' ) ) {
+			return max( 0, (int) SC_TRIAL_DAYS );
+		}
+		return self::TRIAL_DAYS;
+	}
+
+	public static function trial_days_remaining( $started_at, $now, $days = 30 ) {
+		$started_at = (int) $started_at;
+		$now        = (int) $now;
+		$days       = max( 0, (int) $days );
+		if ( $days === 0 || $started_at <= 0 ) {
+			return 0;
+		}
+		$ends = $started_at + ( $days * 86400 );
+		return max( 0, (int) ceil( ( $ends - $now ) / 86400 ) );
+	}
+
+	public function trial_started_at() {
+		return (int) get_option( 'sc_trial_started_at', 0 );
+	}
+
+	public function maybe_start_trial() {
+		if ( $this->trial_started_at() > 0 ) {
+			return;
+		}
+		if ( $this->get_key() !== '' ) {
+			return;
+		}
+		if ( self::trial_length_days() <= 0 ) {
+			return;
+		}
+		if ( ! is_admin() || ! $this->can_manage() ) {
+			return;
+		}
+		update_option( 'sc_trial_started_at', time(), false );
+	}
+
+	public function is_on_trial() {
+		if ( $this->get_key() !== '' ) {
+			return false;
+		}
+		return self::trial_days_remaining( $this->trial_started_at(), time(), self::trial_length_days() ) > 0;
+	}
+
 	public function allows_updates() {
 		if ( $this->server_url() === '' ) {
 			return false;
+		}
+		if ( $this->is_on_trial() ) {
+			return true;
 		}
 		$status = $this->get_status();
 		if ( $status === self::STATUS_ACTIVE ) {
@@ -467,16 +518,30 @@ class SC_License {
 	}
 
 	public function ui_state( $message = '' ) {
-		$data = $this->get_data();
-		$last = $this->last_check();
+		$data      = $this->get_data();
+		$status    = $this->get_status();
+		$last      = $this->last_check();
+		$on_trial  = $this->is_on_trial();
+		$days_left = self::trial_days_remaining( $this->trial_started_at(), time(), self::trial_length_days() );
+		if ( $on_trial ) {
+			$status = self::STATUS_TRIAL;
+		}
+		$ends_label = '';
+		$started    = $this->trial_started_at();
+		if ( $started > 0 ) {
+			$ends_label = function_exists( 'wp_date' ) ? wp_date( 'M j, Y', $started + ( self::trial_length_days() * DAY_IN_SECONDS ) ) : gmdate( 'M j, Y', $started + ( self::trial_length_days() * 86400 ) );
+		}
 		return array(
 			'message'           => $message,
-			'status'            => $this->get_status(),
-			'status_label'      => $this->status_label( $this->get_status() ),
+			'status'            => $status,
+			'status_label'      => $this->status_label( $status, $days_left ),
 			'masked_key'        => $this->mask_key(),
 			'has_key'           => $this->get_key() !== '',
 			'server_configured' => $this->is_configured(),
 			'allows_updates'    => $this->allows_updates(),
+			'on_trial'          => $on_trial,
+			'trial_days_left'   => $days_left,
+			'trial_ends_at'     => $ends_label,
 			'site_url'          => isset( $data['site_url'] ) ? (string) $data['site_url'] : home_url( '/' ),
 			'activations'       => isset( $data['activations'] ) ? (int) $data['activations'] : null,
 			'max_sites'         => isset( $data['max_sites'] ) ? (int) $data['max_sites'] : null,
@@ -487,7 +552,14 @@ class SC_License {
 		);
 	}
 
-	public function status_label( $status ) {
+	public function status_label( $status, $trial_days_left = 0 ) {
+		if ( $status === self::STATUS_TRIAL ) {
+			return sprintf(
+				/* translators: %d: days remaining */
+				_n( 'Trial — %d day left', 'Trial — %d days left', (int) $trial_days_left, 'storecanvas' ),
+				(int) $trial_days_left
+			);
+		}
 		$map = array(
 			self::STATUS_INACTIVE => __( 'Inactive', 'storecanvas' ),
 			self::STATUS_ACTIVE   => __( 'Active', 'storecanvas' ),
@@ -502,6 +574,31 @@ class SC_License {
 		if ( ! $this->can_manage() ) {
 			return;
 		}
+		$url = admin_url( 'admin.php?page=sc-license' );
+		if ( $this->is_on_trial() ) {
+			$days = self::trial_days_remaining( $this->trial_started_at(), time(), self::trial_length_days() );
+			if ( $days > 7 ) {
+				return;
+			}
+			echo '<div class="notice notice-info is-dismissible"><p>';
+			echo esc_html(
+				sprintf(
+					/* translators: %d: days remaining */
+					_n( 'StoreCanvas trial: %d day left. Enter a license key to keep premium updates after the trial.', 'StoreCanvas trial: %d days left. Enter a license key to keep premium updates after the trial.', $days, 'storecanvas' ),
+					$days
+				)
+			);
+			echo ' <a href="' . esc_url( $url ) . '">' . esc_html__( 'Manage license', 'storecanvas' ) . '</a>';
+			echo '</p></div>';
+			return;
+		}
+		if ( $this->get_key() === '' && $this->trial_started_at() > 0 ) {
+			echo '<div class="notice notice-warning is-dismissible"><p>';
+			echo esc_html__( 'Your StoreCanvas trial has ended. The plugin still works. Enter a license key to receive premium updates.', 'storecanvas' );
+			echo ' <a href="' . esc_url( $url ) . '">' . esc_html__( 'Enter license key', 'storecanvas' ) . '</a>';
+			echo '</p></div>';
+			return;
+		}
 		$status = $this->get_status();
 		if ( ! in_array( $status, array( self::STATUS_EXPIRED, self::STATUS_INVALID ), true ) ) {
 			return;
@@ -514,7 +611,7 @@ class SC_License {
 				$this->status_label( $status )
 			)
 		);
-		echo ' <a href="' . esc_url( admin_url( 'admin.php?page=sc-license' ) ) . '">' . esc_html__( 'Manage license', 'storecanvas' ) . '</a>';
+		echo ' <a href="' . esc_url( $url ) . '">' . esc_html__( 'Manage license', 'storecanvas' ) . '</a>';
 		echo '</p></div>';
 	}
 
@@ -528,7 +625,7 @@ class SC_License {
 		echo '<div class="sc-dash-hero sc-license-hero">';
 		echo '<div><p class="sc-dash-kicker">' . esc_html__( 'Account', 'storecanvas' ) . '</p>';
 		echo '<h1>' . esc_html__( 'License', 'storecanvas' ) . '</h1>';
-		echo '<p class="sc-dash-lead">' . esc_html__( 'A license unlocks premium updates from the update server. StoreCanvas keeps working without a key.', 'storecanvas' ) . '</p></div></div>';
+		echo '<p class="sc-dash-lead">' . esc_html__( 'New installs include a 30-day trial. After that, a license key unlocks premium updates. StoreCanvas itself keeps working either way.', 'storecanvas' ) . '</p></div></div>';
 
 		echo '<div class="sc-license-card" id="sc-license-panel" data-status="' . esc_attr( $status ) . '">';
 		echo '<p><span class="toc-license-status toc-license-status--' . esc_attr( $status ) . '" id="sc-license-status-label">' . esc_html( $state['status_label'] ) . '</span> ';
@@ -557,6 +654,9 @@ class SC_License {
 		echo '<li>' . esc_html__( 'Expires:', 'storecanvas' ) . ' <strong id="sc-lic-exp">' . esc_html( $state['expires_at'] ? $state['expires_at'] : __( 'Lifetime / none set', 'storecanvas' ) ) . '</strong></li>';
 		echo '<li>' . esc_html__( 'Customer:', 'storecanvas' ) . ' <strong id="sc-lic-email">' . esc_html( $state['customer_email'] !== '' ? $state['customer_email'] : '—' ) . '</strong></li>';
 		echo '<li>' . esc_html__( 'Last check:', 'storecanvas' ) . ' <strong id="sc-lic-check">' . esc_html( $state['last_check'] !== '' ? $state['last_check'] : '—' ) . '</strong></li>';
+		if ( ! empty( $state['on_trial'] ) || ( ! empty( $state['trial_ends_at'] ) && empty( $state['has_key'] ) ) ) {
+			echo '<li>' . esc_html__( 'Trial ends:', 'storecanvas' ) . ' <strong>' . esc_html( $state['trial_ends_at'] !== '' ? $state['trial_ends_at'] : '—' ) . '</strong></li>';
+		}
 		echo '<li>' . esc_html__( 'Instance ID:', 'storecanvas' ) . ' <code id="sc-lic-instance">' . esc_html( $state['instance_id'] ) . '</code></li>';
 		echo '</ul>';
 

@@ -52,6 +52,7 @@ $options = array(
 	'ob_license_data',
 	'ob_license_last_check',
 	'ob_license_server_url',
+	'ob_trial_started_at',
 );
 
 foreach ( $options as $opt ) {

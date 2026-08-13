@@ -3,7 +3,7 @@ Contributors: alextechgamer
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.9.0
+Stable tag: 1.10.0
 License: GPLv2 or later
 
 Self-hosted WooCommerce ops toolkit: documents, fulfillment, RMA, digests, search.
@@ -49,8 +49,16 @@ Yes — copy any template from the plugin's `templates/` folder into `wp-content
 = Is it compatible with HPOS? =
 Yes, Orderbay declares and supports WooCommerce High-Performance Order Storage.
 
+= Do I need a license key? =
+New installs include a 30-day trial of premium updates. After the trial, a key is required only for those updates. Invoices, packing slips, RMA, and the rest of the ops desk keep working without a license — we do not disable built-in features.
+
 == Changelog ==
 
+
+= 1.10.0 =
+* New: 30-day trial of premium updates starts on first admin visit (override with OB_TRIAL_DAYS)
+* License screen shows days remaining / trial end date; a nag appears in the last week and after expiry
+* Invoices, packing slips, RMA, and the ops desk stay available after the trial — only premium updates pause without a key
 = 1.9.0 =
 * Admin: OrderBay lives only in its own top-level menu (removed the extra WooCommerce submenu)
 * Dashboard: new ops console — hero, colored stat cards, setup prompt, and grouped tiles

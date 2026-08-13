@@ -242,6 +242,7 @@
 .ob-license-hero { margin-bottom: 18px; }
 .toc-license-status { display: inline-block; font-weight: 600; padding: 2px 10px; border-radius: 10px; background: #f0f0f1; }
 .toc-license-status--active { background: #d1e7dd; color: #0f5132; }
+.toc-license-status--trial { background: #cfe2ff; color: #084298; }
 .toc-license-status--inactive { background: #f0f0f1; color: #50575e; }
 .toc-license-status--expired,
 .toc-license-status--invalid { background: #f8d7da; color: #842029; }

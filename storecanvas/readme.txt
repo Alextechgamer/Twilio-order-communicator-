@@ -3,7 +3,7 @@ Contributors: alextechgamer
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.8.0
+Stable tag: 1.9.0
 License: GPLv2 or later
 
 Self-hosted WooCommerce personalization: product options, live mockup, print-ready, library, guest save.
@@ -50,8 +50,16 @@ Uploaded artwork and generated print composites are marked and kept out of the p
 = Is it compatible with HPOS? =
 Yes, StoreCanvas declares and supports WooCommerce High-Performance Order Storage.
 
+= Do I need a license key? =
+New installs include a 30-day trial of premium updates. After the trial, a key is required only for those updates. The designer, options, and production tools keep working without a license — we do not disable built-in features.
+
 == Changelog ==
 
+
+= 1.9.0 =
+* New: 30-day trial of premium updates starts on first admin visit (override with SC_TRIAL_DAYS)
+* License screen shows days remaining / trial end date; a nag appears in the last week and after expiry
+* Designer, options, and production tools stay available after the trial — only premium updates pause without a key
 = 1.8.0 =
 * Admin: StoreCanvas is now its own top-level menu (Overview, Production queue, Option groups, Saved designs, Library, Journey, Proof email, License)
 * Admin: modern Overview dashboard with stats
