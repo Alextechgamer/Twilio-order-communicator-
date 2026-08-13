@@ -340,10 +340,10 @@ trait TOC_Admin_Settings {
 				</tr>
 			</table>
 
-			<h2>Voice Settings</h2>
+			<h2><?php esc_html_e( 'Voice Settings', 'twilio-order-communicator' ); ?></h2>
 			<table class="form-table">
 				<tr>
-					<th>Voice</th>
+					<th><?php esc_html_e( 'Voice', 'twilio-order-communicator' ); ?></th>
 					<td>
 						<select name="toc_voice">
 							<?php
@@ -545,7 +545,7 @@ trait TOC_Admin_Settings {
 				</tr>
 			</table>
 
-			<h2>SMS Consent</h2>
+			<h2><?php esc_html_e( 'SMS Consent', 'twilio-order-communicator' ); ?></h2>
 			<table class="form-table">
 				<tr>
 					<th><?php echo esc_html__( 'Checkout checkbox', 'twilio-order-communicator' ); ?></th>
@@ -569,15 +569,15 @@ trait TOC_Admin_Settings {
 					</td>
 				</tr>
 				<tr>
-					<th>Require consent for SMS</th>
+					<th><?php esc_html_e( 'Require consent for SMS', 'twilio-order-communicator' ); ?></th>
 					<td>
 						<?php $this->checkbox( 'toc_require_sms_consent', 1 ); ?>
-						<label for="toc_require_sms_consent">Only send SMS when the customer has opted in</label>
-						<p class="description">Manual Send SMS warns and can force-send. Automatic and bulk SMS respect this setting. STOP keywords always block further SMS.</p>
+						<label for="toc_require_sms_consent"><?php esc_html_e( 'Only send SMS when the customer has opted in', 'twilio-order-communicator' ); ?></label>
+						<p class="description"><?php esc_html_e( 'Manual Send SMS warns and can force-send. Automatic and bulk SMS respect this setting. STOP keywords always block further SMS.', 'twilio-order-communicator' ); ?></p>
 					</td>
 				</tr>
 				<tr>
-					<th>Consent meta key</th>
+					<th><?php esc_html_e( 'Consent meta key', 'twilio-order-communicator' ); ?></th>
 					<td>
 						<input type="text" name="toc_sms_consent_meta" value="<?php echo esc_attr( get_option( 'toc_sms_consent_meta', '_toc_sms_consent' ) ); ?>" class="regular-text" />
 						<p class="description">
@@ -669,13 +669,13 @@ trait TOC_Admin_Settings {
 				</tr>
 			</table>
 
-			<h2>Advanced</h2>
+			<h2><?php esc_html_e( 'Advanced', 'twilio-order-communicator' ); ?></h2>
 			<table class="form-table">
 				<tr>
-					<th>Webhook base URL</th>
+					<th><?php esc_html_e( 'Webhook base URL', 'twilio-order-communicator' ); ?></th>
 					<td>
 						<input type="url" name="toc_webhook_base_url" value="<?php echo esc_attr( get_option( 'toc_webhook_base_url', '' ) ); ?>" class="regular-text" placeholder="<?php echo esc_attr( home_url( '/' ) ); ?>" />
-						<p class="description">Optional. Set if Twilio signature checks fail behind Cloudflare/proxy (must match the public HTTPS URL Twilio calls). Leave blank to use the WordPress home URL.</p>
+						<p class="description"><?php esc_html_e( 'Optional. Set if Twilio signature checks fail behind Cloudflare/proxy (must match the public HTTPS URL Twilio calls). Leave blank to use the WordPress home URL.', 'twilio-order-communicator' ); ?></p>
 					</td>
 				</tr>
 			</table>

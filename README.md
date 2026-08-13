@@ -8,16 +8,11 @@ WordPress / WooCommerce plugins. **OrderRing** is SMS, voice, and WhatsApp via *
 
 | Plugin | Path | Current |
 |--------|------|---------|
-| OrderRing | `twilio-order-communicator/` | 1.20.0 |
+| OrderRing | `twilio-order-communicator/` | 1.20.1 |
 | StoreCanvas | `storecanvas/` | 1.7.2 |
 | Orderbay | `orderbay/` | 1.8.3 |
 
 Launch (naming, license-server production, pricing, legal): [`docs/launch/`](./docs/launch/).
-=======
-| Twilio Order Communicator | `twilio-order-communicator/` | 1.19.1 |
-| StoreCanvas | `storecanvas/` | 1.7.1 |
-| Orderbay | `orderbay/` | 1.8.2 |
->>>>>>> 39c778e (OrderBay 1.8.2: store-timezone today, low-stock pagination, uninstall completeness)
 
 ## Local development
 

@@ -142,6 +142,14 @@ class TOC_Admin {
 					'unknown'          => __( 'Unknown', 'twilio-order-communicator' ),
 					'needsForce'       => __( 'SMS blocked by consent', 'twilio-order-communicator' ),
 					'sendAnyway'       => __( 'Send anyway?', 'twilio-order-communicator' ),
+					'modeCall'         => __( 'voice call', 'twilio-order-communicator' ),
+					'modeSms'          => __( 'SMS (consent required)', 'twilio-order-communicator' ),
+					'modeBoth'         => __( 'call + SMS (SMS only with consent)', 'twilio-order-communicator' ),
+					/* translators: {mode} send mode label, {count} number of orders, {delay} seconds between sends, {est} estimated minutes. Placeholders are replaced in JS. */
+					'bulkSendConfirm'  => __( "Send {mode} to {count} order(s)?\n\nDelay: {delay}s between each (~{est} min total).", 'twilio-order-communicator' ),
+					'noConsentAll'     => __( 'None of the selected orders have SMS consent. SMS will be skipped for all.', 'twilio-order-communicator' ),
+					/* translators: {skipped} orders without consent, {total} selected orders. Placeholders are replaced in JS. */
+					'noConsentSome'    => __( '{skipped} of {total} selected order(s) have no SMS consent and will be skipped. Continue?', 'twilio-order-communicator' ),
 					'activating'       => __( 'Activating…', 'twilio-order-communicator' ),
 					'deactivating'     => __( 'Deactivating…', 'twilio-order-communicator' ),
 					'checking'         => __( 'Checking…', 'twilio-order-communicator' ),

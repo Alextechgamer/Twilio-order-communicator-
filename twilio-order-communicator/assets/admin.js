@@ -249,9 +249,12 @@ $(function(){
 		if(isNaN(delaySec) || delaySec < 1) delaySec = 8;
 		if(delaySec > 120) delaySec = 120;
 
-		var modeLabel = mode === 'both' ? 'call + SMS (SMS only with consent)' : (mode === 'sms' ? 'SMS (consent required)' : 'voice call');
+		var modeLabel = mode === 'both' ? i18n('modeBoth', 'call + SMS (SMS only with consent)') : (mode === 'sms' ? i18n('modeSms', 'SMS (consent required)') : i18n('modeCall', 'voice call'));
 		var estMin = Math.ceil((ids.length * delaySec) / 60);
-		if(!confirm('Send '+modeLabel+' to '+ids.length+' order(s)?\n\nDelay: '+delaySec+'s between each (~'+estMin+' min total).')) return;
+		var bulkMsg = i18n('bulkSendConfirm', 'Send {mode} to {count} order(s)?\n\nDelay: {delay}s between each (~{est} min total).')
+			.replace('{mode}', modeLabel).replace('{count}', ids.length)
+			.replace('{delay}', delaySec).replace('{est}', estMin);
+		if(!confirm(bulkMsg)) return;
 
 		if(mode === 'sms' || mode === 'both'){
 			var noConsent = 0;
@@ -260,11 +263,12 @@ $(function(){
 				if($row.data('consent') == 0 || $row.data('consent') === '0') noConsent++;
 			});
 			if(mode === 'sms' && noConsent === ids.length){
-				alert('None of the selected orders have SMS consent. SMS will be skipped for all.');
+				alert(i18n('noConsentAll', 'None of the selected orders have SMS consent. SMS will be skipped for all.'));
 				return;
 			}
 			if(noConsent > 0 && mode === 'sms'){
-				if(!confirm(noConsent+' of '+ids.length+' selected order(s) have no SMS consent and will be skipped. Continue?')) return;
+				if(!confirm(i18n('noConsentSome', '{skipped} of {total} selected order(s) have no SMS consent and will be skipped. Continue?')
+					.replace('{skipped}', noConsent).replace('{total}', ids.length))) return;
 			}
 		}
 
