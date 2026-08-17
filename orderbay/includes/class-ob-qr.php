@@ -34,6 +34,27 @@ class OB_QR {
 	}
 
 	/**
+	 * Whether the bundled experimental encoder may be used. Off unless the site explicitly opts in
+	 * by defining OB_QR_BUILTIN_ENCODER as truthy (e.g. in wp-config.php) — the library-backed path
+	 * is the only supported renderer.
+	 *
+	 * @return bool
+	 */
+	public static function builtin_allowed() {
+		return defined( 'OB_QR_BUILTIN_ENCODER' ) && OB_QR_BUILTIN_ENCODER;
+	}
+
+	/**
+	 * Whether any usable renderer exists (vetted library, or built-in via explicit opt-in).
+	 * Templates gate on this the same way the settings screen does.
+	 *
+	 * @return bool
+	 */
+	public static function available() {
+		return self::library_available() || self::builtin_allowed();
+	}
+
+	/**
 	 * Smallest built-in version (1–3) whose EC-M byte capacity holds a payload, or 0 if it exceeds
 	 * the bundled encoder's capacity. Prevents the old silent truncation that produced dead QR for
 	 * order URLs (~47 bytes) by always forcing Version 3.
@@ -112,7 +133,7 @@ class OB_QR {
 	 * @param WC_Order $order Order.
 	 */
 	public static function render_for_order( $order ) {
-		if ( ! self::enabled() || ! $order instanceof WC_Order ) {
+		if ( ! self::enabled() || ! self::available() || ! $order instanceof WC_Order ) {
 			return;
 		}
 		$data = self::payload_for_order( $order );
@@ -147,7 +168,12 @@ class OB_QR {
 			}
 		}
 
-		// Built-in fallback: only encode payloads that fit the reliable V1–V3 capacity. Never
+		// Built-in fallback is experimental and requires the OB_QR_BUILTIN_ENCODER opt-in.
+		if ( ! self::builtin_allowed() ) {
+			return '';
+		}
+
+		// Only encode payloads that fit the reliable V1–V3 capacity. Never
 		// truncate — a truncated symbol is an unscannable (dead) QR, so fail soft instead.
 		if ( 0 === self::pick_version( strlen( $text ) ) ) {
 			return '';

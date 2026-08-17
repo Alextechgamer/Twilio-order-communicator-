@@ -126,7 +126,7 @@ $paper = ( isset( $settings['paper'] ) && 'a4' === $settings['paper'] ) ? 'A4' :
 			</tbody>
 		</table>
 		<?php
-		if ( class_exists( 'OB_QR' ) ) { OB_QR::render_for_order( $order ); }
+		if ( class_exists( 'OB_QR' ) && OB_QR::available() ) { OB_QR::render_for_order( $order ); }
 		$track = $order->get_meta( OB_Plugin::META_TRACKING );
 		$turl  = class_exists( 'OB_Fulfillment' ) ? OB_Fulfillment::build_tracking_url( $order ) : (string) $order->get_meta( OB_Plugin::META_TRACKING_URL );
 		$clab  = class_exists( 'OB_Fulfillment' ) ? OB_Fulfillment::carrier_label( $order ) : '';
