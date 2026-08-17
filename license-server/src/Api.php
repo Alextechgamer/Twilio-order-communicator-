@@ -38,6 +38,9 @@ class TOC_License_API {
 		if ( $method === 'GET' && $path === '/v1/download' ) {
 			$this->download();
 		}
+		if ( $method === 'POST' && $path === '/v1/stripe-webhook' ) {
+			( new TOC_License_Purchases( $this->db, $this->config ) )->handle();
+		}
 
 		TOC_License_Helpers::respond( 404, array( 'success' => false, 'error' => 'Not found' ) );
 	}
@@ -181,6 +184,20 @@ class TOC_License_API {
 			TOC_License_Helpers::respond( 403, array( 'success' => false, 'status' => $status, 'error' => $msg ) );
 		}
 
+		// Product binding: a key minted for one product must never serve another
+		// product's updates. Legacy keys (no item_slug) serve the server default only.
+		$want = $slug !== '' ? $slug : (string) ( $this->config['item_slug'] ?? '' );
+		if ( ! self::slug_allowed( (string) ( $license['item_slug'] ?? '' ), $want, (string) ( $this->config['item_slug'] ?? '' ) ) ) {
+			TOC_License_Helpers::respond(
+				403,
+				array(
+					'success' => false,
+					'status'  => 'wrong_product',
+					'error'   => 'This license key is for a different product.',
+				)
+			);
+		}
+
 		// A signed download URL is bound to an activated site: require site_url +
 		// instance_id AND a matching activation before issuing one. A bare license key
 		// (no site binding) must never mint a package URL — that would let a stolen or
@@ -252,6 +269,26 @@ class TOC_License_API {
 	 */
 	public static function download_allowed( $site, $inst, $activation_found ) {
 		return $site !== '' && $inst !== '' && (bool) $activation_found;
+	}
+
+	/**
+	 * Whether a license may serve updates for the requested product slug.
+	 *
+	 * A key bound to a product (item_slug set) serves only that product. A legacy
+	 * key (no item_slug) serves only the server's default product. Pure (no I/O)
+	 * so the invariant can be unit-tested without a running server.
+	 *
+	 * @param string $license_slug item_slug stored on the license ('' if unbound).
+	 * @param string $requested    Slug the client is asking about.
+	 * @param string $default_slug Server default product slug from config.
+	 * @return bool
+	 */
+	public static function slug_allowed( $license_slug, $requested, $default_slug ) {
+		$license_slug = trim( (string) $license_slug );
+		if ( $license_slug !== '' ) {
+			return $requested === $license_slug;
+		}
+		return $requested === $default_slug;
 	}
 
 	private function download() {
@@ -353,7 +390,9 @@ class TOC_License_API {
 			'instance_id'    => $activation['instance_id'] ?? '',
 			'activated_at'   => $activation['activated_at'] ?? '',
 			'last_seen_at'   => $activation['last_seen_at'] ?? '',
-			'item_slug'      => $this->config['item_slug'] ?? 'orderring',
+			'item_slug'      => ( isset( $license['item_slug'] ) && '' !== (string) $license['item_slug'] )
+				? $license['item_slug']
+				: ( $this->config['item_slug'] ?? 'orderring' ),
 		);
 	}
 }

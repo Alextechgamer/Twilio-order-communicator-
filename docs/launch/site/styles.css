@@ -44,9 +44,20 @@ h2 { font-size: 1.25rem; margin-top: 2rem; }
   padding: 1rem 1.1rem;
 }
 .card h2 { margin-top: 0; }
+.card .price { color: var(--ok); font-weight: 600; font-size: 0.9rem; }
 .fine { color: var(--muted); font-size: 0.9rem; }
+.scroll { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: 0.5rem 0.4rem; border-bottom: 1px solid var(--border); vertical-align: top; }
 footer { border-top: 1px solid var(--border); color: var(--muted); font-size: 0.85rem; }
 ul.checks { padding-left: 1.1rem; }
 .notice { border-left: 3px solid var(--ok); padding-left: 0.8rem; color: var(--muted); }
+.kicker {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 2.5rem 0 0;
+}
+.kicker + .grid { margin-top: 0.75rem; }

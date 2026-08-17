@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Checkout Sentinel — synthetic checkout monitoring for WooCommerce</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="buy.js" defer></script>
+</head>
+<body>
+  <header>
+    <a class="brand" href="index.html">Alextech Plugins</a>
+    <a href="index.html#plugins">Plugins</a>
+    <a href="pricing.html">Pricing</a>
+    <a href="support.html">Support</a>
+  </header>
+  <main>
+    <h1>Checkout Sentinel</h1>
+    <p class="lede">A robot buys from your store every hour in Stripe TEST mode — and the moment a real customer couldn't, you know. Uptime monitors stay green while checkout is broken; this one doesn't.</p>
+    <a class="cta" data-buy="checkout-sentinel-1" href="mailto:support@alextechgamer.com?subject=Buy%20Checkout%20Sentinel%20(1%20store)" title="Checkout opens soon — this emails us and we send an invoice and your license key">1 store — $12/mo</a>
+    <a class="cta secondary" data-buy="checkout-sentinel-3" href="mailto:support@alextechgamer.com?subject=Buy%20Checkout%20Sentinel%20(3%20stores)" title="Checkout opens soon — this emails us and we send an invoice and your license key">3 stores — $29/mo</a>
+    <a class="cta secondary" data-buy="checkout-sentinel-10" href="mailto:support@alextechgamer.com?subject=Buy%20Checkout%20Sentinel%20(10%20stores)" title="Checkout opens soon — this emails us and we send an invoice and your license key">10 stores — $59/mo</a>
+    <p class="fine">Annual billing: 2 months free. 10-store tier includes white-label for agencies.</p>
+    <h2>Problem</h2>
+    <p>Empty carts, missing payment methods, cached checkout pages, a plugin update that silently breaks the pay button — none of it shows up on an uptime monitor. You find out from an angry customer, or from a quiet week of zero orders.</p>
+    <h2>What you get</h2>
+    <ul class="checks">
+      <li>Scheduled synthetic checkout: product → cart → checkout → Stripe <strong>TEST-MODE</strong> order (card 4242…)</li>
+      <li>Every synthetic product and order is deleted before the run exits — no pollution in your reports</li>
+      <li>Alert on FAIL, 30-check dashboard in wp-admin</li>
+      <li>Isolated Playwright scanner — runs outside your WordPress host</li>
+      <li>Opt-in public status badge (JSON or SVG) — payload is status + last-check age only, never your site key</li>
+    </ul>
+    <p class="fine">Requires a Stripe account with test mode (no live charges are ever made). WooCommerce 8.0+.</p>
+    <p><a href="https://github.com/Alextechgamer/Checkout-Sentinel">Source and changelog</a></p>
+  </main>
+  <footer>
+    <p><a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a> · <a href="refund.html">Refunds</a></p>
+  </footer>
+</body>
+</html>

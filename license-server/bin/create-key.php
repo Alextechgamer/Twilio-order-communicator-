@@ -3,7 +3,7 @@
  * CLI: create a license key and optionally register a release.
  *
  * Usage:
- *   php bin/create-key.php [--email=a@b.c] [--sites=1] [--expires=2027-01-01|lifetime] [--notes="..."]
+ *   php bin/create-key.php [--email=a@b.c] [--sites=1] [--expires=2027-01-01|lifetime] [--slug=orderring] [--notes="..."]
  *   php bin/add-release.php --version=1.20.0 --file=orderring-1.20.0.zip [--slug=orderring] [--changelog="..."]
  */
 
@@ -32,6 +32,7 @@ foreach ( array_slice( $argv, 1 ) as $arg ) {
 $db = new TOC_License_DB( $config['db_path'] );
 
 $email   = isset( $args['email'] ) ? (string) $args['email'] : null;
+$slug    = isset( $args['slug'] ) ? trim( (string) $args['slug'] ) : '';
 $sites   = isset( $args['sites'] ) ? max( 1, (int) $args['sites'] ) : 1;
 $notes   = isset( $args['notes'] ) ? (string) $args['notes'] : null;
 $expires = null;
@@ -50,25 +51,12 @@ while ( $db->get_license( $key ) ) {
 	$key = TOC_License_Helpers::generate_key();
 }
 
-$stmt = $db->pdo()->prepare(
-	'INSERT INTO licenses (license_key, status, expires_at, max_sites, customer_email, notes, created_at)
-	 VALUES (?, ?, ?, ?, ?, ?, ?)'
-);
-$stmt->execute(
-	array(
-		$key,
-		'active',
-		$expires,
-		$sites,
-		$email,
-		$notes,
-		gmdate( 'c' ),
-	)
-);
+$db->create_license( $key, $slug, $sites, $expires, $email, $notes );
 
 echo "Created license key:\n";
 echo "  KEY:      {$key}\n";
 echo '  SITES:    ' . $sites . "\n";
+echo '  PRODUCT:  ' . ( $slug !== '' ? $slug : '(server default)' ) . "\n";
 echo '  EXPIRES:  ' . ( $expires ?: 'lifetime' ) . "\n";
 echo '  EMAIL:    ' . ( $email ?: '(none)' ) . "\n";
 echo "Store this key securely; it will not be shown again by the server.\n";

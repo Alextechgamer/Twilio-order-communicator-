@@ -15,6 +15,7 @@ require $root . '/twilio-order-communicator/includes/class-toc-logger.php';
 require $root . '/twilio-order-communicator/includes/class-toc-caps.php';
 require $root . '/license-server/src/Helpers.php';
 require $root . '/license-server/src/Api.php';
+require $root . '/license-server/src/Purchases.php';
 require $root . '/twilio-order-communicator/includes/class-toc-license.php';
 require $root . '/orderring-lite/includes/class-orl-twilio.php';
 require $root . '/orderring-lite/includes/class-orl-caps.php';
@@ -180,9 +181,49 @@ if ( extension_loaded( 'pdo_sqlite' ) ) {
 	check( 'rate 3rd allowed', $db->rate_hit( 'activate|1.1.1.1', 3, 3600 ), true );
 	check( 'rate 4th blocked', $db->rate_hit( 'activate|1.1.1.1', 3, 3600 ), false );
 	check( 'rate other bucket ok', $db->rate_hit( 'activate|2.2.2.2', 3, 3600 ), true );
+
+	/* purchases: idempotency lock + product-bound license creation */
+	check( 'purchase insert', $db->insert_purchase( 'stripe', 'cs_1', 'a@b.c', 'orderring', 'pro', 6900, 'usd', 'processing' ), true );
+	check( 'purchase duplicate blocked', $db->insert_purchase( 'stripe', 'cs_1', 'a@b.c', 'orderring', 'pro', 6900, 'usd', 'processing' ), false );
+	$db->finish_purchase( 'stripe', 'cs_1', 'KEY-1', 'ok' );
+	check( 'purchase finished', $db->get_purchase_by_ref( 'stripe', 'cs_1' )['license_key'], 'KEY-1' );
+	$db->create_license( 'TOC-TEST', 'orderbay', 5, null, 'a@b.c', 'stripe:cs_1' );
+	check( 'license slug stored', $db->get_license( 'TOC-TEST' )['item_slug'], 'orderbay' );
+	check( 'license lifetime usable', TOC_License_Helpers::license_is_usable( $db->get_license( 'TOC-TEST' ) )[0], true );
+	$db->create_license( 'TOC-LEGACY', '', 1, null, null, null );
+	check( 'license empty slug stored null', $db->get_license( 'TOC-LEGACY' )['item_slug'], null );
 } else {
 	echo "SKIP: pdo_sqlite not loaded — license-server rate-limit test skipped\n";
 }
+
+/* ---- license-server Stripe webhook signature + tier resolution (pure) ---- */
+$sec  = 'whsec_test';
+$body = '{"id":"evt_1"}';
+$ts   = 1700000000;
+$sig  = hash_hmac( 'sha256', $ts . '.' . $body, $sec );
+check( 'stripe sig valid', TOC_License_Purchases::verify_stripe_signature( $body, "t={$ts},v1={$sig}", $sec, 300, $ts + 10 ), true );
+check( 'stripe sig multiple v1', TOC_License_Purchases::verify_stripe_signature( $body, "t={$ts},v1=deadbeef,v1={$sig}", $sec, 300, $ts ), true );
+check( 'stripe sig wrong', TOC_License_Purchases::verify_stripe_signature( $body, "t={$ts},v1=" . str_repeat( '0', 64 ), $sec, 300, $ts ), false );
+check( 'stripe sig stale', TOC_License_Purchases::verify_stripe_signature( $body, "t={$ts},v1={$sig}", $sec, 300, $ts + 301 ), false );
+check( 'stripe sig tampered body', TOC_License_Purchases::verify_stripe_signature( $body . 'x', "t={$ts},v1={$sig}", $sec, 300, $ts ), false );
+check( 'stripe sig empty secret', TOC_License_Purchases::verify_stripe_signature( $body, "t={$ts},v1={$sig}", '', 300, $ts ), false );
+check( 'stripe sig missing t', TOC_License_Purchases::verify_stripe_signature( $body, "v1={$sig}", $sec, 300, $ts ), false );
+
+$tiers = array(
+	'orderring'   => array( 'pro' => array( 'sites' => 1, 'days' => 365 ), 'agency' => array( 'sites' => 5, 'days' => 365 ) ),
+	'storecanvas' => array( 'pro-lifetime' => array( 'sites' => 1 ) ),
+);
+check( 'tier resolves sites', TOC_License_Purchases::resolve_tier( $tiers, 'orderring', 'agency', 0 )[0], 5 );
+check( 'tier resolves expiry', TOC_License_Purchases::resolve_tier( $tiers, 'orderring', 'pro', 0 )[1], gmdate( 'c', 365 * 86400 ) );
+check( 'tier lifetime null expiry', TOC_License_Purchases::resolve_tier( $tiers, 'storecanvas', 'pro-lifetime', 0 )[1], null );
+check( 'tier unknown product', TOC_License_Purchases::resolve_tier( $tiers, 'nope', 'pro', 0 ), null );
+check( 'tier unknown tier', TOC_License_Purchases::resolve_tier( $tiers, 'orderring', 'mega', 0 ), null );
+
+/* product binding: a key for one product must not serve another product's updates */
+check( 'slug bound match', TOC_License_API::slug_allowed( 'orderbay', 'orderbay', 'orderring' ), true );
+check( 'slug bound mismatch', TOC_License_API::slug_allowed( 'orderbay', 'orderring', 'orderring' ), false );
+check( 'slug legacy default', TOC_License_API::slug_allowed( '', 'orderring', 'orderring' ), true );
+check( 'slug legacy non-default', TOC_License_API::slug_allowed( '', 'orderbay', 'orderring' ), false );
 
 /* ---- OrderBay e-invoice XML builders (pure; skipped if ext-dom absent) ---- */
 if ( extension_loaded( 'dom' ) ) {

@@ -22,6 +22,7 @@ $config = require $config_file;
 
 require_once dirname( __DIR__ ) . '/src/Helpers.php';
 require_once dirname( __DIR__ ) . '/src/Database.php';
+require_once dirname( __DIR__ ) . '/src/Purchases.php';
 require_once dirname( __DIR__ ) . '/src/Api.php';
 
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
