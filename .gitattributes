@@ -1,0 +1,8 @@
+# Generated license-client copies must byte-match the LF output of
+# tools/license-client/generate.php (enforced by tools/release/check-license-sync.php
+# as a hard CI gate), so pin them and their canonical sources to LF.
+tools/license-client/** text eol=lf
+storecanvas/includes/class-sc-license.php text eol=lf
+storecanvas/assets/license.js text eol=lf
+orderbay/includes/class-ob-license.php text eol=lf
+orderbay/assets/license.js text eol=lf
