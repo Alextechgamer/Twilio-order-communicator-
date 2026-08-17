@@ -62,7 +62,7 @@ $paper = ( isset( $settings['paper'] ) && 'a4' === $settings['paper'] ) ? 'A4' :
 		<?php if ( class_exists( 'OB_Barcode' ) && OB_Barcode::enabled() ) : ?>
 			<?php OB_Barcode::render( $order->get_order_number() ); ?>
 		<?php endif; ?>
-		<?php if ( class_exists( 'OB_QR' ) && OB_QR::available() ) { OB_QR::render_for_order( $order ); } ?>
+		<?php if ( class_exists( 'OB_QR' ) ) { OB_QR::render_for_order( $order ); } ?>
 
 				<div class="meta">
 					<?php echo esc_html( $order->get_date_created() ? $order->get_date_created()->date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) : '' ); ?>
