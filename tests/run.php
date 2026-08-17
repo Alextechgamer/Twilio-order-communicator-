@@ -421,6 +421,16 @@ check( 'qr library absent here', OB_QR::library_available(), false );
 check( 'qr svg empty payload', OB_QR::svg( '' ), '' );
 check( 'qr svg long payload no library skips', OB_QR::svg( str_repeat( 'x', 47 ) ), '' );
 
+/* ---- OrderBay QR gating (library-only unless built-in opt-in; pins the template gate) ---- */
+check( 'qr builtin off by default', OB_QR::builtin_allowed(), false );
+check( 'qr unavailable without library or opt-in', OB_QR::available(), false );
+check( 'qr svg short payload skipped without opt-in', OB_QR::svg( 'ORDER-123' ), '' );
+define( 'OB_QR_BUILTIN_ENCODER', true );
+check( 'qr builtin on after opt-in constant', OB_QR::builtin_allowed(), true );
+check( 'qr available after opt-in constant', OB_QR::available(), true );
+check( 'qr svg short payload renders with opt-in', 0 === strpos( OB_QR::svg( 'ORDER-123' ), '<svg' ), true );
+check( 'qr svg long payload still skips with opt-in', OB_QR::svg( str_repeat( 'x', 47 ) ), '' );
+
 /* ---- OrderBay per-rate tax rows (pure; pins the tax-breakdown feature) ---- */
 $tax_obj = array(
 	(object) array( 'label' => 'VAT (20%)', 'amount' => 4.0 ),

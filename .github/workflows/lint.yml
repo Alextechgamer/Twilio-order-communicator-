@@ -34,6 +34,8 @@ jobs:
         run: php tests/run.php
       - name: Version consistency (5 markers per plugin)
         run: php tools/release/check-versions.php
+      - name: License client sync (generated copies match tools/license-client/)
+        run: php tools/release/check-license-sync.php
 
   # Hard gate: end-to-end smoke of the flagship flow. Provisions a real
   # WordPress + WooCommerce site via tools/dev/setup-wp.sh, places an order,
