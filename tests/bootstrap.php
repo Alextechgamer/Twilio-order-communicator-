@@ -82,6 +82,35 @@ if ( ! function_exists( 'wp_generate_password' ) ) {
 		return substr( str_replace( array( '+', '/', '=' ), '', base64_encode( random_bytes( 16 ) ) ), 0, max( 1, (int) $length ) );
 	}
 }
+if ( ! function_exists( 'wp_unslash' ) ) {
+	function wp_unslash( $value ) {
+		if ( is_array( $value ) ) {
+			return array_map( 'wp_unslash', $value );
+		}
+		return is_string( $value ) ? stripslashes( $value ) : $value;
+	}
+}
+if ( ! function_exists( 'wp_parse_url' ) ) {
+	function wp_parse_url( $url, $component = -1 ) {
+		return parse_url( (string) $url, $component );
+	}
+}
+if ( ! function_exists( 'trailingslashit' ) ) {
+	function trailingslashit( $s ) {
+		return rtrim( (string) $s, '/\\' ) . '/';
+	}
+}
+if ( ! function_exists( 'is_ssl' ) ) {
+	function is_ssl() {
+		return false;
+	}
+}
+if ( ! function_exists( 'home_url' ) ) {
+	// Fixed fake site host; the signature-validation tests sign against this base.
+	function home_url( $path = '' ) {
+		return 'https://shop.example' . $path;
+	}
+}
 if ( ! isset( $GLOBALS['wpdb'] ) ) {
 	// TOC_Logger's constructor only reads $wpdb->prefix.
 	$GLOBALS['wpdb'] = (object) array( 'prefix' => 'wp_' );

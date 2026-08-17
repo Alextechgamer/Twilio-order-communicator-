@@ -35,6 +35,34 @@ jobs:
       - name: Version consistency (5 markers per plugin)
         run: php tools/release/check-versions.php
 
+  # Hard gate: end-to-end smoke of the flagship flow. Provisions a real
+  # WordPress + WooCommerce site via tools/dev/setup-wp.sh, places an order,
+  # moves it to Ready for Pickup, and asserts the outbound auto-SMS was
+  # captured by the Twilio HTTP mock mu-plugin (/tmp/toc-http.log) with the
+  # expected To number and template text. Goes red if class-toc-auto.php stops
+  # sending on status change. No live Twilio credentials are used or needed.
+  e2e-smoke:
+    name: E2E smoke (order → Ready for Pickup → SMS via Twilio mock)
+    # ubuntu-24.04 pinned (not -latest): setup-wp.sh apt-installs the php8.3-*
+    # packages, which only exist in the 24.04 archive — this is what keeps the
+    # job on PHP 8.3 even if the runner default moves.
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      # The runner image ships MySQL on port 3306; stop it so the MariaDB that
+      # setup-wp.sh installs can bind. Harmless where the service is absent.
+      - name: Stop preinstalled MySQL
+        run: sudo systemctl stop mysql.service 2>/dev/null || true
+      - name: Provision WordPress + WooCommerce + plugins (tools/dev/setup-wp.sh)
+        run: bash tools/dev/setup-wp.sh
+      - name: Assert PHP 8.3
+        run: php -v && php -v | grep -qF 'PHP 8.3'
+      - name: Run E2E smoke (order → status change → captured SMS)
+        run: bash tools/dev/e2e-smoke.sh
+      - name: Show WordPress debug.log on failure
+        if: failure()
+        run: cat "$HOME/wordpress/wp-content/debug.log" 2>/dev/null || echo "no debug.log"
+
   # Advisory: WordPress Coding Standards + PHPCompatibility. Not a hard gate yet
   # (see tasks.md G8) — the report is printed for humans but never fails the build,
   # so the historical docblock/Yoda/alignment debt does not block merges.

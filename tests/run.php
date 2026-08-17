@@ -18,6 +18,7 @@ require $root . '/license-server/src/Api.php';
 require $root . '/twilio-order-communicator/includes/class-toc-license.php';
 require $root . '/orderring-lite/includes/class-orl-twilio.php';
 require $root . '/orderring-lite/includes/class-orl-caps.php';
+require $root . '/orderring-lite/includes/class-orl-logger.php';
 require $root . '/orderbay/includes/class-ob-plugin.php';
 require $root . '/orderbay/includes/class-ob-einvoice.php';
 require $root . '/orderbay/includes/class-ob-invoicing.php';
@@ -500,6 +501,278 @@ check( 'pdf xref', strpos( $pdf, "\nxref\n" ) !== false, true );
 check( 'pdf trailer', strpos( $pdf, 'trailer' ) !== false, true );
 check( 'pdf xobject image', strpos( $pdf, '/XObject' ) !== false, true );
 check( 'pdf eof', substr( trim( $pdf ), -5 ) === '%%EOF', true );
+
+/* =====================================================================
+ * Lite↔Pro parity (orderring-lite vs twilio-order-communicator).
+ *
+ * The Twilio/checkout/webhook logic is intentionally duplicated between the
+ * two plugins; until T3 dedupes it, these tests are the drift gate: a
+ * behavior change in one plugin's copy without the twin fails the suite.
+ * Two layers:
+ *   1. Runtime vectors — identical inputs through both copies must produce
+ *      identical outputs (consent truthiness, E.164 + phone normalization,
+ *      Twilio signature validation, STOP/HELP/START keywords, SMS footer).
+ *   2. Normalized source diff — twin method bodies must stay identical after
+ *      mapping orl_/ORL_/text-domain to the Pro spellings (comments and
+ *      whitespace ignored).
+ * ===================================================================== */
+
+$orl_twilio = ORL_Twilio::instance();
+$toc_twilio = TOC_Twilio::instance();
+$orl_logger = ORL_Logger::instance();
+
+/* ---- parity: E.164 validation ---- */
+$e164_vectors = array(
+	'+15055551234', '+447911123456', '15055551234', '+05055551234', '+1234',
+	'+1505555abcd', '', '+', '00447911123456', 'whatsapp:+15055551234',
+	'+123456789012345', '+1234567890123456', ' +15055551234', '+1 5055551234',
+);
+foreach ( $e164_vectors as $v ) {
+	check( 'parity e164 ' . var_export( $v, true ), ORL_Twilio::is_e164( $v ), TOC_Twilio::is_e164( $v ) );
+}
+
+/* ---- parity: consent truthiness / falsiness ---- */
+$consent_vectors = array(
+	'yes', 'Y', '1', 1, 1.0, true, 'true', 'checked', 'on', 'opt-in', 'optin', 'agreed', 'agree', ' yes ',
+	'no', 'N', '0', 0, 0.0, false, 'false', 'off', 'unchecked', 'opt-out', 'optout', 'declined',
+	'', null, array( 'yes' ), 'maybe', 2, -1, 'YES PLEASE',
+);
+foreach ( $consent_vectors as $i => $v ) {
+	$label = var_export( $v, true );
+	check( "parity truthy {$label}", $orl_twilio->is_truthy_consent( $v ), $toc_twilio->is_truthy_consent( $v ) );
+	check( "parity falsy {$label}", $orl_twilio->is_falsy_consent( $v ), $toc_twilio->is_falsy_consent( $v ) );
+}
+
+/* ---- parity: phone normalization (E.164) + last10/phones_match ---- */
+$phone_vectors = array(
+	'(505) 555-1234', '1 (505) 555-1234', '+447911123456', '07911 123456',
+	'020 7946 0018', '7911123456', '00 44 7911 123456', 'not a phone', '+', '0',
+	'5055551234', '005055551234', '0007911123456',
+);
+foreach ( array( 'US', 'GB', 'US:CA', 'DE' ) as $country ) {
+	$GLOBALS['toc_test_options'] = array( 'woocommerce_default_country' => $country );
+	check( "parity default cc {$country}", $orl_logger->default_country_code(), $logger->default_country_code() );
+	foreach ( $phone_vectors as $v ) {
+		check( "parity normalize [{$country}] " . var_export( $v, true ), $orl_logger->normalize_phone( $v ), $logger->normalize_phone( $v ) );
+	}
+}
+$GLOBALS['toc_test_options'] = array();
+foreach ( array( '+1 (505) 555-1234', '+447911123456', '5551234', 'abc12-34', '' ) as $v ) {
+	check( 'parity last10 ' . var_export( $v, true ), ORL_Logger::last10( $v ), TOC_Logger::last10( $v ) );
+}
+check( 'parity phones_match hit', ORL_Logger::phones_match( '+15055551234', '(505) 555-1234' ), TOC_Logger::phones_match( '+15055551234', '(505) 555-1234' ) );
+check( 'parity phones_match miss', ORL_Logger::phones_match( '5055551234', '5055559999' ), TOC_Logger::phones_match( '5055551234', '5055559999' ) );
+
+/* ---- parity: SMS compliance footer append ---- */
+function t2_footer_pair( $orl_twilio, $toc_twilio, $enabled, $text, $body ) {
+	$GLOBALS['toc_test_options']['orl_sms_footer_enabled'] = $enabled;
+	$GLOBALS['toc_test_options']['toc_sms_footer_enabled'] = $enabled;
+	if ( null === $text ) {
+		unset( $GLOBALS['toc_test_options']['orl_sms_footer_text'], $GLOBALS['toc_test_options']['toc_sms_footer_text'] );
+	} else {
+		$GLOBALS['toc_test_options']['orl_sms_footer_text'] = $text;
+		$GLOBALS['toc_test_options']['toc_sms_footer_text'] = $text;
+	}
+	return array( $orl_twilio->append_sms_footer( $body ), $toc_twilio->append_sms_footer( $body ) );
+}
+$footer_cases = array(
+	'disabled'            => array( 0, null, 'Your order is ready.' ),
+	'default text'        => array( 1, null, 'Your order is ready.' ),
+	'custom text'         => array( 1, 'Custom footer.', 'Your order is ready.' ),
+	'blank text'          => array( 1, '   ', 'Your order is ready.' ),
+	'already compliant'   => array( 1, null, 'Ready. Reply STOP to opt out.' ),
+	'trailing whitespace' => array( 1, null, "Your order is ready.  \n" ),
+	'empty body'          => array( 1, null, '' ),
+);
+foreach ( $footer_cases as $name => $c ) {
+	list( $orl_out, $toc_out ) = t2_footer_pair( $orl_twilio, $toc_twilio, $c[0], $c[1], $c[2] );
+	check( "parity footer {$name}", $orl_out, $toc_out );
+}
+// Absolute pin so a both-sides regression can't slip through as "equal".
+list( $orl_out, ) = t2_footer_pair( $orl_twilio, $toc_twilio, 1, null, 'Your order is ready.' );
+check( 'footer appended when enabled', $orl_out, "Your order is ready.\n\nReply STOP to opt out. Msg & data rates may apply." );
+$GLOBALS['toc_test_options'] = array();
+
+/* ---- parity: Twilio signature validation ----
+ * Signs a fake webhook request per Twilio's scheme (HMAC-SHA1 of URL +
+ * ksorted post params) against the bootstrap's fixed home_url host, then
+ * runs BOTH plugins' validators over the same superglobals. */
+function t2_sign( $url, $params, $token ) {
+	ksort( $params );
+	$data = $url;
+	foreach ( $params as $k => $v ) {
+		$data .= $k . $v;
+	}
+	return base64_encode( hash_hmac( 'sha1', $data, $token, true ) );
+}
+$sig_token = 'parity-auth-token';
+$GLOBALS['toc_test_options'] = array( 'orl_auth_token' => $sig_token, 'toc_auth_token' => $sig_token );
+$_SERVER['REQUEST_URI'] = '/wp-json/parity/v1/sms';
+unset( $_SERVER['HTTP_HOST'], $_SERVER['HTTP_X_FORWARDED_PROTO'] );
+$_POST = array( 'Body' => 'STOP', 'From' => '+15055551234', 'MessageSid' => 'SMparity123' );
+$sig_url = 'https://shop.example/wp-json/parity/v1/sms';
+
+$_SERVER['HTTP_X_TWILIO_SIGNATURE'] = t2_sign( $sig_url, $_POST, $sig_token );
+check( 'sig valid lite', $orl_twilio->validate_twilio_signature(), true );
+check( 'sig valid pro', $toc_twilio->validate_twilio_signature(), true );
+
+$_POST['Body'] = 'HELP'; // tampered param, stale signature
+check( 'sig tampered param lite', $orl_twilio->validate_twilio_signature(), false );
+check( 'sig tampered param pro', $toc_twilio->validate_twilio_signature(), false );
+$_POST['Body'] = 'STOP';
+
+$_SERVER['HTTP_X_TWILIO_SIGNATURE'] = t2_sign( $sig_url, $_POST, 'wrong-token' );
+check( 'sig wrong token lite', $orl_twilio->validate_twilio_signature(), false );
+check( 'sig wrong token pro', $toc_twilio->validate_twilio_signature(), false );
+
+unset( $_SERVER['HTTP_X_TWILIO_SIGNATURE'] );
+check( 'sig missing header lite', $orl_twilio->validate_twilio_signature(), false );
+check( 'sig missing header pro', $toc_twilio->validate_twilio_signature(), false );
+
+$_SERVER['HTTP_X_TWILIO_SIGNATURE'] = t2_sign( $sig_url, $_POST, $sig_token );
+$GLOBALS['toc_test_options'] = array( 'orl_auth_token' => '', 'toc_auth_token' => '' );
+check( 'sig no token lite', $orl_twilio->validate_twilio_signature(), false );
+check( 'sig no token pro', $toc_twilio->validate_twilio_signature(), false );
+
+$_POST = array();
+unset( $_SERVER['HTTP_X_TWILIO_SIGNATURE'], $_SERVER['REQUEST_URI'] );
+$GLOBALS['toc_test_options'] = array();
+
+/* ---- parity: STOP/HELP/START keyword handling ----
+ * The classifier lives inline in the private incoming_sms() webhook handlers,
+ * so the keyword lists and body normalization are extracted from BOTH sources
+ * and compared, then shared vectors are classified with each plugin's lists. */
+$orl_webhooks_src = file_get_contents( $root . '/orderring-lite/includes/class-orl-webhooks.php' );
+$toc_webhooks_src = file_get_contents( $root . '/twilio-order-communicator/includes/class-toc-webhooks.php' );
+
+function t2_keyword_lists( $src ) {
+	$lists = array();
+	foreach ( array( 'stop_words', 'help_words', 'start_words' ) as $name ) {
+		if ( preg_match( '/\$' . $name . '\s*=\s*array\(([^)]*)\)\s*;/s', $src, $m )
+			&& preg_match_all( "/'([A-Z]+)'/", $m[1], $words ) ) {
+			$lists[ $name ] = $words[1];
+		} else {
+			$lists[ $name ] = null; // extraction broken — fails the checks below loudly
+		}
+	}
+	return $lists;
+}
+function t2_classify( $body, $lists ) {
+	// Mirrors the normalization in incoming_sms(); the source-equality check
+	// below fails if either plugin changes those lines.
+	$norm    = preg_replace( '/\s+/', ' ', strtoupper( trim( $body ) ) );
+	$keyword = preg_replace( '/[^A-Z]/', '', $norm );
+	foreach ( array( 'stop_words' => 'stop', 'help_words' => 'help', 'start_words' => 'start' ) as $list => $verdict ) {
+		if ( is_array( $lists[ $list ] ) && in_array( $keyword, $lists[ $list ], true ) ) {
+			return $verdict;
+		}
+	}
+	return 'none';
+}
+$orl_kw = t2_keyword_lists( $orl_webhooks_src );
+$toc_kw = t2_keyword_lists( $toc_webhooks_src );
+check( 'keyword stop lists match', $orl_kw['stop_words'], $toc_kw['stop_words'] );
+check( 'keyword help lists match', $orl_kw['help_words'], $toc_kw['help_words'] );
+check( 'keyword start lists match', $orl_kw['start_words'], $toc_kw['start_words'] );
+check( 'keyword stop list extracted', is_array( $toc_kw['stop_words'] ) && count( $toc_kw['stop_words'] ) >= 3, true );
+
+$kw_norm = array();
+foreach ( array( 'orl' => $orl_webhooks_src, 'toc' => $toc_webhooks_src ) as $k => $src ) {
+	$kw_norm[ $k ] = preg_match( '/\$norm\s*=\s*(.+?);\s*\$keyword\s*=\s*(.+?);/s', $src, $m ) ? $m[1] . '|' . $m[2] : $k . '-missing';
+}
+check( 'keyword normalization lines match', $kw_norm['orl'], $kw_norm['toc'] );
+
+$keyword_vectors = array(
+	'STOP', 'stop', ' Stop. ', 'STOPALL', 'STOP ALL', 'unsubscribe', 'CANCEL', 'End', 'QUIT',
+	'HELP', 'info', 'START', 'UnStop', 'YES', 'yes please', 'Please stop', 'stop2', 'st op',
+	'Where is my order?', '', 'ÉSTOP',
+);
+foreach ( $keyword_vectors as $v ) {
+	check( 'parity keyword ' . var_export( $v, true ), t2_classify( $v, $orl_kw ), t2_classify( $v, $toc_kw ) );
+}
+// Absolute pins (both-sides regressions).
+check( 'keyword STOP classified', t2_classify( 'STOP', $toc_kw ), 'stop' );
+check( 'keyword HELP classified', t2_classify( 'help', $toc_kw ), 'help' );
+check( 'keyword START classified', t2_classify( 'Start', $toc_kw ), 'start' );
+check( 'keyword bare YES is not re-subscribe', t2_classify( 'YES', $toc_kw ), 'none' );
+
+/* ---- parity: normalized source diff over the duplicated twin methods ---- */
+function t2_methods( $src ) {
+	preg_match_all( '/^\t(?:(?:public|private|protected|static|final)\s+)+function\s+&?(\w+)\s*\(/m', $src, $m, PREG_OFFSET_CAPTURE );
+	$out = array();
+	$n   = count( $m[0] );
+	for ( $i = 0; $i < $n; $i++ ) {
+		$end = ( $i + 1 < $n ) ? $m[0][ $i + 1 ][1] : strlen( $src );
+		$out[ $m[1][ $i ][0] ] = substr( $src, $m[0][ $i ][1], $end - $m[0][ $i ][1] );
+	}
+	return $out;
+}
+function t2_normalize_src( $src ) {
+	$src = preg_replace( '~/\*.*?\*/~s', ' ', $src );   // block comments / docblocks
+	$src = preg_replace( '~^\s*//.*$~m', ' ', $src );   // full-line comments
+	$src = preg_replace( '~;[ \t]*//.*$~m', ';', $src ); // trailing statement comments (phpcs:ignore etc.)
+	$src = preg_replace( '~\s+~', ' ', $src );
+	return trim( $src );
+}
+function t2_map_lite_to_pro( $src ) {
+	$src = strtr( $src, array(
+		'ORL_'             => 'TOC_',
+		'orl_'             => 'toc_',
+		'orl/sms-consent'  => 'toc/sms-consent', // checkout block-field id
+
+		"'orderring-lite'" => "'twilio-order-communicator'",
+	) );
+	// Known accepted divergences (reconcile in T3 dedup, see tasks.md):
+	// Lite additionally passes REQUEST_URI through sanitize_text_field, and
+	// uses esc_xml() where Pro inlines htmlspecialchars(ENT_XML1).
+	$src = str_replace( "sanitize_text_field( wp_unslash( \$_SERVER['REQUEST_URI'] ) )", "wp_unslash( \$_SERVER['REQUEST_URI'] )", $src );
+	$src = str_replace( 'esc_xml( $reply )', "htmlspecialchars( \$reply, ENT_XML1 | ENT_QUOTES, 'UTF-8' )", $src );
+	return $src;
+}
+/**
+ * @param string $label   Pair label for test output.
+ * @param string $lite    Lite source file path.
+ * @param string $pro     Pro source file path.
+ * @param array  $exempt  Methods allowed to diverge (Pro-only features).
+ * @param int    $min     Minimum shared methods expected (guards against the
+ *                        comparison silently going hollow after a refactor).
+ */
+function t2_twin_diff( $label, $lite, $pro, $exempt, $min ) {
+	$lite_methods = t2_methods( file_get_contents( $lite ) );
+	$pro_methods  = t2_methods( file_get_contents( $pro ) );
+	$shared       = array_diff( array_intersect( array_keys( $lite_methods ), array_keys( $pro_methods ) ), $exempt );
+	check( "twin {$label} shared-method floor (" . count( $shared ) . ' >= ' . $min . ')', count( $shared ) >= $min, true );
+	foreach ( $shared as $name ) {
+		check(
+			"twin {$label}::{$name}",
+			t2_normalize_src( t2_map_lite_to_pro( $lite_methods[ $name ] ) ),
+			t2_normalize_src( $pro_methods[ $name ] )
+		);
+	}
+}
+t2_twin_diff(
+	'twilio',
+	$root . '/orderring-lite/includes/class-orl-twilio.php',
+	$root . '/twilio-order-communicator/includes/class-toc-twilio.php',
+	// send_sms: Pro adds the $channel param + WhatsApp addressing.
+	// __construct/webhook_url: Pro wires the voice TwiML endpoint Lite lacks.
+	array( 'send_sms', '__construct', 'webhook_url' ),
+	20
+);
+t2_twin_diff(
+	'checkout',
+	$root . '/orderring-lite/includes/class-orl-checkout.php',
+	$root . '/twilio-order-communicator/includes/class-toc-checkout.php',
+	array(),
+	15
+);
+t2_twin_diff(
+	'webhooks',
+	$root . '/orderring-lite/includes/class-orl-webhooks.php',
+	$root . '/twilio-order-communicator/includes/class-toc-webhooks.php',
+	array( 'register_rest_routes', 'handle_query_aliases', 'message_status' ), // Pro adds voice routes + failure alerts
+	8
+);
 
 echo "PASS: {$pass}  FAIL: {$fail}\n";
 foreach ( $fails as $f ) {

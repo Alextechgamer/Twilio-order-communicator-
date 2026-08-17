@@ -23,10 +23,27 @@ class SC_Journey {
 
 	private function __construct() {
 		add_action( 'wp_ajax_sc_journey_log', array( $this, 'ajax_log' ) );
-		add_action( 'wp_ajax_nopriv_sc_journey_log', array( $this, 'ajax_log' ) );
+		// Journey is a dev-only debugging tool. The unauthenticated (nopriv)
+		// logging endpoint is registered ONLY on a debug build — never on a
+		// normal production site, where it would be an open, anonymous write
+		// endpoint into wp_sc_journey.
+		if ( self::is_dev() ) {
+			add_action( 'wp_ajax_nopriv_sc_journey_log', array( $this, 'ajax_log' ) );
+		}
 		add_action( 'admin_menu', array( $this, 'admin_menu' ), 60 );
 		add_action( 'admin_init', array( $this, 'maybe_create_table' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'localize' ), 30 );
+	}
+
+	/**
+	 * Whether Journey's dev-only surfaces (the anonymous nopriv logger) are
+	 * allowed. Opt in with WP_DEBUG or an explicit SC_JOURNEY_DEV constant.
+	 */
+	private static function is_dev() {
+		if ( defined( 'SC_JOURNEY_DEV' ) ) {
+			return (bool) SC_JOURNEY_DEV;
+		}
+		return defined( 'WP_DEBUG' ) && WP_DEBUG;
 	}
 
 	public function maybe_create_table() {
@@ -52,7 +69,9 @@ class SC_Journey {
 		) {$charset};";
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( $sql );
-		update_option( self::OPTION_ENABLED, '1' );
+		// Creating the table must not silently enable logging — Journey is off
+		// by default and is turned on deliberately from its admin screen.
+		add_option( self::OPTION_ENABLED, '0' );
 	}
 
 	public function localize() {
@@ -64,14 +83,14 @@ class SC_Journey {
 			'scJourney',
 			array(
 				'ajax'    => admin_url( 'admin-ajax.php' ),
-				'enabled' => get_option( self::OPTION_ENABLED, '1' ) === '1',
+				'enabled' => get_option( self::OPTION_ENABLED, '0' ) === '1',
 				'nonce'   => wp_create_nonce( 'sc_journey' ),
 			)
 		);
 	}
 
 	public function ajax_log() {
-		if ( get_option( self::OPTION_ENABLED, '1' ) !== '1' ) {
+		if ( get_option( self::OPTION_ENABLED, '0' ) !== '1' ) {
 			wp_send_json_success( array( 'skipped' => true ) );
 		}
 		check_ajax_referer( 'sc_journey', 'nonce' );

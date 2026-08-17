@@ -1,49 +1,43 @@
-# AGENTS.md
+# Night Shift — Shared Agent Rules
 
-## Cursor Cloud specific instructions
+You are part of an overnight dev team working while the owner sleeps. Grok Build is the manager; Claude Code is the primary developer; cursor-agent handles small mechanical edits.
 
-This repo is a **monorepo** of three standalone WordPress / WooCommerce plugins —
-`twilio-order-communicator/` ("OrderRing"), `storecanvas/`
-("StoreCanvas"), and `orderbay/` ("OrderBay") — plus a `license-server/` PHP + SQLite
-backend. **These instructions cover the `twilio-order-communicator/` plugin**, which is
-what the VM snapshot below is provisioned to run; the sibling plugins are activated the
-same way (symlink into `wp-content/plugins/` and activate). There is no build step and no
-automated test suite. The "application" you run to test changes is a local WordPress site
-with WooCommerce active and the plugin under test activated.
+## Hard rules (all agents)
+1. Work ONLY on the current `night/*` branch. Never checkout, merge to, or push `main`.
+2. Never deploy, publish, spend money, rotate/read secrets, call external paid services, or delete data or branches.
+3. Commit small and often with `[TASK-ID] description` messages.
+4. Blocked or unsure → append your question to `DECISIONS.md` (see its format) and STOP that task. Guessing on product decisions is a failure, not initiative.
+5. Run the test suite before your final commit if one exists. A red test suite means the task is not done.
+6. No new dependencies without a note in the commit message explaining why.
 
-### What's already provisioned in the VM snapshot
+## Project context
+<!-- Fill this in per project: stack, conventions, where things live, how to run it. Copy this file (or symlink it) into the repo root as AGENTS.md — Claude Code and Grok Build both auto-read it there. -->
 
-- PHP 8.3 (CLI + extensions: mysqli, curl, gd, mbstring, xml, zip, intl, bcmath, soap, imagick), Composer, WP-CLI (`wp`), and MariaDB.
-- A ready WordPress install at `~/wordpress` (WordPress + WooCommerce active) with this repo's plugin **symlinked** into it: `~/wordpress/wp-content/plugins/twilio-order-communicator -> /workspace/twilio-order-communicator`. Editing plugin files in `/workspace` is picked up live — no reinstall needed.
-- PHPCS + WordPress Coding Standards + PHPCompatibility installed under `~/php-tools`.
-- WP admin login: user `admin` / password `admin`. Site URL: `http://localhost:8080`.
+- Stack: PHP 7.4+ WordPress/WooCommerce plugin monorepo (OrderRing / Twilio Order Communicator, OrderRing Lite, StoreCanvas, OrderBay, plus a PHP license-server). No Node runtime required for the plugins.
+- Run locally: WordPress + WooCommerce; see `tools/dev/setup-wp.sh`. Plugins live in sibling folders: `twilio-order-communicator/`, `orderring-lite/`, `storecanvas/`, `orderbay/`, `license-server/`.
+- Test command: `php tests/run.php` (dependency-free unit tests). CI also runs `php -l` on every PHP file and `php tools/release/check-versions.php`. PHPCS (`composer lint`) is advisory only.
+- Code style: WordPress Coding Standards / PHPCompatibility via `phpcs.xml.dist`. Do not mass-fix historical style debt unless the task says so.
+- Files/dirs never to touch: `.github/` secrets, `vendor/`, release zip artifacts, license keys, production deploy scripts that publish or spend money.
 
-### Starting services
+## Night Shift verification
+Night Shift reads this block. Fill it in the next time you plan work here; an
+empty PREVIEW_CMD means this repo is never previewed.
 
-When the saved Cloud Agent environment is active, its `start` command boots
-MariaDB and the PHP dev web server (`:8080`) automatically on every VM start, so
-the site is usually already up. The idempotent repository bootstrap lives in
-`.cursor/install.sh` and per-boot service startup in `.cursor/start.sh`.
+<!-- night-shift:verify -->
+VERIFY=none
+PREVIEW_CMD=
+PREVIEW_PORT=auto
+PREVIEW_PATH=/
+PREVIEW_READY_MS=90000
+PREVIEW_KIND=node
+<!-- /night-shift:verify -->
 
-If you need to (re)start the services manually — e.g. a plain VM without the saved
-environment — run:
-
-- Start the database: `sudo service mariadb start`
-- Start the dev web server (use tmux so it persists): `php -S 0.0.0.0:8080 -t ~/wordpress`
-- Site: `http://localhost:8080` — admin: `http://localhost:8080/wp-admin` (`admin` / `admin`).
-
-### Lint
-
-From `/workspace`: `~/php-tools/vendor/bin/phpcs --standard=phpcs.xml.dist -p` (auto-fix a subset with `phpcbf`). The existing code reports pre-existing WPCS style warnings/errors — that is expected, not a setup failure.
-
-### Non-obvious gotchas
-
-- **DB host must be `127.0.0.1`, not `localhost`.** PHP's mysqli cannot find the MariaDB unix socket via `localhost` in this environment (`No such file or directory`); TCP on `127.0.0.1` works. `~/wordpress/wp-config.php` is already set to `127.0.0.1`.
-- **HPOS is disabled**, so orders are classic `shop_order` posts. Edit an order at `wp-admin/post.php?post=<ID>&action=edit` (not the HPOS `wc-orders` screen). The plugin's "Customer Communications" meta box appears there.
-- **Twilio is bring-your-own.** Placeholder/fake credentials are stored in options so the code paths run, but real SMS/voice cannot send without valid Twilio creds. With fake creds, the Connection Test and auto voice call correctly report `Twilio rejected credentials: Authenticate`. Set real creds under **WooCommerce → Order Communicator → Settings** to actually send.
-- **Auto-notify runs once per status.** To re-test, clear the order meta `_toc_notified_ready_for_pickup_at` / `_toc_notified_shipped_at`, then move the order into that status again.
-- Use WP-CLI as `wp <cmd> --allow-root` from `~/wordpress`. Outbound email is not configured (`sendmail` missing) — order-email warnings during CLI order operations are harmless.
-
-### Hello-world sanity check
-
-Create a WooCommerce order with a billing phone, move it to the **Ready for Pickup** status, and confirm the plugin writes auto-notify order notes and stamps `_toc_notified_ready_for_pickup_at`.
+- `VERIFY` — `none` (backend only), `preview` (start the dev server), or
+  `full` (preview plus a Playwright pass with screenshots on every UI task).
+- `PREVIEW_CMD` — how to start the dev server in the foreground. `$PREVIEW_PORT`
+  is substituted. Bind `0.0.0.0`, not `localhost`.
+- `PREVIEW_PORT` — `auto` (assigned from 5170-5189) or a fixed port in that range.
+- `PREVIEW_PATH` — path health-checked once the port opens.
+- `PREVIEW_READY_MS` — how long to wait for the first good response.
+- `PREVIEW_KIND` — `node`, `static`, or `wordpress` (WooCommerce plugin repos
+  preview against the shared WordPress stack; leave PREVIEW_CMD empty).
